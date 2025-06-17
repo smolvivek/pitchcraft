@@ -55,6 +55,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Attempting signup for:', email);
       
+      if (import.meta.env.VITE_ALLOW_TEST_SIGNUP !== 'true') {
+        throw new Error('Signup disabled in this environment');
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -62,33 +66,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           data: {
             name,
           },
-          // Disable email confirmation to avoid rate limits during development
           emailRedirectTo: undefined,
         },
       });
 
       if (error) {
         console.error('Signup error:', error);
-        
-        // Handle rate limit errors specifically
-        if (error.message.includes('over_email_send_rate_limit') || error.message.includes('email rate limit exceeded')) {
-          return { error: 'Too many signup attempts. Please wait a few minutes before trying again, or contact support if this persists.' };
-        }
-        
-        // Return user-friendly error messages
-        if (error.message.includes('already registered')) {
-          return { error: 'An account with this email already exists. Try signing in instead.' };
-        }
-        if (error.message.includes('Password should be')) {
-          return { error: 'Password must be at least 6 characters long' };
-        }
-        if (error.message.includes('Invalid email') || error.message.includes('email_address_invalid')) {
-          return { error: 'Please enter a valid email address' };
-        }
-        if (error.message.includes('weak password')) {
-          return { error: 'Password is too weak. Please use a stronger password' };
-        }
-        
         return { error: error.message };
       }
 
@@ -109,20 +92,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (profileError) {
             console.error('Profile creation error:', profileError);
-            // Don't fail signup for profile creation issues
           } else {
             console.log('Profile created successfully');
           }
         } catch (profileErr) {
           console.error('Profile creation failed:', profileErr);
-          // Don't fail the signup
         }
       }
 
       return { error: null };
     } catch (err: any) {
       console.error('Unexpected signup error:', err);
-      return { error: 'An unexpected error occurred. Please try again.' };
+      return { error: err.message || 'An unexpected error occurred. Please try again.' };
     }
   };
 

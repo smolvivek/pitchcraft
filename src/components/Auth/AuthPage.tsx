@@ -191,7 +191,7 @@ const AuthPage: React.FC = () => {
           </div>
 
           {/* Development Helper */}
-          {!isSignUp && (
+          {!isSignUp && import.meta.env.VITE_ALLOW_TEST_SIGNUP === 'true' && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
