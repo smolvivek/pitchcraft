@@ -134,6 +134,13 @@ PitchCraft is a comprehensive platform that bridges the gap between creative sto
 - **Prettier** for code formatting
 - **Git** for version control
 
+## 🆕 Latest Updates
+
+- Auth now uses `signInWithPassword`; test sign-up is env-gated by `VITE_ALLOW_TEST_SIGNUP`
+- Improved error handling and user feedback
+- Enhanced TypeScript configuration
+- Streamlined authentication flow
+
 ## ✅ What's Done
 
 ### Core Infrastructure
@@ -143,6 +150,7 @@ PitchCraft is a comprehensive platform that bridges the gap between creative sto
 - ✅ Project CRUD operations
 - ✅ File upload and management
 - ✅ Real-time collaboration foundation
+- ✅ Auth bug fixes and improvements
 
 ### User Features
 - ✅ User registration and login
