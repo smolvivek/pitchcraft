@@ -373,6 +373,60 @@ Subtle CSS grain overlay applied to `<body>`:
 
 ---
 
+## Voice & Tone
+
+Pitchcraft speaks to **creative professionals**: filmmakers, writers, ad creators, content makers. People who've sat in pitch meetings, revised treatments, tracked feedback cycles.
+
+**We sound like:**
+- A trusted collaborator, not a product marketer
+- Someone who understands creative workflow, not a tech bro
+- Confident but not cocky
+- Warm but not casual
+- Grounded but not boring
+
+**Voice characteristics:**
+- **Direct:** "Your pitch is live" not "Congratulations! Your pitch has been successfully published!"
+- **Human:** "Check your inbox" not "Please verify your email address to continue"
+- **Confident:** "Delete this pitch" not "Are you absolutely sure you want to permanently delete this pitch? This action cannot be undone."
+- **Respectful of time:** Short sentences. No fluff. Get to the point.
+
+**Examples:**
+
+| ❌ Generic SaaS | ✅ Pitchcraft Voice |
+|----------------|-------------------|
+| "Welcome back! Let's make today amazing!" | "Welcome back, [Name]" |
+| "You have 0 pitches. Get started by creating your first pitch!" | "Your first pitch starts here" |
+| "Oops! Something went wrong. Please try again later." | "Save failed. Try again" |
+| "Your pitch was successfully saved!" | "Saved" |
+| "Upgrade to Premium to unlock unlimited collaborators!" | "Need more collaborators? Upgrade" |
+
+**Empty states:**
+- Never: "No pitches yet! Create your first pitch to get started!"
+- Always: "Your first pitch starts here" + button
+
+**Errors:**
+- Never: "Oops! An unexpected error occurred. Our team has been notified."
+- Always: "Save failed. Try again" (specific, actionable)
+
+**Confirmations:**
+- Never: "Success! Your pitch has been published and is now live!"
+- Always: "Pitch is live" (brief, clear)
+
+**Tone adjustments by context:**
+- **Onboarding:** Slightly warmer ("You're in, [Name]")
+- **Dashboard:** Neutral, tool-like ("3 pitches", "Last edited 2 days ago")
+- **Errors:** Direct, no apology ("Password must be 8+ characters")
+- **Success:** Brief, no exclamation marks ("Saved", "Pitch deleted")
+
+**Never:**
+- Exclamation marks (except errors: "Password required!")
+- Emoji
+- Marketing speak ("game-changer", "revolutionary", "seamless")
+- Unnecessary words ("simply", "just", "easily")
+- Corporate jargon ("leverage", "utilize", "synergy")
+
+---
+
 ## Final Design Principle
 
 **Good design is invisible.**

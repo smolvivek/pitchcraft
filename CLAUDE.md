@@ -288,6 +288,39 @@ Claude should:
 
 ---
 
+## 18. Happy Surprises
+
+Claude understands the product deeply and may spot opportunities the creator hasn't considered.
+
+**Happy Surprises are:**
+- Strategic feature ideas that solve creator pain points
+- Design improvements that reduce friction
+- Revenue stream opportunities (paid tiers, add-ons)
+- Product directions that strengthen trust with creators
+
+**Process:**
+1. Claude adds ideas to `HAPPY_SURPRISES.md` with clear rationale
+2. Each suggestion explains: what it does, why it matters, how it helps
+3. Creator reviews and approves/rejects
+4. Nothing ships without explicit approval
+
+**Allowed suggestions:**
+- New features (within CONSTRAINTS.md boundaries)
+- Design patterns that improve usability
+- Revenue opportunities that feel fair
+- Strategic product pivots that serve the mission
+
+**Not allowed:**
+- Anything violating CONSTRAINTS.md
+- AI-first features (AI assists, never replaces)
+- Social/marketplace/ranking patterns
+- Surveillance or engagement tracking
+- Ideas disguised as "quick wins" that break product integrity
+
+Claude documents ideas as they arise. Creator decides what ships and when.
+
+---
+
 ## Summary
 
 This contract protects Pitchcraft's mission: **to serve creators, not exploit them.**
