@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { useRouter } from "next/navigation";
 
 interface NavLink {
   label: string;
@@ -9,12 +11,27 @@ interface NavLink {
   active?: boolean;
 }
 
-interface NavProps {
-  links?: NavLink[];
+interface User {
+  name: string;
+  email: string;
 }
 
-function Nav({ links = [] }: NavProps) {
+interface NavProps {
+  links?: NavLink[];
+  user?: User | null;
+}
+
+function Nav({ links = [], user = null }: NavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <nav className="h-[64px] bg-background border-b border-border flex items-center px-[24px] relative">
@@ -44,6 +61,31 @@ function Nav({ links = [] }: NavProps) {
             {link.label}
           </Link>
         ))}
+
+        {/* Auth buttons */}
+        {user ? (
+          <div className="flex items-center gap-[16px]">
+            <span className="text-[14px] leading-[20px] text-text-primary">
+              {user.name}
+            </span>
+            <Button variant="secondary" onClick={handleSignOut} className="text-[14px]">
+              Log out
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-[12px]">
+            <Link href="/login">
+              <Button variant="tertiary" className="text-[14px]">
+                Log in
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button variant="primary" className="text-[14px]">
+                Sign up
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Mobile hamburger */}
@@ -91,6 +133,31 @@ function Nav({ links = [] }: NavProps) {
                 {link.label}
               </Link>
             ))}
+
+            {/* Mobile auth buttons */}
+            {user ? (
+              <div className="flex flex-col gap-[8px] pt-[8px] border-t border-border mt-[8px]">
+                <div className="px-[16px] py-[8px] text-[14px] leading-[20px] text-text-primary">
+                  {user.name}
+                </div>
+                <Button variant="secondary" onClick={handleSignOut} className="w-full">
+                  Log out
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-[8px] pt-[8px] border-t border-border mt-[8px]">
+                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                  <Button variant="tertiary" className="w-full">
+                    Log in
+                  </Button>
+                </Link>
+                <Link href="/signup" onClick={() => setMobileOpen(false)}>
+                  <Button variant="primary" className="w-full">
+                    Sign up
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
