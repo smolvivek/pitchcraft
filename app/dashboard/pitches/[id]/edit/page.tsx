@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { TextInput, Textarea, SelectInput } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
-import type { BudgetRange, PitchStatus, PitchSection } from '@/lib/types/pitch'
+import { ImageUpload } from '@/components/ui/ImageUpload'
+import { PDFUpload } from '@/components/ui/PDFUpload'
+import type { BudgetRange, PitchStatus, PitchSection, MediaRecord, FlowBeat } from '@/lib/types/pitch'
 
 export default function EditPitchPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -76,6 +78,19 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
   const [custom3Title, setCustom3Title] = useState('')
   const [custom3Content, setCustom3Content] = useState('')
 
+  // Media state for sections
+  const [flowBeats, setFlowBeats] = useState<FlowBeat[]>([])
+  const [companionDocMediaId, setCompanionDocMediaId] = useState<string | null>(null)
+  const [locationsMediaIds, setLocationsMediaIds] = useState<string[]>([])
+  const [artDirectionMediaIds, setArtDirectionMediaIds] = useState<string[]>([])
+  const [costumesMediaIds, setCostumesMediaIds] = useState<string[]>([])
+  const [makeupMediaIds, setMakeupMediaIds] = useState<string[]>([])
+  const [propsMediaIds, setPropsMediaIds] = useState<string[]>([])
+  const [vehiclesMediaIds, setVehiclesMediaIds] = useState<string[]>([])
+  const [stuntsMediaIds, setStuntsMediaIds] = useState<string[]>([])
+  const [cameraMediaIds, setCameraMediaIds] = useState<string[]>([])
+  const [soundMediaIds, setSoundMediaIds] = useState<string[]>([])
+
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -138,46 +153,79 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
             case 'flow':
               setFlowEnabled(true)
               setFlowContent(content)
+              if (section.data.beats) {
+                setFlowBeats(section.data.beats)
+              }
               break
             case 'companion_documents':
               setCompanionDocsEnabled(true)
               setCompanionDocsContent(content)
+              if (section.data.mediaId) {
+                setCompanionDocMediaId(section.data.mediaId)
+              }
               break
             case 'locations':
               setLocationsEnabled(true)
               setLocationsContent(content)
+              if (section.data.mediaIds) {
+                setLocationsMediaIds(section.data.mediaIds)
+              }
               break
             case 'art_direction':
               setArtDirectionEnabled(true)
               setArtDirectionContent(content)
+              if (section.data.mediaIds) {
+                setArtDirectionMediaIds(section.data.mediaIds)
+              }
               break
             case 'costumes':
               setCostumesEnabled(true)
               setCostumesContent(content)
+              if (section.data.mediaIds) {
+                setCostumesMediaIds(section.data.mediaIds)
+              }
               break
             case 'makeup':
               setMakeupEnabled(true)
               setMakeupContent(content)
+              if (section.data.mediaIds) {
+                setMakeupMediaIds(section.data.mediaIds)
+              }
               break
             case 'props':
               setPropsEnabled(true)
               setPropsContent(content)
+              if (section.data.mediaIds) {
+                setPropsMediaIds(section.data.mediaIds)
+              }
               break
             case 'vehicles':
               setVehiclesEnabled(true)
               setVehiclesContent(content)
+              if (section.data.mediaIds) {
+                setVehiclesMediaIds(section.data.mediaIds)
+              }
               break
             case 'stunts':
               setStuntsEnabled(true)
               setStuntsContent(content)
+              if (section.data.mediaIds) {
+                setStuntsMediaIds(section.data.mediaIds)
+              }
               break
             case 'camera':
               setCameraEnabled(true)
               setCameraContent(content)
+              if (section.data.mediaIds) {
+                setCameraMediaIds(section.data.mediaIds)
+              }
               break
             case 'sound':
               setSoundEnabled(true)
               setSoundContent(content)
+              if (section.data.mediaIds) {
+                setSoundMediaIds(section.data.mediaIds)
+              }
               break
             case 'world_building':
               setWorldBuildingEnabled(true)
@@ -267,101 +315,134 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       // Insert enabled optional sections
       const sectionsToInsert = []
 
-      if (flowEnabled && flowContent.trim()) {
+      if (flowEnabled && (flowContent.trim() || flowBeats.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'flow',
-          data: { content: flowContent },
+          data: {
+            content: flowContent,
+            beats: flowBeats.length > 0 ? flowBeats : undefined,
+          },
           order_index: 1
         })
       }
 
-      if (companionDocsEnabled && companionDocsContent.trim()) {
+      if (companionDocsEnabled && (companionDocsContent.trim() || companionDocMediaId)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'companion_documents',
-          data: { content: companionDocsContent },
+          data: {
+            content: companionDocsContent,
+            mediaId: companionDocMediaId || undefined,
+          },
           order_index: 2
         })
       }
 
-      if (locationsEnabled && locationsContent.trim()) {
+      if (locationsEnabled && (locationsContent.trim() || locationsMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'locations',
-          data: { content: locationsContent },
+          data: {
+            content: locationsContent,
+            mediaIds: locationsMediaIds.length > 0 ? locationsMediaIds : undefined,
+          },
           order_index: 3
         })
       }
 
-      if (artDirectionEnabled && artDirectionContent.trim()) {
+      if (artDirectionEnabled && (artDirectionContent.trim() || artDirectionMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'art_direction',
-          data: { content: artDirectionContent },
+          data: {
+            content: artDirectionContent,
+            mediaIds: artDirectionMediaIds.length > 0 ? artDirectionMediaIds : undefined,
+          },
           order_index: 4
         })
       }
 
-      if (costumesEnabled && costumesContent.trim()) {
+      if (costumesEnabled && (costumesContent.trim() || costumesMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'costumes',
-          data: { content: costumesContent },
+          data: {
+            content: costumesContent,
+            mediaIds: costumesMediaIds.length > 0 ? costumesMediaIds : undefined,
+          },
           order_index: 5
         })
       }
 
-      if (makeupEnabled && makeupContent.trim()) {
+      if (makeupEnabled && (makeupContent.trim() || makeupMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'makeup',
-          data: { content: makeupContent },
+          data: {
+            content: makeupContent,
+            mediaIds: makeupMediaIds.length > 0 ? makeupMediaIds : undefined,
+          },
           order_index: 6
         })
       }
 
-      if (propsEnabled && propsContent.trim()) {
+      if (propsEnabled && (propsContent.trim() || propsMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'props',
-          data: { content: propsContent },
+          data: {
+            content: propsContent,
+            mediaIds: propsMediaIds.length > 0 ? propsMediaIds : undefined,
+          },
           order_index: 7
         })
       }
 
-      if (vehiclesEnabled && vehiclesContent.trim()) {
+      if (vehiclesEnabled && (vehiclesContent.trim() || vehiclesMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'vehicles',
-          data: { content: vehiclesContent },
+          data: {
+            content: vehiclesContent,
+            mediaIds: vehiclesMediaIds.length > 0 ? vehiclesMediaIds : undefined,
+          },
           order_index: 8
         })
       }
 
-      if (stuntsEnabled && stuntsContent.trim()) {
+      if (stuntsEnabled && (stuntsContent.trim() || stuntsMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'stunts',
-          data: { content: stuntsContent },
+          data: {
+            content: stuntsContent,
+            mediaIds: stuntsMediaIds.length > 0 ? stuntsMediaIds : undefined,
+          },
           order_index: 9
         })
       }
 
-      if (cameraEnabled && cameraContent.trim()) {
+      if (cameraEnabled && (cameraContent.trim() || cameraMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'camera',
-          data: { content: cameraContent },
+          data: {
+            content: cameraContent,
+            mediaIds: cameraMediaIds.length > 0 ? cameraMediaIds : undefined,
+          },
           order_index: 10
         })
       }
 
-      if (soundEnabled && soundContent.trim()) {
+      if (soundEnabled && (soundContent.trim() || soundMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
           section_name: 'sound',
-          data: { content: soundContent },
+          data: {
+            content: soundContent,
+            mediaIds: soundMediaIds.length > 0 ? soundMediaIds : undefined,
+          },
           order_index: 11
         })
       }
@@ -582,7 +663,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                   </div>
 
                   {/* Companion Documents */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -593,17 +674,25 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Companion Documents</span>
                     </label>
                     {companionDocsEnabled && (
-                      <Textarea
-                        value={companionDocsContent}
-                        onChange={(e) => setCompanionDocsContent(e.target.value)}
-                        helpText="Description of attached script/design doc"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={companionDocsContent}
+                          onChange={(e) => setCompanionDocsContent(e.target.value)}
+                          helpText="Description of attached script/design doc"
+                        />
+                        <PDFUpload
+                          pitchId={params.id}
+                          sectionName="companion_documents"
+                          existingMedia={null}
+                          onUploadComplete={(mediaId) => setCompanionDocMediaId(mediaId)}
+                          onDeleteComplete={() => setCompanionDocMediaId(null)}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Locations */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -614,17 +703,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Locations</span>
                     </label>
                     {locationsEnabled && (
-                      <Textarea
-                        value={locationsContent}
-                        onChange={(e) => setLocationsContent(e.target.value)}
-                        helpText="Shooting locations, requirements, permit notes"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={locationsContent}
+                          onChange={(e) => setLocationsContent(e.target.value)}
+                          helpText="Shooting locations, requirements, permit notes"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="locations"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setLocationsMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setLocationsMediaIds(locationsMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Art Direction */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -635,17 +733,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Art Direction & Set Design</span>
                     </label>
                     {artDirectionEnabled && (
-                      <Textarea
-                        value={artDirectionContent}
-                        onChange={(e) => setArtDirectionContent(e.target.value)}
-                        helpText="Visual style, set pieces, color palette"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={artDirectionContent}
+                          onChange={(e) => setArtDirectionContent(e.target.value)}
+                          helpText="Visual style, set pieces, color palette"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="art_direction"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setArtDirectionMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setArtDirectionMediaIds(artDirectionMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Costumes */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -656,17 +763,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Costumes & Wardrobe</span>
                     </label>
                     {costumesEnabled && (
-                      <Textarea
-                        value={costumesContent}
-                        onChange={(e) => setCostumesContent(e.target.value)}
-                        helpText="Period/style, key changes, requirements"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={costumesContent}
+                          onChange={(e) => setCostumesContent(e.target.value)}
+                          helpText="Period/style, key changes, requirements"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="costumes"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setCostumesMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setCostumesMediaIds(costumesMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Makeup */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -677,17 +793,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Makeup & Hair</span>
                     </label>
                     {makeupEnabled && (
-                      <Textarea
-                        value={makeupContent}
-                        onChange={(e) => setMakeupContent(e.target.value)}
-                        helpText="Special requirements, prosthetics, period guidance"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={makeupContent}
+                          onChange={(e) => setMakeupContent(e.target.value)}
+                          helpText="Special requirements, prosthetics, period guidance"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="makeup"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setMakeupMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setMakeupMediaIds(makeupMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Props */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -698,17 +823,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Props & Set Dressing</span>
                     </label>
                     {propsEnabled && (
-                      <Textarea
-                        value={propsContent}
-                        onChange={(e) => setPropsContent(e.target.value)}
-                        helpText="Key props, set dressing aesthetic"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={propsContent}
+                          onChange={(e) => setPropsContent(e.target.value)}
+                          helpText="Key props, set dressing aesthetic"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="props"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setPropsMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setPropsMediaIds(propsMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Vehicles */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -719,17 +853,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Vehicles & Animals</span>
                     </label>
                     {vehiclesEnabled && (
-                      <Textarea
-                        value={vehiclesContent}
-                        onChange={(e) => setVehiclesContent(e.target.value)}
-                        helpText="Picture vehicles, animals, handlers"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={vehiclesContent}
+                          onChange={(e) => setVehiclesContent(e.target.value)}
+                          helpText="Picture vehicles, animals, handlers"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="vehicles"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setVehiclesMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setVehiclesMediaIds(vehiclesMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Stunts */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -740,17 +883,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Stunts & Special Effects</span>
                     </label>
                     {stuntsEnabled && (
-                      <Textarea
-                        value={stuntsContent}
-                        onChange={(e) => setStuntsContent(e.target.value)}
-                        helpText="Action sequences, SFX, VFX requirements"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={stuntsContent}
+                          onChange={(e) => setStuntsContent(e.target.value)}
+                          helpText="Action sequences, SFX, VFX requirements"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="stunts"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setStuntsMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setStuntsMediaIds(stuntsMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Camera */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -761,17 +913,26 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Camera & Cinematography</span>
                     </label>
                     {cameraEnabled && (
-                      <Textarea
-                        value={cameraContent}
-                        onChange={(e) => setCameraContent(e.target.value)}
-                        helpText="Visual style, lens choices, lighting mood"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={cameraContent}
+                          onChange={(e) => setCameraContent(e.target.value)}
+                          helpText="Visual style, lens choices, lighting mood"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="camera"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setCameraMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setCameraMediaIds(cameraMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 
                   {/* Sound */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
                         type="checkbox"
@@ -782,12 +943,21 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                       <span className="text-[14px] leading-[20px] text-text-primary">Sound & Music</span>
                     </label>
                     {soundEnabled && (
-                      <Textarea
-                        value={soundContent}
-                        onChange={(e) => setSoundContent(e.target.value)}
-                        helpText="Sound design, music style, voice-over"
-                        className="mt-[8px]"
-                      />
+                      <div className="mt-[8px] flex flex-col gap-[12px]">
+                        <Textarea
+                          value={soundContent}
+                          onChange={(e) => setSoundContent(e.target.value)}
+                          helpText="Sound design, music style, voice-over"
+                        />
+                        <ImageUpload
+                          pitchId={params.id}
+                          sectionName="sound"
+                          maxFiles={10}
+                          existingMedia={[]}
+                          onUploadComplete={(mediaIds) => setSoundMediaIds(mediaIds)}
+                          onDeleteComplete={(mediaId) => setSoundMediaIds(soundMediaIds.filter(id => id !== mediaId))}
+                        />
+                      </div>
                     )}
                   </div>
 

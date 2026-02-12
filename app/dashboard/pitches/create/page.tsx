@@ -8,7 +8,9 @@ import { TextInput, Textarea } from '@/components/ui/Input'
 import { BudgetSegments } from '@/components/ui/BudgetSegments'
 import { StatusRadio } from '@/components/ui/StatusRadio'
 import { CharacterCounter } from '@/components/ui/CharacterCounter'
-import type { BudgetRange, PitchStatus, CastMember, TeamMember } from '@/lib/types/pitch'
+import { ImageUpload } from '@/components/ui/ImageUpload'
+import { PDFUpload } from '@/components/ui/PDFUpload'
+import type { BudgetRange, PitchStatus, CastMember, TeamMember, FlowBeat } from '@/lib/types/pitch'
 
 type SectionKey = 'project' | 'logline' | 'synopsis' | 'genre' | 'vision' | 'cast' | 'budget' | 'team'
 
@@ -94,6 +96,22 @@ export default function CreatePitchPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
+  // Optional sections state
+  const [flowEnabled, setFlowEnabled] = useState(false)
+  const [flowBeats, setFlowBeats] = useState<FlowBeat[]>([])
+
+  const [companionDocsEnabled, setCompanionDocsEnabled] = useState(false)
+  const [companionDocsDescription, setCompanionDocsDescription] = useState('')
+  const [companionDocMediaId, setCompanionDocMediaId] = useState<string | null>(null)
+
+  const [locationsEnabled, setLocationsEnabled] = useState(false)
+  const [locationsContent, setLocationsContent] = useState('')
+  const [locationsMediaIds, setLocationsMediaIds] = useState<string[]>([])
+
+  const [artDirectionEnabled, setArtDirectionEnabled] = useState(false)
+  const [artDirectionContent, setArtDirectionContent] = useState('')
+  const [artDirectionMediaIds, setArtDirectionMediaIds] = useState<string[]>([])
+
   // Helper functions
   const getSectionIndex = (key: SectionKey) => sections.findIndex((s) => s.key === key)
   const getCurrentSectionIndex = () => getSectionIndex(currentSection)
@@ -150,6 +168,28 @@ export default function CreatePitchPage() {
 
   const updateTeamMember = (id: string, field: keyof TeamMember, value: string) => {
     setTeamMembers(teamMembers.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
+  }
+
+  // Flow beat helpers
+  const addFlowBeat = () => {
+    const newBeat: FlowBeat = {
+      id: Date.now().toString(),
+      caption: '',
+      arcLabel: '',
+      mediaIds: [],
+      order: flowBeats.length,
+    }
+    setFlowBeats([...flowBeats, newBeat])
+  }
+
+  const removeFlowBeat = (id: string) => {
+    if (flowBeats.length > 1) {
+      setFlowBeats(flowBeats.filter((b) => b.id !== id))
+    }
+  }
+
+  const updateFlowBeat = (id: string, field: keyof FlowBeat, value: any) => {
+    setFlowBeats(flowBeats.map((b) => (b.id === id ? { ...b, [field]: value } : b)))
   }
 
   // Word count helper
@@ -246,6 +286,65 @@ export default function CreatePitchPage() {
         .single()
 
       if (pitchError) throw pitchError
+
+      // Insert optional sections
+      const sectionsToInsert = []
+
+      if (flowEnabled && flowBeats.length > 0) {
+        sectionsToInsert.push({
+          pitch_id: pitch.id,
+          section_name: 'flow',
+          data: { beats: flowBeats },
+          order_index: 1,
+        })
+      }
+
+      if (companionDocsEnabled && (companionDocsDescription.trim() || companionDocMediaId)) {
+        sectionsToInsert.push({
+          pitch_id: pitch.id,
+          section_name: 'companion_documents',
+          data: {
+            content: companionDocsDescription,
+            mediaId: companionDocMediaId,
+          },
+          order_index: 2,
+        })
+      }
+
+      if (locationsEnabled && (locationsContent.trim() || locationsMediaIds.length > 0)) {
+        sectionsToInsert.push({
+          pitch_id: pitch.id,
+          section_name: 'locations',
+          data: {
+            content: locationsContent,
+            mediaIds: locationsMediaIds,
+          },
+          order_index: 3,
+        })
+      }
+
+      if (artDirectionEnabled && (artDirectionContent.trim() || artDirectionMediaIds.length > 0)) {
+        sectionsToInsert.push({
+          pitch_id: pitch.id,
+          section_name: 'art_direction',
+          data: {
+            content: artDirectionContent,
+            mediaIds: artDirectionMediaIds,
+          },
+          order_index: 4,
+        })
+      }
+
+      if (sectionsToInsert.length > 0) {
+        const { error: sectionsError } = await supabase
+          .from('pitch_sections')
+          .insert(sectionsToInsert)
+
+        if (sectionsError) {
+          console.error('Sections insert error:', sectionsError)
+          // Don't fail the whole operation, just log
+        }
+      }
 
       router.push('/dashboard')
       router.refresh()
@@ -566,6 +665,178 @@ export default function CreatePitchPage() {
                 </div>
               )}
             </div>
+
+            {/* Optional Sections (shown only on team section) */}
+            {currentSection === 'team' && completedSections.size >= 7 && (
+              <div className="mt-[64px] pt-[64px] border-t border-border">
+                <h2 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[8px]">
+                  Optional Sections
+                </h2>
+                <p className="text-[14px] leading-[20px] text-text-secondary mb-[32px]">
+                  Add additional context to your pitch. All sections are optional.
+                </p>
+
+                {/* Flow Section */}
+                <div className="mb-[32px]">
+                  <label className="flex items-center gap-[12px] cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={flowEnabled}
+                      onChange={(e) => {
+                        setFlowEnabled(e.target.checked)
+                        if (e.target.checked && flowBeats.length === 0) {
+                          addFlowBeat()
+                        }
+                      }}
+                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
+                    />
+                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
+                      Flow
+                    </span>
+                  </label>
+                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
+                    Story beats, character arcs, narrative structure
+                  </p>
+
+                  {flowEnabled && (
+                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
+                      {flowBeats.map((beat, index) => (
+                        <div key={beat.id} className="border border-border rounded-[4px] p-[16px] bg-white">
+                          <div className="flex items-center justify-between mb-[12px]">
+                            <span className="font-[var(--font-mono)] text-[11px] text-text-secondary">
+                              BEAT {index + 1}
+                            </span>
+                            {flowBeats.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeFlowBeat(beat.id)}
+                                className="text-[12px] text-error hover:underline"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-[12px]">
+                            <TextInput
+                              value={beat.caption}
+                              onChange={(e) => updateFlowBeat(beat.id, 'caption', e.target.value)}
+                              placeholder="Beat description"
+                            />
+                            <TextInput
+                              value={beat.arcLabel || ''}
+                              onChange={(e) => updateFlowBeat(beat.id, 'arcLabel', e.target.value)}
+                              placeholder="Character arc label (optional)"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <Button type="button" variant="secondary" onClick={addFlowBeat}>
+                        + Add beat
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Companion Documents Section */}
+                <div className="mb-[32px]">
+                  <label className="flex items-center gap-[12px] cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={companionDocsEnabled}
+                      onChange={(e) => setCompanionDocsEnabled(e.target.checked)}
+                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
+                    />
+                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
+                      Companion Documents
+                    </span>
+                  </label>
+                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
+                    Script, treatment, design documents (PDF only)
+                  </p>
+
+                  {companionDocsEnabled && (
+                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
+                      <Textarea
+                        value={companionDocsDescription}
+                        onChange={(e) => setCompanionDocsDescription(e.target.value)}
+                        placeholder="Brief description of the document (optional)"
+                        className="min-h-[80px]"
+                      />
+                      {/* PDF upload will be added after pitch is created */}
+                      <p className="text-[13px] text-text-secondary italic">
+                        Upload document after creating pitch
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Locations Section */}
+                <div className="mb-[32px]">
+                  <label className="flex items-center gap-[12px] cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={locationsEnabled}
+                      onChange={(e) => setLocationsEnabled(e.target.checked)}
+                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
+                    />
+                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
+                      Locations
+                    </span>
+                  </label>
+                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
+                    Shooting locations, requirements, permits
+                  </p>
+
+                  {locationsEnabled && (
+                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
+                      <Textarea
+                        value={locationsContent}
+                        onChange={(e) => setLocationsContent(e.target.value)}
+                        placeholder="Describe your locations, requirements, etc."
+                        className="min-h-[120px]"
+                      />
+                      {/* Image upload will be added after pitch is created */}
+                      <p className="text-[13px] text-text-secondary italic">
+                        Upload location images after creating pitch
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Art Direction Section */}
+                <div className="mb-[32px]">
+                  <label className="flex items-center gap-[12px] cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={artDirectionEnabled}
+                      onChange={(e) => setArtDirectionEnabled(e.target.checked)}
+                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
+                    />
+                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
+                      Art Direction & Set Design
+                    </span>
+                  </label>
+                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
+                    Visual style, set pieces, color palette
+                  </p>
+
+                  {artDirectionEnabled && (
+                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
+                      <Textarea
+                        value={artDirectionContent}
+                        onChange={(e) => setArtDirectionContent(e.target.value)}
+                        placeholder="Describe your visual style, set design, etc."
+                        className="min-h-[120px]"
+                      />
+                      {/* Image upload will be added after pitch is created */}
+                      <p className="text-[13px] text-text-secondary italic">
+                        Upload reference images after creating pitch
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Error message */}
             {errors.general && (
