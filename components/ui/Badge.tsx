@@ -1,20 +1,20 @@
-type StatusType = "looking" | "in-progress" | "complete";
+type StatusType = "development" | "production" | "completed";
 
 interface BadgeProps {
   status: StatusType;
 }
 
 const statusConfig: Record<StatusType, { label: string; dotColor: string }> = {
-  looking: {
-    label: "Looking",
+  development: {
+    label: "Development",
     dotColor: "bg-status-looking",
   },
-  "in-progress": {
-    label: "In Progress",
+  production: {
+    label: "Production",
     dotColor: "bg-status-progress",
   },
-  complete: {
-    label: "Complete",
+  completed: {
+    label: "Completed",
     dotColor: "bg-status-complete",
   },
 };

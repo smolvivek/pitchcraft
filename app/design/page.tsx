@@ -251,9 +251,9 @@ export default function DesignShowcase() {
         {/* ── Badges ── */}
         <Section title="Status Badges">
           <div className="flex flex-wrap items-center gap-[24px]">
-            <Badge status="looking" />
-            <Badge status="in-progress" />
-            <Badge status="complete" />
+            <Badge status="development" />
+            <Badge status="production" />
+            <Badge status="completed" />
           </div>
         </Section>
 
@@ -271,7 +271,7 @@ export default function DesignShowcase() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
               <PitchCard
                 title="The Last Migration"
-                status="looking"
+                status="development"
                 genre="Documentary"
                 budget="$50K–$250K"
                 version={3}
@@ -279,7 +279,7 @@ export default function DesignShowcase() {
               />
               <PitchCard
                 title="Neon Requiem"
-                status="in-progress"
+                status="production"
                 genre="Sci-Fi / Thriller"
                 budget="$250K–$1M"
                 version={7}
@@ -287,7 +287,7 @@ export default function DesignShowcase() {
               />
               <PitchCard
                 title="Sunday Morning"
-                status="complete"
+                status="completed"
                 genre="Drama"
                 budget="Under $5K"
                 version={12}

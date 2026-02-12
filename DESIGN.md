@@ -2,6 +2,10 @@
 
 (Working title product: TBD)
 
+**For brand personality, voice, and terracotta usage strategy, see [BRAND.md](./BRAND.md)**
+
+---
+
 ## Design Philosophy
 
 Pitchcraft's design draws from three influences:
@@ -75,15 +79,37 @@ Pitchcraft's design draws from three influences:
 | **Accent button** | `#B8503A` | Primary button background (white text: 4.51:1 WCAG AA) |
 | **Accent button hover** | `#9C3F2E` | Button hover state |
 | **Accent button active** | `#863525` | Button pressed state |
-| **Status: Looking** | `#D32F2F` | Red dot + label |
-| **Status: In Progress** | `#E8A817` | Amber dot + label |
-| **Status: Complete** | `#388E3C` | Green dot + label |
+| **Status: Development** | `#D32F2F` | Red dot + label |
+| **Status: Production** | `#E8A817` | Amber dot + label |
+| **Status: Completed** | `#388E3C` | Green dot + label |
 | **Error** | `#D32F2F` | Form validation |
 | **Success** | `#4CAF50` | Confirmations |
 
 **Background texture:** Subtle CSS grain overlay (SVG noise pattern, ~3% opacity). Adds tactile warmth without competing with content.
 
 **No Dark Mode.** Light mode only. The design system is calibrated for warm cream backgrounds. No `dark:` variants, no `prefers-color-scheme` media queries.
+
+---
+
+### Terracotta Usage Rules (NON-NEGOTIABLE)
+
+**Use terracotta like Teenage Engineering uses orange: sparingly, structurally, purposefully.**
+
+**✅ ONLY use terracotta for:**
+1. Active states (current section in sidebar, selected item)
+2. Primary actions (ONE per page — the main CTA)
+3. Progress indicators (completion marks, filled progress bars)
+4. User-created content markers (elements the creator added, not system UI)
+
+**❌ NEVER use terracotta for:**
+1. Hover states (use subtle gray `#F3EDE6` instead)
+2. Multiple buttons on same screen (only primary action gets terracotta)
+3. Decorative accents (no terracotta borders, backgrounds, or flourishes)
+4. Non-interactive text (labels, body copy, metadata stay monochrome)
+
+**The test:** If you remove all terracotta from the page, it should still work. Terracotta is the **signal**, not the structure.
+
+See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 ---
 
@@ -246,10 +272,15 @@ Pitchcraft's design draws from three influences:
 
 ### Animations & Interactions
 
+**Quality bar: Lando Norris website, Wall-E, Ghibli films, Ghost in the Shell**
+
+All animations must be senior-level craft — cinematic patience, reveals structure/meaning, never decoration. See [BRAND.md](./BRAND.md) for motion design philosophy.
+
 **Timing:**
 - Short transitions (state changes): 150–200ms
 - Medium transitions (page/section): 250–300ms
 - Long transitions (major changes): 400–500ms
+- Cinematic transitions (hero animations): 750ms cubic-bezier(0.16, 1, 0.3, 1)
 - Easing: `ease-out` for most. `cubic-bezier(0.34, 1.56, 0.64, 1)` for spring effects.
 
 **Button Press:** Scale to 0.98x on active (minimal spring). Background color change 200ms ease-out.
@@ -375,55 +406,36 @@ Subtle CSS grain overlay applied to `<body>`:
 
 ## Voice & Tone
 
-Pitchcraft speaks to **creative professionals**: filmmakers, writers, ad creators, content makers. People who've sat in pitch meetings, revised treatments, tracked feedback cycles.
+**See [BRAND.md](./BRAND.md) for complete voice guidelines and approved copy examples.**
 
-**We sound like:**
-- A trusted collaborator, not a product marketer
-- Someone who understands creative workflow, not a tech bro
-- Confident but not cocky
-- Warm but not casual
-- Grounded but not boring
+**Foundation:** David Ogilvy + British dry humor. Sharp, economical, warm. Self-aware wit, never condescending.
 
-**Voice characteristics:**
-- **Direct:** "Your pitch is live" not "Congratulations! Your pitch has been successfully published!"
-- **Human:** "Check your inbox" not "Please verify your email address to continue"
-- **Confident:** "Delete this pitch" not "Are you absolutely sure you want to permanently delete this pitch? This action cannot be undone."
-- **Respectful of time:** Short sentences. No fluff. Get to the point.
+**Personality:** "The editor who makes you look sharp" — in service of the creator, never judging.
 
-**Examples:**
+**Terminology:** Use "project" (not "pitch") throughout UI. Product name is working title and will change.
 
-| ❌ Generic SaaS | ✅ Pitchcraft Voice |
+**Quick reference examples:**
+
+| ❌ Generic SaaS | ✅ Our Voice |
 |----------------|-------------------|
 | "Welcome back! Let's make today amazing!" | "Welcome back, [Name]" |
-| "You have 0 pitches. Get started by creating your first pitch!" | "Your first pitch starts here" |
+| "You have 0 projects. Get started by creating your first project!" | "Nothing here. Time to fix that." |
 | "Oops! Something went wrong. Please try again later." | "Save failed. Try again" |
-| "Your pitch was successfully saved!" | "Saved" |
-| "Upgrade to Premium to unlock unlimited collaborators!" | "Need more collaborators? Upgrade" |
+| "Your project was successfully saved!" | "Saved" |
+| "Are you absolutely sure you want to delete this?" | "Delete project? This action can't be undone." |
 
-**Empty states:**
-- Never: "No pitches yet! Create your first pitch to get started!"
-- Always: "Your first pitch starts here" + button
-
-**Errors:**
-- Never: "Oops! An unexpected error occurred. Our team has been notified."
-- Always: "Save failed. Try again" (specific, actionable)
-
-**Confirmations:**
-- Never: "Success! Your pitch has been published and is now live!"
-- Always: "Pitch is live" (brief, clear)
-
-**Tone adjustments by context:**
-- **Onboarding:** Slightly warmer ("You're in, [Name]")
-- **Dashboard:** Neutral, tool-like ("3 pitches", "Last edited 2 days ago")
-- **Errors:** Direct, no apology ("Password must be 8+ characters")
-- **Success:** Brief, no exclamation marks ("Saved", "Pitch deleted")
+**Approved copy (from BRAND.md):**
+- Project published: "Your work is ready. Now the hard part: sharing it."
+- Empty state: "Nothing here. Time to fix that." OR "No projects yet. Rectify this."
+- After save: "Saved."
+- Character limit: "Too long. Edit."
+- Back to empty: "Back to square one."
 
 **Never:**
-- Exclamation marks (except errors: "Password required!")
+- Exclamation marks (except critical errors)
 - Emoji
-- Marketing speak ("game-changer", "revolutionary", "seamless")
-- Unnecessary words ("simply", "just", "easily")
-- Corporate jargon ("leverage", "utilize", "synergy")
+- Marketing speak, corporate jargon
+- Condescending tone ("Share wisely", "Send it to someone who matters")
 
 ---
 

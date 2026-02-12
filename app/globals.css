@@ -11,12 +11,14 @@
   --color-text-secondary: #6B6560;
   --color-text-disabled: #A8A29E;
   --color-accent: #D4654A;
+  --color-accent-visual: #D4654A;
   --color-accent-hover: #B8503A;
   --color-accent-active: #9C3F2E;
   --color-accent-text: #A8432D;
   --color-accent-btn: #B8503A;
   --color-accent-btn-hover: #9C3F2E;
   --color-accent-btn-active: #863525;
+  --color-accent-button: #B8503A;
   --color-status-looking: #D32F2F;
   --color-status-progress: #E8A817;
   --color-status-complete: #388E3C;
@@ -138,4 +140,23 @@ body::before {
   to {
     stroke-dashoffset: 0;
   }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Animation Utilities ── */
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.animate-draw-check {
+  animation: draw-check 300ms ease-out forwards;
 }
