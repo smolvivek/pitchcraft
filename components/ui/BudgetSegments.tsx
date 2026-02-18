@@ -33,7 +33,7 @@ export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) 
               relative overflow-hidden
               ${
                 value === option.value
-                  ? 'border-accent-button scale-[1.02]'
+                  ? 'border-btn scale-[1.02]'
                   : 'bg-white border-border hover:bg-surface scale-100'
               }
             `}
@@ -44,7 +44,7 @@ export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) 
             {/* Terracotta background slide-in */}
             <div
               className={`
-                absolute inset-0 bg-accent-button
+                absolute inset-0 bg-btn
                 transition-transform duration-[150ms] ease-out
                 ${value === option.value ? 'translate-x-0' : '-translate-x-full'}
               `}

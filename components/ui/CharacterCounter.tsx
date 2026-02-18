@@ -16,7 +16,7 @@ export function CharacterCounter({ current, max, type = 'characters' }: Characte
       <span
         className={`
           font-[var(--font-mono)] text-[13px] leading-[20px]
-          ${isOverLimit ? 'text-error' : isNearLimit ? 'text-accent-text' : 'text-text-secondary'}
+          ${isOverLimit ? 'text-error' : isNearLimit ? 'text-link' : 'text-text-secondary'}
         `}
       >
         {type === 'words' ? `WC ${current}` : max ? `${current}/${max}` : current}

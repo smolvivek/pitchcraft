@@ -46,7 +46,7 @@ export function StatusRadio({ value, onChange, error }: StatusRadioProps) {
               text-left
               ${
                 value === option.value
-                  ? 'bg-surface border-accent-visual shadow-[0_0_0_1px_rgba(212,101,74,0.2)]'
+                  ? 'bg-surface border-pop shadow-[0_0_0_1px_rgba(255,92,54,0.2)]'
                   : 'bg-white border-border hover:bg-surface'
               }
             `}

@@ -46,9 +46,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white border border-border rounded-[8px] p-[32px]">
+    <div className="bg-white border border-border rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[24px]">
-        Log in to Pitchcraft
+        Welcome back
       </h2>
 
       {error && (
@@ -77,9 +77,9 @@ export default function LoginPage() {
         <div className="text-right">
           <Link
             href="/reset-password"
-            className="text-[14px] leading-[20px] text-accent-text hover:underline font-medium"
+            className="text-[14px] leading-[20px] text-link hover:underline font-medium"
           >
-            Forgot password?
+            Reset password
           </Link>
         </div>
 
@@ -95,7 +95,7 @@ export default function LoginPage() {
         <div className="text-center mt-[8px]">
           <p className="text-[14px] leading-[20px] text-text-secondary">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-accent-text hover:underline font-medium">
+            <Link href="/signup" className="text-link hover:underline font-medium">
               Sign up
             </Link>
           </p>

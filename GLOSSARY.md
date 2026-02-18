@@ -94,23 +94,28 @@ This document defines every key term used across the codebase and intent files. 
 ---
 
 ### Section (Optional)
-**Definition:** An optional topical area a creator can add to their pitch (e.g., Locations, Cast, Art Direction).
-**List of sections:**
-- Locations
-- Cast, Crew & Team
-- Art Direction, Design & Aesthetic
-- Costumes, Wardrobe & Appearance
-- Makeup, Hair & Physical Effects
-- Props, Objects & Set Dressing
-- Vehicles, Animals & Living Elements
-- Stunts, Action & Special Effects
-- Camera, Cinematography & Visual Language
-- Sound, Music & Audio
-- World Building, Lore & Context
-- Schedule & Timeline
-- Flow (special: horizontal scroll experience)
+**Definition:** An optional topical area a creator can add to their pitch. 18 optional sections + 3 custom = 21 available.
+**List of sections (18):**
+- 09 Flow (special: horizontal scroll experience)
+- 10 Script & Documents
+- 11 Locations
+- 12 Art Direction
+- 13 Set Design
+- 14 Costume
+- 15 Makeup & Hair
+- 16 Props
+- 17 Vehicles & Animals
+- 18 Stunts & SFX
+- 19 Camera
+- 20 Sound Design
+- 21 Music
+- 22 Setting & World
+- 23 Schedule
+- 24 Crew
+- 25–27 Custom (up to 3)
 
-**Rule:** Each section is independent. Creator chooses which to include.
+**Per-section capabilities:** Notes field, reference image uploads (with optional captions), video/link embeds.
+**Rule:** Each section is independent. Creator chooses which to include via sidebar "More" panel.
 **Related:** Field Group, Module, Component
 
 ---
@@ -166,10 +171,9 @@ This document defines every key term used across the codebase and intent files. 
 
 ---
 
-### Companion Document
-**Definition:** One optional PDF/document upload (script, design doc, treatment, etc.).
+### Script & Documents (formerly Companion Document)
+**Definition:** Optional section for PDF/document uploads (script, treatment, lookbook, design bible).
 **Purpose:** Provide detailed supplementary material without creating multiple links.
-**Limit:** 1 per pitch
 **Format:** Any PDF (scripts, design docs, lookbooks, bibles)
 **Related:** Attachment, Supplementary Material, Supporting Document
 
@@ -387,7 +391,7 @@ This document defines every key term used across the codebase and intent files. 
 
 ## Usage Rules
 
-1. **Use these terms consistently.** If you say "Project," Claude will say "Project" too. Say "Pitch" instead.
+1. **Use "project" in UI-facing copy** (buttons, labels, headings). Use "pitch" in code, database, and technical discussions.
 2. **When in doubt, consult this file.** Don't invent terminology.
 3. **New terms get defined here.** If you introduce a term, add it to GLOSSARY.md.
 4. **Claude reads this first.** Before starting work, Claude reads GLOSSARY.md to understand vocabulary.

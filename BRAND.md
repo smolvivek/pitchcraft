@@ -92,35 +92,42 @@ Inspired by: Teenage Engineering, Dieter Rams, A24, Apple (Jony Ive era)
 
 1. **Negative space as active element** — Not just "clean", but breathing room that creates structure
 2. **Typography as hierarchy** — Scale and weight do the work, not decoration
-3. **Monochrome + terracotta** — Limited palette, used with precision
+3. **Monochrome + pop colour** — Limited palette, used with precision (`#AF2E1B` for accents, `#1A1A1A` for buttons)
 4. **Every element has purpose** — If you can't explain why it's there, remove it
 5. **Personality emerges from precision** — Not from decoration or cleverness
 
 ---
 
-## Terracotta Accent Strategy
+## Pop Colour Accent Strategy
 
-**Use terracotta like Teenage Engineering uses orange: sparingly, structurally, purposefully.**
+**Use pop colour like Teenage Engineering uses orange: sparingly, structurally, purposefully.**
 
-### Only Use Terracotta For:
+The colour system splits intent: `pop` (`#AF2E1B`) is the visual accent, `btn` (`#1A1A1A`) is the action colour. Primary buttons are dark charcoal — trust through restraint, not brightness.
+
+### Only Use Pop Colour (`#AF2E1B`) For:
 
 1. **Active states** — Current section in sidebar, selected item
-2. **Primary actions** — ONE per page (the main CTA)
-3. **Progress indicators** — Completion marks, filled progress bars
+2. **Focus rings and progress indicators** — Completion marks, filled progress bars
+3. **Links and tertiary text actions** — Via `--color-link` (`#AF2E1B`)
 4. **User-created content markers** — Elements the creator added (not system UI)
 
-### Never Use Terracotta For:
+### Use Dark Charcoal (`#1A1A1A`) For:
+
+1. **Primary action buttons** — ONE per page (the main CTA)
+2. **Button hover/active** — Darkens further (`#333333` → `#000000`)
+
+### Never Use Pop Colour For:
 
 1. **Hover states** — Use subtle gray instead
-2. **Multiple buttons on same screen** — Only the primary action gets terracotta
-3. **Decorative accents** — No terracotta borders, backgrounds, or flourishes
+2. **Primary button backgrounds** — Buttons are dark charcoal, not pop
+3. **Decorative accents** — No pop colour borders, backgrounds, or flourishes
 4. **Non-interactive text** — Labels, body copy, metadata stay monochrome
 
 ### The Test
 
-**If you remove all terracotta from the page, it should still work.**
+**If you remove all pop colour from the page, it should still work.**
 
-Terracotta is the **signal**, not the structure.
+Pop colour is the **signal**, not the structure.
 
 ---
 
@@ -145,8 +152,11 @@ Terracotta is the **signal**, not the structure.
 ### Never
 
 - Generic fade-ins or slide-ups
-- Bouncy/springy effects (unless structurally motivated like TE knobs)
-- Loading spinners (use progress indicators or subtle patterns)
+- Spring overshoot or bouncy effects
+- Glow effects or pulses
+- Ambient floating shapes (circles, dots, lines)
+- SVG stroke-draw animations (done to death)
+- Loading spinners (use skeleton screens)
 - Motion for motion's sake
 
 ---
@@ -157,7 +167,7 @@ Actively avoid these personalities:
 
 - ❌ **Generic SaaS** — No "seamless workflows" or "powerful dashboards"
 - ❌ **Tech startup** — No Silicon Valley energy or growth-hacking language
-- ❌ **Design tool** — Not Figma/Canva (we're for presentation, not creation)
+- ❌ **Design tool** — Not a design or deck-building app (we're for presentation, not creation)
 - ❌ **Hollywood studio** — Not corporate, not bureaucratic
 - ❌ **Precious art gallery** — Not elitist or unapproachable
 - ❌ **Cold engineering tool** — Precise but warm, never sterile
@@ -185,7 +195,7 @@ Actively avoid these personalities:
 ## Implementation Notes
 
 - All new copy must pass the "Ogilvy test" — sharp, specific, benefit-focused
-- All new UI must pass the "terracotta test" — used sparingly and structurally
+- All new UI must pass the "pop colour test" — used sparingly and structurally
 - All new animations must pass the "senior craft test" — Lando/Wall-E quality bar
 - When in doubt, subtract. Restraint is the brand.
 

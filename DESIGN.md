@@ -2,7 +2,7 @@
 
 (Working title product: TBD)
 
-**For brand personality, voice, and terracotta usage strategy, see [BRAND.md](./BRAND.md)**
+**For brand personality, voice, and pop colour usage strategy, see [BRAND.md](./BRAND.md)**
 
 ---
 
@@ -18,7 +18,7 @@ Pitchcraft's design draws from three influences:
 
 ### 2. Dieter Rams — "The Tool Disappears"
 - Pitch view page = creator's work, not Pitchcraft's UI
-- Color restraint: accent only on primary actions + status indicators
+- Color restraint: pop colour only on primary actions + status indicators
 - Typography IS the hierarchy (no decorative elements needed)
 - Sacred 8px grid, pixel-perfect alignment
 
@@ -44,7 +44,7 @@ Pitchcraft's design draws from three influences:
 - If it doesn't clarify, it doesn't ship
 
 ### 3. Consistency Over Novelty
-- One accent color (terracotta, not borrowed from competitors)
+- One accent color (pop `#AF2E1B` — Braun Signal Red, from DR05 Dieter Rams palette)
 - Three fonts (heading, body, metadata monospace)
 - Consistent 8px spacing grid
 - Same aesthetic everywhere
@@ -68,17 +68,19 @@ Pitchcraft's design draws from three influences:
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| **Background** | `#FAF8F5` (warm cream) | Page backgrounds, content areas |
-| **Surface** | `#F3EDE6` | Hover states, sidebar, subtle differentiation |
-| **Border** | `#D9D0C7` | Warm neutral, not cold gray |
+| **Background** | `#DBDDD0` (Braun warm gray, DR05) | Page backgrounds, content areas |
+| **Surface** | `#D0D2C5` | Hover states, sidebar, subtle differentiation |
+| **Border** | `#B3B5A8` | Warm neutral border, visible on #DBDDD0 |
 | **Text primary** | `#1A1A1A` | Near-black, body and headings |
 | **Text secondary** | `#6B6560` | Warm muted, captions, help text |
 | **Text disabled** | `#A8A29E` | Non-interactive elements |
-| **Accent (visual)** | `#D4654A` (warm terracotta) | Non-text: focus rings, progress bars, decorative borders |
-| **Accent text** | `#A8432D` | Text on cream: tertiary buttons, links (5.46:1 WCAG AA) |
-| **Accent button** | `#B8503A` | Primary button background (white text: 4.51:1 WCAG AA) |
-| **Accent button hover** | `#9C3F2E` | Button hover state |
-| **Accent button active** | `#863525` | Button pressed state |
+| **Pop** (`--color-pop`) | `#AF2E1B` | Non-text: focus rings, progress bars, active indicators |
+| **Pop hover** (`--color-pop-hover`) | `#952717` | Pop colour hover state |
+| **Pop active** (`--color-pop-active`) | `#7E2213` | Pop colour pressed state |
+| **Link** (`--color-link`) | `#AF2E1B` | Text links, tertiary buttons |
+| **Button** (`--color-btn`) | `#1A1A1A` | Primary button background (dark charcoal, white text) |
+| **Button hover** (`--color-btn-hover`) | `#333333` | Button hover state |
+| **Button active** (`--color-btn-active`) | `#000000` | Button pressed state |
 | **Status: Development** | `#D32F2F` | Red dot + label |
 | **Status: Production** | `#E8A817` | Amber dot + label |
 | **Status: Completed** | `#388E3C` | Green dot + label |
@@ -91,25 +93,31 @@ Pitchcraft's design draws from three influences:
 
 ---
 
-### Terracotta Usage Rules (NON-NEGOTIABLE)
+### Pop Colour Usage Rules (NON-NEGOTIABLE)
 
-**Use terracotta like Teenage Engineering uses orange: sparingly, structurally, purposefully.**
+**Use pop colour like Teenage Engineering uses orange: sparingly, structurally, purposefully.**
 
-**✅ ONLY use terracotta for:**
+Pop colour (`#AF2E1B`) is the visual accent. Primary buttons use dark charcoal (`#1A1A1A`), not the pop colour — buttons earn trust through restraint, not brightness.
+
+**✅ ONLY use pop colour for:**
 1. Active states (current section in sidebar, selected item)
-2. Primary actions (ONE per page — the main CTA)
-3. Progress indicators (completion marks, filled progress bars)
-4. User-created content markers (elements the creator added, not system UI)
+2. Focus rings and progress indicators
+3. Completion marks and filled progress bars
+4. Links and tertiary text actions (via `--color-link`)
 
-**❌ NEVER use terracotta for:**
-1. Hover states (use subtle gray `#F3EDE6` instead)
-2. Multiple buttons on same screen (only primary action gets terracotta)
-3. Decorative accents (no terracotta borders, backgrounds, or flourishes)
+**✅ Use dark charcoal (`--color-btn`) for:**
+1. Primary action buttons (ONE per page — the main CTA)
+2. Button hover/active states darken further
+
+**❌ NEVER use pop colour for:**
+1. Hover states (use subtle gray `#D0D2C5` instead)
+2. Primary button backgrounds (buttons are dark charcoal, not pop)
+3. Decorative accents (no pop colour borders, backgrounds, or flourishes)
 4. Non-interactive text (labels, body copy, metadata stay monochrome)
 
-**The test:** If you remove all terracotta from the page, it should still work. Terracotta is the **signal**, not the structure.
+**The test:** If you remove all pop colour from the page, it should still work. Pop colour is the **signal**, not the structure.
 
-See [BRAND.md](./BRAND.md) for complete terracotta strategy.
+See [BRAND.md](./BRAND.md) for complete pop colour strategy.
 
 ---
 
@@ -150,32 +158,32 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 ### Button Design
 
-**Primary Button** (Main action: "Create Pitch", "Share Link", "Save Draft")
-- Background: `#B8503A` (accessible terracotta — white text passes WCAG AA at 4.51:1)
+**Primary Button** (Main action: "Create Project", "Share Link", "Save Draft")
+- Background: `#1A1A1A` (dark charcoal — white text, high contrast)
 - Text: White (`#FFFFFF`)
 - Padding: 12px 24px (height ~44px for touchability)
 - Border radius: 4px
 - Font: 14px / 600 weight
-- Hover: `#9C3F2E`
-- Active: `#863525`
-- Disabled: `#D9D0C7` background, `#A8A29E` text
+- Hover: `#333333`
+- Active: `#000000`
+- Disabled: `#B3B5A8` background, `#A8A29E` text
 - Transition: 200ms ease-out
 
 **Secondary Button** (Less important: "Cancel", "Skip", "Preview")
 - Background: Transparent
-- Border: 1px solid `#D9D0C7`
+- Border: 1px solid `#B3B5A8`
 - Text: `#1A1A1A`
 - Padding: 12px 24px
-- Hover: Background `#F3EDE6`
+- Hover: Background `#D0D2C5`
 - Active: Background `#E8E0D8`
 
 **Tertiary Button** (Minimal action: "Learn more", "Help")
 - Background: Transparent
 - Border: None
-- Text: `#A8432D` (accessible terracotta — passes WCAG AA at 5.46:1 on cream)
+- Text: `#AF2E1B` (`--color-link`)
 - Padding: 8px 16px
 - Hover: Underline
-- Active: `#9C3F2E` text
+- Active: `#333333` text
 
 **Button Layout:**
 - Primary buttons flush left in forms
@@ -188,14 +196,14 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 **Input Fields:**
 - Background: `#FFFFFF`
-- Border: 1px solid `#D9D0C7`
+- Border: 1px solid `#B3B5A8`
 - Padding: 12px 16px (height ~44px)
 - Border radius: 4px
 - Font: 14px / 400 weight (Inter)
 - Placeholder text: `#A8A29E`
-- Focus state: Border `2px solid #D4654A`, no box-shadow, no glow
+- Focus state: Border `2px solid #AF2E1B` (`--color-pop`), no box-shadow, no glow
 - Error state: Border `2px solid #D32F2F`, error text below field
-- Disabled: Background `#F3EDE6`, text `#A8A29E`, border `#D9D0C7`
+- Disabled: Background `#D0D2C5`, text `#A8A29E`, border `#B3B5A8`
 
 **Textarea/Large Input:**
 - Same as input, but min-height 120px
@@ -204,15 +212,15 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 **Checkboxes:**
 - Size: 20x20px (touchable)
-- Color: `#D4654A` when checked
-- Border: 2px solid `#D9D0C7`
+- Color: `#AF2E1B` (`--color-pop`) when checked
+- Border: 2px solid `#B3B5A8`
 - Label: 14px, to the right, clickable
 - Spacing: 8px gap between checkbox and label
 
 **Select/Dropdown:**
 - Same padding/height as input (44px)
-- Arrow icon: `#D4654A`, right-aligned
-- Hover: Background `#F3EDE6`
+- Arrow icon: `#AF2E1B` (`--color-pop`), right-aligned
+- Hover: Background `#D0D2C5`
 
 **Form Layout:**
 - One column on mobile and desktop (keep it simple)
@@ -227,7 +235,7 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 **Section Container:**
 - Background: `#FFFFFF`
-- Border: 1px solid `#D9D0C7`
+- Border: 1px solid `#B3B5A8`
 - Padding: 24px
 - Border radius: 4px
 - Shadow: None (keep flat)
@@ -237,7 +245,7 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 - Same as section container
 - Title: 18px / 600 weight (Space Grotesk)
 - Metadata below in JetBrains Mono (status badge, date, version)
-- Hover: Background `#F3EDE6`
+- Hover: Background `#D0D2C5`
 
 **Status Badge:**
 - Format: `[colored dot] Status`
@@ -252,21 +260,36 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 **Top Navigation Bar:**
 - Height: 64px
-- Background: `#FAF8F5`
-- Border-bottom: 1px solid `#D9D0C7`
+- Background: `#DBDDD0`
+- Border-bottom: 1px solid `#B3B5A8`
 - Logo: Left side
 - Navigation links: Right side, 14px / 400 weight (Inter)
-- Active link: Terracotta underline
+- Active link: Pop colour underline (`#AF2E1B`)
 - Mobile: Hamburger at < 768px
 
 **Sidebar (Pitch Creation — Step Sequencer):**
 - Width: 240px
-- Background: `#F3EDE6` (surface color)
-- Border-right: 1px solid `#D9D0C7`
-- 8 required sections as channel strip items
+- Background: `#D0D2C5` (surface color)
+- Border-right: 1px solid `#B3B5A8`
+- Sections 01–08 (required) always visible as numbered steps
 - Completion indicators: SVG draw animation on completion (300ms)
-- Active section: Left border `#D4654A`, bolder text
+- Active section: Left border `#AF2E1B` (`--color-pop`), bolder text
 - Monospace section numbers (JetBrains Mono)
+
+**Sidebar "More" Pattern (Optional Sections):**
+- Below section 08: **"More"** label/button, always visible
+- Clicking "More" expands a scrollable panel showing all optional sections (09–27)
+- Each optional section has a toggle — enable it and it appears as a numbered step in the main sidebar
+- Enabled optional sections continue numbering: 09, 10, 11...
+- User can enable sections at ANY time — before, during, or after filling required fields
+- Disabled sections visible in "More" panel but don't clutter the main sidebar
+- Each section in "More" shows name + one-line description
+- "More" panel is collapsible (▼/▲ chevron)
+
+**Per-Section Media Capabilities (All Optional Sections):**
+- Notes field (textarea)
+- Reference image uploads (multiple per section, with optional per-image captions)
+- Video/link embeds (YouTube, Vimeo, or any URL)
 
 ---
 
@@ -276,49 +299,83 @@ See [BRAND.md](./BRAND.md) for complete terracotta strategy.
 
 All animations must be senior-level craft — cinematic patience, reveals structure/meaning, never decoration. See [BRAND.md](./BRAND.md) for motion design philosophy.
 
-**Timing:**
+---
+
+#### Signature Animation 1: Scroll-Driven Landing Page
+
+The landing page is a sequence you move through, not a static page you read. The user's scroll IS the film reel advancing.
+
+- **Hero headline:** Three lines ("Present your work." / "Fund your vision." / "Own your story.") clip-reveal horizontally left-to-right as the user scrolls into them, staggered 300ms apart. `cubic-bezier(0.16, 1, 0.3, 1)`. Subheading fades in 400ms after last line. CTA button cuts in last — no animation, just appears.
+- **Each landing section** enters through scroll position — content transforms as you scroll, not just "appears when in viewport." Scroll position controls the animation progress directly.
+- **Typography is the visual element.** Large-scale type moves with cinematic intention. No floating shapes, no decorative elements — the words themselves are the motion.
+- Total hero sequence: ~1.8s from first scroll trigger.
+
+#### Signature Animation 2: Section Transition (A24 Title Card)
+
+The defining animation of the product. Every time you move between sections in create/edit, this happens:
+
+1. Current content drops to opacity 0 (150ms ease-out)
+2. Section number appears large (72px JetBrains Mono, weight 500), centered in the content area
+3. Number holds for 350ms — this is the title card moment. The hold is where the confidence lives.
+4. Number fades as new section content fades in behind it (300ms)
+5. Total: ~1s. Patient but not slow.
+
+This happens dozens of times per session. If it feels cinematic every time, the whole product feels cinematic. This is the one animation worth real investment in craft.
+
+---
+
+#### Timing
+
 - Short transitions (state changes): 150–200ms
 - Medium transitions (page/section): 250–300ms
 - Long transitions (major changes): 400–500ms
-- Cinematic transitions (hero animations): 750ms cubic-bezier(0.16, 1, 0.3, 1)
-- Easing: `ease-out` for most. `cubic-bezier(0.34, 1.56, 0.64, 1)` for spring effects.
+- Cinematic transitions (hero, section titles): 750ms–1s, `cubic-bezier(0.16, 1, 0.3, 1)`
+- Easing: `ease-out` for most. No spring easing unless structurally motivated.
 
-**Button Press:** Scale to 0.98x on active (minimal spring). Background color change 200ms ease-out.
+#### Micro-Interactions
 
-**Input Focus:** Border color change, 200ms ease-out. No glow, no shadow.
+**Button Press:** Scale to 0.98x on press, immediate. Returns to 1.0 on release (100ms ease-out). Like pressing a physical key. No spring.
 
-**Save/Publish Confirmation:** Button shrinks to 0.96x, text fades, checkmark draws (300ms), returns to normal. Inline feedback — no floating toasts. Feedback at point of contact.
+**Input Focus:** Border color change to `#AF2E1B`, 200ms ease-out. No glow, no shadow.
 
-**Sidebar Completion:** Dot scales 1.2x then settles (spring). Checkmark draws over green circle (300ms). Satisfying mechanical state change.
+**Save/Create Success:** Button text swaps to "Saved" (or "Created") — instant, no animation. Reverts after 1.2s. For create: standard page navigation to dashboard. No fade to black. No glow on new card. The absence of fanfare IS the design. Inline feedback — no floating toasts.
 
-**Section Navigation:** Instant cut, new content fades in (200ms). No slide transitions.
+**Sidebar Completion:** Section number color shifts from neutral to pop `#AF2E1B` (200ms ease-out). Tick mark appears instantly — no drawn animation. Like a hardware toggle clicking into position. Binary state change.
 
-**Rolling Digits:** Word count, char count, and version numbers roll like a mechanical counter when values change. Teenage Engineering–style.
+**Section Navigation:** Signature Animation 2 (A24 title card — see above).
 
-**Progress Bar:** Ease-out fill with ~2% overshoot, then settles back (spring physics). Feels alive.
+**Rolling Digits:** Word count, char count, and version numbers roll like a mechanical counter. Each digit column scrolls independently, staggered 30ms per column right-to-left. 200ms per roll, ease-out (odometers don't bounce). At 80% limit: digits shift to `#AF2E1B` instantly. Over limit: `#D32F2F` instantly. Teenage Engineering–style.
 
-**Flow Beats (Horizontal Scroll):** Each beat scales from 0.95 → 1.0 on viewport entry with staggered timing offset. Cinematic reveal — A24 title card energy.
+**Progress Bar:** Ease-out fill, NO overshoot. 400ms. Precision is the point. At 8/8 complete: bar and label shift to `#388E3C`. No pulse. No glow. A gauge reads "complete" — it doesn't dance.
 
-**Modal/Overlay:** Backdrop blur 4px + dim 30% black. Modal scale-up from center 250ms ease-out.
+**Budget Segment Selection:** No scale. Selected segment fills with `#AF2E1B`, text goes white. 150ms ease-out. Previous segment returns to neutral simultaneously. One on, one off. Like radio presets on a Braun receiver.
 
-**Drag Reorder:** Dragged item lifts (subtle shadow + scale 1.02x). Other items spring apart to make room. Snaps into place. Tactile.
+**Status Radio Selection:** Dot appears at full size, color fills instantly. Card border shifts to status color (200ms ease-out). No spring. No glow.
+
+**Cast/Team Member Add:** New card appears at full size. Opacity 0 → 1, 150ms ease-out. First input auto-focuses — the focus ring IS the attention signal. No slide. No scale. No glow.
+
+**Flow Beats (Horizontal Scroll):** Each beat scales from 0.95 → 1.0 on viewport entry with staggered timing offset. Cinematic reveal.
+
+**Modal/Overlay:** Backdrop dims 40% black, no blur. Modal appears at full size, opacity 0 → 1, 200ms ease-out. No scale animation.
+
+**Drag Reorder:** Dragged item lifts (subtle shadow + scale 1.02x). Other items shift to make room. Snaps into place. Tactile.
 
 **Loading States:** Skeleton screens with subtle pulse animation. Content-shaped placeholders.
 
-**Empty States:** Text only + single action button. Whitespace speaks. No illustrations.
+**Empty States:** Text + single action button. Optionally with large background section number (oversized, 8–10% opacity) as a structural visual element. No self-drawing illustrations.
 
 **Keyboard Shortcuts:** Hold-to-reveal — holding modifier key (Cmd/Ctrl) shows shortcut hints on relevant buttons. Invisible until needed.
 
 **Grain Texture:** Shifts subtly on scroll/click (CSS transform offset on `::before`, triggered by scroll events). Reactive, not continuous. Zero CPU cost at rest.
 
-**Sound Design (Toggleable):**
+**Sound Design (Toggleable, TE OP-1 style — clean, digital, short):**
 - Soft click on save
 - Subtle tick on section completion
 - Muted pop on publish
 - All sounds can be toggled off in settings
 - No sound on first visit (opt-in)
 
-**No confetti, no bounce animations, no slide transitions, no floating toasts.**
+**No confetti, no bounce animations, no spring overshoot, no slide transitions, no floating toasts, no glow effects, no ambient floating shapes.**
 
 ---
 
@@ -355,7 +412,7 @@ All animations must be senior-level craft — cinematic patience, reveals struct
 
 **Keyboard Navigation:**
 - All interactive elements focusable via Tab
-- Focus state: 2px `#D4654A` outline
+- Focus state: 2px `#AF2E1B` (`--color-pop`) outline
 - No keyboard traps
 - Logical tab order (left-to-right, top-to-bottom)
 

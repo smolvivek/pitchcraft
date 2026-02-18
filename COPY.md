@@ -9,7 +9,7 @@ All copy for PitchCraft, organized by page and context.
 **Influences:**
 - **A24:** Bold, confident, no hand-holding. "Moonlight" not "Your film journey starts here!"
 - **Teenage Engineering:** Terse, precise, monospace. "BPM 120" not "Set your tempo"
-- **Dieter Rams:** Honest, functional, no decoration. "Delete pitch" not "Are you absolutely sure?"
+- **Dieter Rams:** Honest, functional, no decoration. "Delete project" not "Are you absolutely sure?"
 
 **Core rules:**
 - Direct. No fluff.
@@ -45,7 +45,7 @@ A pitch tool for filmmakers, writers, and creators who need funding—not fluff.
 
 **CTA Button:**
 ```
-Create Your Pitch
+Create Your Project
 ```
 
 ---
@@ -60,7 +60,7 @@ One link. Your entire project.
 **Body:**
 ```
 Logline, synopsis, vision, budget, team.
-Flow, locations, crew, world-building.
+Flow, locations, camera, sound design, crew.
 Everything a producer, funder, or collaborator needs to say yes.
 
 No templates. No AI writing your pitch.
@@ -112,7 +112,7 @@ If you make something and need someone to fund it, this is for you.
 
 **Heading:**
 ```
-Your first pitch starts here.
+Your first project starts here.
 ```
 
 **CTA Button:**
@@ -130,43 +130,43 @@ Get Started
 
 **Heading:**
 ```
-Your first pitch starts here
+Your first project starts here
 ```
 
 **CTA Button:**
 ```
-Create Pitch
+Create Project
 ```
 
 **No explanation needed. The action is obvious.**
 
 ---
 
-### Dashboard with Pitches
+### Dashboard with Projects
 
 **Page Title:**
 ```
-Your Pitches
+Your Projects
 ```
 
 **Metadata (top-right, monospace):**
 ```
-3 PITCHES / LAST EDITED 2H AGO
+3 PROJECTS / LAST EDITED 2H AGO
 ```
 
-**Pitch Card Metadata (monospace):**
+**Project Card Metadata (monospace):**
 ```
 v3 / UPDATED 2H AGO
 ```
 
 ---
 
-## Create Pitch Page
+## Create Project Page
 
 ### Page Header (monospace)
 
 ```
-NEW PITCH / DRAFT / v1.0
+NEW PROJECT / DRAFT / v1.0
 ```
 
 **No other heading. The metadata is the heading.**
@@ -225,10 +225,10 @@ The emotional arc of your project.
 Beats, images, character turns. The journey.
 ```
 
-**10 / COMPANION DOCUMENTS**
+**10 / SCRIPT & DOCUMENTS**
 ```
-Script, treatment, lookbook—whatever supports the pitch.
-One document. Everything else lives here.
+Script, treatment, lookbook, design bible.
+Whatever supports the pitch.
 ```
 
 **11 / LOCATIONS**
@@ -237,70 +237,81 @@ Where are you shooting?
 Interiors, exteriors, permits, access.
 ```
 
-**12 / ART DIRECTION & SET DESIGN**
+**12 / ART DIRECTION**
 ```
-Visual style, key set pieces, production design.
+Visual style, color palette, design references.
 What does this project look like?
 ```
 
-**13 / COSTUMES & WARDROBE**
+**13 / SET DESIGN**
+```
+Key sets, construction, dressing.
+The physical world of the project.
+```
+
+**14 / COSTUME**
 ```
 Period, style, key costume changes.
 What are your characters wearing?
 ```
 
-**14 / MAKEUP & HAIR**
+**15 / MAKEUP & HAIR**
 ```
-Special effects, prosthetics, period guidance.
-```
-
-**15 / PROPS & SET DRESSING**
-```
-Key props, set dressing aesthetic.
-Script-essential vs. decorative.
+SFX makeup, prosthetics, hair changes.
 ```
 
-**16 / VEHICLES & ANIMALS**
+**16 / PROPS**
+```
+Key props. Script-essential vs. decorative.
+```
+
+**17 / VEHICLES & ANIMALS**
 ```
 Picture vehicles, trained animals, handlers.
 ```
 
-**17 / STUNTS & SPECIAL EFFECTS**
+**18 / STUNTS & SFX**
 ```
-Action sequences, SFX makeup, VFX requirements.
+Action sequences, stunt coordination, practical and visual effects.
 ```
 
-**18 / CAMERA & CINEMATOGRAPHY**
+**19 / CAMERA**
 ```
 Visual style, lens choices, lighting mood.
 How will you shoot this?
 ```
 
-**19 / SOUND & MUSIC**
+**20 / SOUND DESIGN**
 ```
-Sound design, music style, voice-over.
+Ambience, foley, voice-over.
 What does this project sound like?
 ```
 
-**20 / WORLD BUILDING & LORE**
+**21 / MUSIC**
 ```
-World rules, mythology, cultural details.
-For fantasy, sci-fi, or complex narratives.
+Score, soundtrack, temp tracks.
+What does this project feel like?
 ```
 
-**21 / TIMELINE & SCHEDULE**
+**22 / SETTING & WORLD**
+```
+World rules, environment, cultural details, period specifics.
+For any project that needs context beyond locations.
+```
+
+**23 / SCHEDULE**
 ```
 Shooting days, pre-production, post-production.
 When does this happen?
 ```
 
-**22 / CREW & TEAM (EXPANDED)**
+**24 / CREW**
 ```
 Department heads, crew size, key hires.
 Who else do you need?
 ```
 
-**23-25 / CUSTOM SECTIONS**
+**25-27 / CUSTOM SECTIONS**
 ```
 Anything project-specific.
 Research, strategy, legal—whatever fits your project.
@@ -405,9 +416,9 @@ Finished and ready for distribution
 Save & Continue
 ```
 
-**Create Pitch (final step):**
+**Create Project (final step):**
 ```
-Create Pitch
+Create Project
 ```
 
 **Add Cast Member:**
@@ -427,12 +438,12 @@ Cancel
 
 ---
 
-## Edit Pitch Page
+## Edit Project Page
 
 ### Page Header (monospace)
 
 ```
-EDIT PITCH / v1.3 / LAST SAVED 2M AGO
+EDIT PROJECT / v1.3 / LAST SAVED 2M AGO
 ```
 
 ---
@@ -449,9 +460,9 @@ Save
 Saving...
 ```
 
-**Delete Pitch:**
+**Delete Project:**
 ```
-Delete pitch
+Delete project
 ```
 
 ---
@@ -460,7 +471,7 @@ Delete pitch
 
 **Title:**
 ```
-Delete pitch?
+Delete project?
 ```
 
 **Body:**
@@ -622,14 +633,14 @@ At least one entry with name and role required
 Save failed. Try again
 ```
 
-**Create pitch failed:**
+**Create project failed:**
 ```
-Failed to create pitch
+Failed to create project
 ```
 
 **Delete failed:**
 ```
-Failed to delete pitch
+Failed to delete project
 ```
 
 **Login failed:**
@@ -656,19 +667,19 @@ Session expired. Log in again
 
 ## Success States
 
-**Pitch created:**
+**Project created:**
 ```
-Pitch created
+Project created
 ```
 
-**Pitch saved:**
+**Project saved:**
 ```
 Saved
 ```
 
-**Pitch deleted:**
+**Project deleted:**
 ```
-Pitch deleted
+Project deleted
 ```
 
 **Account created:**
@@ -685,7 +696,7 @@ Check your inbox
 
 ## Loading States
 
-**Creating pitch:**
+**Creating project:**
 ```
 Creating...
 ```
@@ -736,93 +747,70 @@ v1.3
 
 ---
 
-## Strategic Animation Moments
+## Signature Animations
 
-### Where Animations Bring Life
+### 1. Scroll-Driven Landing Page
 
-**1. Section Completion**
-- Checkmark draws over section number in sidebar (300ms SVG animation)
-- Audible click if sound enabled
-- Progress bar jumps with spring overshoot
+The landing page is a sequence, not a static page. Scroll IS the film reel advancing.
 
-**2. Section Transition**
-- Current content cuts to black
-- New section number appears centered in large monospace
-- Number fades out, new content fades in (A24-style title card)
+- Three headline lines clip-reveal horizontally as the user scrolls
+- Each landing section enters through scroll position (content transforms, not just "appears")
+- Typography is the visual element — large-scale type moves with cinematic intention
+- No floating shapes, no decorative elements
 
-**3. Character Counter Roll**
-- Digits roll like odometer as you type
-- Color shifts to terracotta at 80% limit
-- Red when over limit
+### 2. Section Transition — A24 Title Card
 
-**4. Empty State Illustration**
-- Simple line drawing (film strip/clapperboard) draws itself on page load
-- Minimal, Rams-style, 3-4 lines max
+The defining animation of the product. Every section change in create/edit:
 
-**5. Create Pitch Success**
-- Button text fades, checkmark draws inside button
-- Screen fades to black, dashboard fades in
-- New pitch card has subtle glow pulse (1 cycle, 600ms)
-
-**6. Loading During Save**
-- Progress bar below button fills with terracotta
-- Spring overshoot at end
-- Or: Simple line illustration draws/undraws in loop
-
-**7. Budget Segment Selection**
-- Clicked segment scales to 102%
-- Terracotta fill slides in left-to-right (150ms)
-- Previously selected drains out right-to-left
-
-**8. Status Radio Selection**
-- Colored dot scales from 0 to 1.2x (spring overshoot)
-- Settles to 1.0x
-- Card border glows terracotta briefly (300ms)
-
-**9. Cast/Team Member Add**
-- New card slides down from collapsed (200ms)
-- Scales 95% to 100% (spring)
-- First input auto-focuses
-- Subtle terracotta left border glow (1 second)
-
-**10. Progress Bar Fill**
-- Bar extends with 5% overshoot when section completes
-- Springs back to correct percentage (150ms bounce)
-- Pulses green when 8/8 complete (400ms)
+- Current content drops to opacity 0 (150ms)
+- Section number appears large (72px monospace), centered, holds for 350ms
+- Number fades as new content fades in (300ms)
+- Total: ~1s. Patient but not slow.
 
 ---
 
-## Strategic Visual Moments
+## Micro-Interaction Moments
 
-### Where Visuals Support Text-Heavy UI
+**1. Section Completion**
+- Section number shifts to pop colour (`#AF2E1B`), 200ms ease-out
+- Tick mark appears instantly — no drawn animation
+- Like a hardware toggle clicking into position
 
-**1. Dashboard Empty State**
-- Simple line illustration (film strip or clapperboard)
-- Draws itself on page load (stroke animation, 800ms)
-- Monochrome, minimal, on-brand
+**2. Character Counter Roll**
+- Digits roll like odometer as you type (staggered 30ms per column)
+- Colour shifts to `#AF2E1B` at 80% limit — instant, like a warning light
+- Red (`#D32F2F`) when over limit — instant
 
-**2. Create Pitch Welcome (Optional)**
-- First-time users see subtle visual guide
-- Simple diagram showing 8 required sections
-- Fades after first visit
+**3. Save / Create Success**
+- Button text swaps to "Saved" or "Created" — instant, no animation
+- Reverts after 1.2s
+- No fade to black, no glow pulse. The absence of fanfare IS the design.
 
-**3. Section Icons in Sidebar (Optional)**
-- Minimal monochrome icons next to section numbers
-- Camera icon for Camera & Cinematography, etc.
-- Very subtle, not decorative
+**4. Budget Segment Selection**
+- Selected segment fills with `#AF2E1B`, text goes white. 150ms ease-out.
+- Previous segment returns to neutral simultaneously
+- One on, one off. Like radio presets on a Braun receiver.
 
-**4. Loading State Visual**
-- Simple geometric pattern that animates during save
-- Not a spinner—branded pattern (film strip, grid, etc.)
-- Monochrome, minimal motion
+**5. Status Radio Selection**
+- Dot appears at full size, color fills instantly
+- Card border shifts to status color (200ms ease-out)
+- No spring. No glow.
 
-**5. Success Confirmation Visual**
-- Checkmark draw animation (already planned)
-- Or: Simple terracotta pulse around button
+**6. Cast/Team Member Add**
+- New card appears at full size. Opacity 0 → 1, 150ms ease-out.
+- First input auto-focuses — the focus ring IS the attention signal
 
-**6. Error State Visual (Critical Errors Only)**
-- Red X or warning triangle draws itself
-- Used sparingly—most errors are inline text only
+**7. Progress Bar Fill**
+- Ease-out fill, no overshoot. 400ms. Precision is the point.
+- At 8/8: bar and label shift to success colour. No pulse.
+
+**8. Button Press**
+- Scale to 0.98x on press, immediate. Returns to 1.0 on release (100ms ease-out).
+- Like pressing a physical key.
+
+**9. Modal**
+- Backdrop dims 40% black, no blur
+- Modal appears at full size, opacity 0 → 1, 200ms ease-out. No scale.
 
 ---
 
@@ -850,7 +838,7 @@ Save failed. Try again
 **Success (brief, no exclamation):**
 ```
 Saved
-Pitch deleted
+Project deleted
 Account created
 ```
 
@@ -861,11 +849,11 @@ Account created
 | ❌ Generic SaaS | ✅ PitchCraft Voice |
 |----------------|-------------------|
 | "Welcome back! Let's make today amazing!" | "Welcome back, [Name]" |
-| "You have 0 pitches. Get started by creating your first pitch!" | "Your first pitch starts here" |
+| "You have 0 projects. Get started by creating your first project!" | "Your first project starts here" |
 | "Oops! Something went wrong. Please try again later." | "Save failed. Try again" |
-| "Your pitch was successfully saved!" | "Saved" |
-| "Are you absolutely sure you want to permanently delete this pitch? This action cannot be undone." | "Delete pitch? This action can't be undone." |
-| "Congratulations! Your pitch has been published and is now live!" | "Pitch is live" |
+| "Your project was successfully saved!" | "Saved" |
+| "Are you absolutely sure you want to permanently delete this project? This action cannot be undone." | "Delete project? This action can't be undone." |
+| "Congratulations! Your project has been published and is now live!" | "Project is live" |
 
 ---
 

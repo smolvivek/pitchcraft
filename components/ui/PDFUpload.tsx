@@ -147,7 +147,7 @@ export function PDFUpload({
             transition-colors duration-[200ms]
             ${
               dragActive
-                ? 'border-accent-visual bg-accent-visual/5'
+                ? 'border-pop bg-pop/5'
                 : 'border-border bg-surface hover:bg-surface/70'
             }
           `}

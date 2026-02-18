@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
@@ -8,17 +8,26 @@ import { TextInput, Textarea } from '@/components/ui/Input'
 import { BudgetSegments } from '@/components/ui/BudgetSegments'
 import { StatusRadio } from '@/components/ui/StatusRadio'
 import { CharacterCounter } from '@/components/ui/CharacterCounter'
-import { ImageUpload } from '@/components/ui/ImageUpload'
-import { PDFUpload } from '@/components/ui/PDFUpload'
-import type { BudgetRange, PitchStatus, CastMember, TeamMember, FlowBeat } from '@/lib/types/pitch'
+import { validateImageFile } from '@/lib/utils/fileValidation'
+import type { BudgetRange, PitchStatus, CastMember, TeamMember } from '@/lib/types/pitch'
 
-type SectionKey = 'project' | 'logline' | 'synopsis' | 'genre' | 'vision' | 'cast' | 'budget' | 'team'
+/* ─── Types ─── */
+type SectionKey =
+  | 'project'
+  | 'logline'
+  | 'synopsis'
+  | 'genre'
+  | 'vision'
+  | 'cast'
+  | 'budget'
+  | 'team'
 
 interface Section {
   key: SectionKey
   number: string
   title: string
   description: string
+  required: boolean
 }
 
 const sections: Section[] = [
@@ -26,64 +35,296 @@ const sections: Section[] = [
     key: 'project',
     number: '01',
     title: 'Project Name',
-    description: 'What is your project called?',
+    description: "What's your project called?",
+    required: true,
   },
   {
     key: 'logline',
     number: '02',
     title: 'Logline',
     description: 'One sentence. The idea distilled to its essence.',
+    required: true,
   },
   {
     key: 'synopsis',
     number: '03',
     title: 'Synopsis',
-    description: 'The heart of your project. What is the story, the concept, the idea? Why should someone care?',
+    description: "The heart of your project. What's the story, the concept, the idea? Why should someone care?",
+    required: true,
   },
   {
     key: 'genre',
     number: '04',
     title: 'Genre & Format',
     description: 'What kind of project is this? What format will it take?',
+    required: true,
   },
   {
     key: 'vision',
     number: '05',
-    title: 'Director Vision',
-    description: 'Why this project, why you. Tone, style, aesthetic.',
+    title: "Director's Vision",
+    description: 'Why this project, why you. Tone, style, aesthetic. What are you trying to say?',
+    required: true,
   },
   {
     key: 'cast',
     number: '06',
     title: 'Cast & Characters',
-    description: 'Key characters and their roles in the story.',
+    description: "Key characters and their roles in the story. Who's in it? Who are they playing?",
+    required: true,
   },
   {
     key: 'budget',
     number: '07',
     title: 'Budget & Status',
-    description: 'Budget range and production status.',
+    description: 'How much will it cost? Where are you in production?',
+    required: true,
   },
   {
     key: 'team',
     number: '08',
     title: 'Key Team',
-    description: 'Director, producer, writer, and other key creative leads.',
+    description: "Director, producer, writer, and other key creative leads. Who's making this with you?",
+    required: true,
   },
 ]
 
+/* ─── Inline image drop zone (works without pitchId) ─── */
+function InlineImageUpload({
+  files,
+  onAdd,
+  onRemove,
+  maxFiles = 5,
+  label,
+}: {
+  files: File[]
+  onAdd: (newFiles: File[]) => void
+  onRemove: (index: number) => void
+  maxFiles?: number
+  label?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFiles = useCallback(
+    (fileList: FileList | null) => {
+      if (!fileList) return
+      setError(null)
+
+      const incoming = Array.from(fileList)
+      if (files.length + incoming.length > maxFiles) {
+        setError(`Max ${maxFiles} images`)
+        return
+      }
+
+      const valid: File[] = []
+      for (const f of incoming) {
+        const result = validateImageFile(f)
+        if (!result.valid) {
+          setError(result.message || 'Invalid file')
+          return
+        }
+        valid.push(f)
+      }
+      onAdd(valid)
+    },
+    [files.length, maxFiles, onAdd]
+  )
+
+  return (
+    <div className="flex flex-col gap-[12px]">
+      {label && (
+        <label className="block font-[var(--font-body)] text-[14px] font-medium leading-[20px] text-text-primary">
+          {label}
+        </label>
+      )}
+
+      {/* Thumbnails */}
+      {files.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-[8px]">
+          {files.map((file, i) => (
+            <div key={i} className="relative aspect-square bg-surface rounded-[4px] overflow-hidden border border-border group">
+              <img
+                src={URL.createObjectURL(file)}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                className="absolute top-[4px] right-[4px] w-[22px] h-[22px] bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:text-white"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Drop zone */}
+      {files.length < maxFiles && (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragEnter={(e) => { e.preventDefault(); setDragActive(true) }}
+          onDragLeave={(e) => { e.preventDefault(); setDragActive(false) }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragActive(false)
+            handleFiles(e.dataTransfer.files)
+          }}
+          className={`
+            border-2 border-dashed rounded-[4px] px-[20px] py-[24px] cursor-pointer
+            transition-colors duration-[200ms] text-center
+            ${dragActive ? 'border-pop bg-pop/5' : 'border-border bg-surface/50 hover:bg-surface'}
+          `}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
+            className="hidden"
+          />
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="mx-auto mb-[6px] text-text-secondary">
+            <path d="M14 19V9M14 9L10 13M14 9L18 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="3" y="3" width="22" height="22" rx="4" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <p className="text-[13px] leading-[18px] text-text-secondary">
+            Drop images or click to upload
+          </p>
+          <p className="text-[11px] leading-[16px] text-text-disabled mt-[2px]">
+            JPG, PNG, WebP — max 10MB
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-[13px] leading-[18px] text-error">{error}</p>
+      )}
+    </div>
+  )
+}
+
+/* ─── Single image upload (poster) ─── */
+function PosterUpload({
+  file,
+  onSelect,
+  onRemove,
+}: {
+  file: File | null
+  onSelect: (f: File) => void
+  onRemove: () => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFile = useCallback(
+    (f: File | undefined) => {
+      if (!f) return
+      setError(null)
+      const result = validateImageFile(f)
+      if (!result.valid) {
+        setError(result.message || 'Invalid file')
+        return
+      }
+      onSelect(f)
+    },
+    [onSelect]
+  )
+
+  return (
+    <div>
+      <label className="block font-[var(--font-body)] text-[14px] font-medium leading-[20px] text-text-primary mb-[12px]">
+        Project Poster / Image
+      </label>
+      <p className="text-[13px] leading-[18px] text-text-secondary mb-[12px]">
+        Your film poster, project cover, or key visual.
+      </p>
+
+      {file ? (
+        <div className="relative inline-block">
+          <div className="w-[180px] aspect-[2/3] rounded-[4px] overflow-hidden border border-border bg-surface">
+            <img
+              src={URL.createObjectURL(file)}
+              alt="Project poster preview"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="absolute top-[6px] right-[6px] w-[24px] h-[24px] bg-white/90 rounded-full flex items-center justify-center hover:bg-error hover:text-white transition-colors"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragEnter={(e) => { e.preventDefault(); setDragActive(true) }}
+          onDragLeave={(e) => { e.preventDefault(); setDragActive(false) }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragActive(false)
+            handleFile(e.dataTransfer.files?.[0])
+          }}
+          className={`
+            w-[180px] aspect-[2/3] rounded-[4px] cursor-pointer
+            border-2 border-dashed flex flex-col items-center justify-center
+            transition-colors duration-[200ms]
+            ${dragActive ? 'border-pop bg-pop/5' : 'border-border bg-surface/50 hover:bg-surface'}
+          `}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = '' }}
+            className="hidden"
+          />
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="mb-[8px] text-text-secondary">
+            <path d="M16 22V10M16 10L11 15M16 10L21 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <p className="text-[12px] leading-[16px] text-text-secondary text-center px-[8px]">
+            Upload poster
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-[13px] leading-[18px] text-error mt-[8px]">{error}</p>
+      )}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
+   CREATE PAGE
+   ═══════════════════════════════════════════════════════ */
 export default function CreatePitchPage() {
   const router = useRouter()
   const [currentSection, setCurrentSection] = useState<SectionKey>('project')
   const [completedSections, setCompletedSections] = useState<Set<SectionKey>>(new Set())
 
-  // Form state
+  // ─── Form state ───
   const [projectName, setProjectName] = useState('')
+  const [posterFile, setPosterFile] = useState<File | null>(null)
   const [logline, setLogline] = useState('')
   const [synopsis, setSynopsis] = useState('')
   const [genre, setGenre] = useState('')
   const [format, setFormat] = useState('')
   const [vision, setVision] = useState('')
+  const [visionImages, setVisionImages] = useState<File[]>([])
   const [castMembers, setCastMembers] = useState<CastMember[]>([
     { id: '1', name: '', role: '', description: '' },
   ])
@@ -96,23 +337,7 @@ export default function CreatePitchPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
-  // Optional sections state
-  const [flowEnabled, setFlowEnabled] = useState(false)
-  const [flowBeats, setFlowBeats] = useState<FlowBeat[]>([])
-
-  const [companionDocsEnabled, setCompanionDocsEnabled] = useState(false)
-  const [companionDocsDescription, setCompanionDocsDescription] = useState('')
-  const [companionDocMediaId, setCompanionDocMediaId] = useState<string | null>(null)
-
-  const [locationsEnabled, setLocationsEnabled] = useState(false)
-  const [locationsContent, setLocationsContent] = useState('')
-  const [locationsMediaIds, setLocationsMediaIds] = useState<string[]>([])
-
-  const [artDirectionEnabled, setArtDirectionEnabled] = useState(false)
-  const [artDirectionContent, setArtDirectionContent] = useState('')
-  const [artDirectionMediaIds, setArtDirectionMediaIds] = useState<string[]>([])
-
-  // Helper functions
+  // ─── Helpers ───
   const getSectionIndex = (key: SectionKey) => sections.findIndex((s) => s.key === key)
   const getCurrentSectionIndex = () => getSectionIndex(currentSection)
 
@@ -122,17 +347,17 @@ export default function CreatePitchPage() {
   }
 
   const goToNextSection = () => {
-    const currentIndex = getCurrentSectionIndex()
-    if (currentIndex < sections.length - 1) {
-      setCurrentSection(sections[currentIndex + 1].key)
+    const idx = getCurrentSectionIndex()
+    if (idx < sections.length - 1) {
+      setCurrentSection(sections[idx + 1].key)
       setErrors({})
     }
   }
 
   const goToPreviousSection = () => {
-    const currentIndex = getCurrentSectionIndex()
-    if (currentIndex > 0) {
-      setCurrentSection(sections[currentIndex - 1].key)
+    const idx = getCurrentSectionIndex()
+    if (idx > 0) {
+      setCurrentSection(sections[idx - 1].key)
       setErrors({})
     }
   }
@@ -141,100 +366,70 @@ export default function CreatePitchPage() {
     setCompletedSections((prev) => new Set([...prev, key]))
   }
 
-  // Cast & Team helpers
+  // Cast helpers
   const addCastMember = () => {
     setCastMembers([...castMembers, { id: Date.now().toString(), name: '', role: '', description: '' }])
   }
-
   const removeCastMember = (id: string) => {
-    if (castMembers.length > 1) {
-      setCastMembers(castMembers.filter((m) => m.id !== id))
-    }
+    if (castMembers.length > 1) setCastMembers(castMembers.filter((m) => m.id !== id))
   }
-
   const updateCastMember = (id: string, field: keyof CastMember, value: string) => {
     setCastMembers(castMembers.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
+  // Team helpers
   const addTeamMember = () => {
     setTeamMembers([...teamMembers, { id: Date.now().toString(), name: '', role: '', bio: '' }])
   }
-
   const removeTeamMember = (id: string) => {
-    if (teamMembers.length > 1) {
-      setTeamMembers(teamMembers.filter((m) => m.id !== id))
-    }
+    if (teamMembers.length > 1) setTeamMembers(teamMembers.filter((m) => m.id !== id))
   }
-
   const updateTeamMember = (id: string, field: keyof TeamMember, value: string) => {
     setTeamMembers(teamMembers.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
-  // Flow beat helpers
-  const addFlowBeat = () => {
-    const newBeat: FlowBeat = {
-      id: Date.now().toString(),
-      caption: '',
-      arcLabel: '',
-      mediaIds: [],
-      order: flowBeats.length,
-    }
-    setFlowBeats([...flowBeats, newBeat])
-  }
+  const getWordCount = (text: string) => text.trim().split(/\s+/).filter((w) => w.length > 0).length
 
-  const removeFlowBeat = (id: string) => {
-    if (flowBeats.length > 1) {
-      setFlowBeats(flowBeats.filter((b) => b.id !== id))
-    }
-  }
-
-  const updateFlowBeat = (id: string, field: keyof FlowBeat, value: any) => {
-    setFlowBeats(flowBeats.map((b) => (b.id === id ? { ...b, [field]: value } : b)))
-  }
-
-  // Word count helper
-  const getWordCount = (text: string) => {
-    return text.trim().split(/\s+/).filter((word) => word.length > 0).length
-  }
-
-  // Validation
+  // ─── Validation ───
   const validateCurrentSection = (): boolean => {
-    const newErrors: Record<string, string> = {}
+    const err: Record<string, string> = {}
 
     switch (currentSection) {
       case 'project':
-        if (!projectName.trim()) newErrors.projectName = 'Project name is required'
-        if (projectName.length > 100) newErrors.projectName = 'Max 100 characters'
+        if (!projectName.trim()) err.projectName = 'Project name is required'
+        if (projectName.length > 100) err.projectName = 'Max 100 characters'
         break
       case 'logline':
-        if (!logline.trim()) newErrors.logline = 'Logline is required'
-        if (logline.length > 500) newErrors.logline = 'Max 500 characters'
+        if (!logline.trim()) err.logline = 'Logline is required'
+        if (logline.length > 500) err.logline = 'Max 500 characters'
         break
       case 'synopsis':
-        if (!synopsis.trim()) newErrors.synopsis = 'Synopsis is required'
+        if (!synopsis.trim()) err.synopsis = 'Synopsis is required'
         break
       case 'genre':
-        if (!genre.trim()) newErrors.genre = 'Genre is required'
-        if (!format.trim()) newErrors.format = 'Format is required'
+        if (!genre.trim()) err.genre = 'Genre is required'
+        if (!format.trim()) err.format = 'Format is required'
         break
       case 'vision':
-        if (!vision.trim()) newErrors.vision = "Director's vision is required"
+        if (!vision.trim()) err.vision = "Director's vision is required"
         break
-      case 'cast':
+      case 'cast': {
         const validCast = castMembers.filter((m) => m.name.trim() && m.role.trim())
-        if (validCast.length === 0) newErrors.cast = 'At least one cast member with name and role is required'
+        if (validCast.length === 0) err.cast = 'At least one cast member with name and role'
         break
+      }
       case 'budget':
-        if (!budgetRange) newErrors.budgetRange = 'Budget range is required'
+        if (!budgetRange) err.budgetRange = 'Budget range is required'
         break
-      case 'team':
+      case 'team': {
         const validTeam = teamMembers.filter((m) => m.name.trim() && m.role.trim())
-        if (validTeam.length === 0) newErrors.team = 'At least one team member with name and role is required'
+        if (validTeam.length === 0) err.team = 'At least one team member with name and role'
         break
+      }
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(err)
+    return Object.keys(err).length === 0
   }
 
   const handleContinue = () => {
@@ -244,16 +439,53 @@ export default function CreatePitchPage() {
     }
   }
 
+  // ─── Upload pending files after pitch creation ───
+  const uploadPendingFiles = async (pitchId: string) => {
+    const uploads: Promise<void>[] = []
+
+    // Poster
+    if (posterFile) {
+      const fd = new FormData()
+      fd.append('file', posterFile)
+      fd.append('pitchId', pitchId)
+      fd.append('sectionName', 'poster')
+      uploads.push(
+        fetch('/api/media/upload', { method: 'POST', body: fd }).then((r) => {
+          if (!r.ok) console.error('Poster upload failed')
+        })
+      )
+    }
+
+    // Vision reference images
+    for (const file of visionImages) {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('pitchId', pitchId)
+      fd.append('sectionName', 'vision')
+      uploads.push(
+        fetch('/api/media/upload', { method: 'POST', body: fd }).then((r) => {
+          if (!r.ok) console.error('Vision image upload failed')
+        })
+      )
+    }
+
+    if (uploads.length > 0) {
+      await Promise.allSettled(uploads)
+    }
+  }
+
+  // ─── Submit ───
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-
     if (!validateCurrentSection()) return
 
     setLoading(true)
 
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
       const { data: profile } = await supabase
@@ -264,7 +496,6 @@ export default function CreatePitchPage() {
 
       if (!profile) throw new Error('Profile not found')
 
-      // Prepare cast and team as JSONB
       const validCast = castMembers.filter((m) => m.name.trim() && m.role.trim())
       const validTeam = teamMembers.filter((m) => m.name.trim() && m.role.trim())
 
@@ -287,64 +518,8 @@ export default function CreatePitchPage() {
 
       if (pitchError) throw pitchError
 
-      // Insert optional sections
-      const sectionsToInsert = []
-
-      if (flowEnabled && flowBeats.length > 0) {
-        sectionsToInsert.push({
-          pitch_id: pitch.id,
-          section_name: 'flow',
-          data: { beats: flowBeats },
-          order_index: 1,
-        })
-      }
-
-      if (companionDocsEnabled && (companionDocsDescription.trim() || companionDocMediaId)) {
-        sectionsToInsert.push({
-          pitch_id: pitch.id,
-          section_name: 'companion_documents',
-          data: {
-            content: companionDocsDescription,
-            mediaId: companionDocMediaId,
-          },
-          order_index: 2,
-        })
-      }
-
-      if (locationsEnabled && (locationsContent.trim() || locationsMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: pitch.id,
-          section_name: 'locations',
-          data: {
-            content: locationsContent,
-            mediaIds: locationsMediaIds,
-          },
-          order_index: 3,
-        })
-      }
-
-      if (artDirectionEnabled && (artDirectionContent.trim() || artDirectionMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: pitch.id,
-          section_name: 'art_direction',
-          data: {
-            content: artDirectionContent,
-            mediaIds: artDirectionMediaIds,
-          },
-          order_index: 4,
-        })
-      }
-
-      if (sectionsToInsert.length > 0) {
-        const { error: sectionsError } = await supabase
-          .from('pitch_sections')
-          .insert(sectionsToInsert)
-
-        if (sectionsError) {
-          console.error('Sections insert error:', sectionsError)
-          // Don't fail the whole operation, just log
-        }
-      }
+      // Upload any pending files (poster, vision images)
+      await uploadPendingFiles(pitch.id)
 
       router.push('/dashboard')
       router.refresh()
@@ -360,12 +535,32 @@ export default function CreatePitchPage() {
   const progress = `${completedSections.size}/8 COMPLETE`
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-[240px] bg-surface border-r border-border flex flex-col">
-        {/* Section list */}
-        <nav className="flex-1 py-[32px]">
-          {sections.map((section) => {
+    <div className="min-h-screen bg-background flex relative overflow-hidden">
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-[15%] right-[-5%] w-[300px] h-[300px] rounded-full border border-border opacity-[0.12] animate-[create-drift_25s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[25%] left-[20%] w-[180px] h-[180px] rounded-full border border-pop/10 opacity-[0.14] animate-[create-drift-2_18s_ease-in-out_infinite]" />
+        <div className="absolute top-[50%] right-[30%] w-[4px] h-[4px] rounded-full bg-pop opacity-[0.2] animate-[create-dot_5s_ease-in-out_infinite]" />
+        <style jsx global>{`
+          @keyframes create-drift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, 15px); }
+          }
+          @keyframes create-drift-2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10px, -12px); }
+          }
+          @keyframes create-dot {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.4); opacity: 0.35; }
+          }
+        `}</style>
+      </div>
+
+      {/* ─── Sidebar ─── */}
+      <aside className="fixed left-0 top-0 h-screen w-[240px] bg-surface border-r border-border flex flex-col z-10">
+        <nav className="flex-1 py-[32px] overflow-y-auto">
+          {sections.map((section, sectionIndex) => {
             const isActive = section.key === currentSection
             const isComplete = completedSections.has(section.key)
 
@@ -377,49 +572,37 @@ export default function CreatePitchPage() {
                 className={`
                   w-full px-[24px] py-[12px] text-left
                   border-l-[3px] transition-all duration-[200ms] ease-out
-                  ${
-                    isActive
-                      ? 'border-accent-visual bg-white/50'
-                      : 'border-transparent hover:bg-white/30'
-                  }
+                  animate-fade-up opacity-0 [animation-fill-mode:forwards]
+                  ${isActive ? 'border-pop bg-white/50' : 'border-transparent hover:bg-white/30'}
                 `}
+                style={{ animationDelay: `${sectionIndex * 60}ms` }}
               >
                 <div className="flex items-center gap-[12px]">
                   <span
-                    className={`
-                      font-[var(--font-mono)] text-[24px] leading-[32px] font-medium
-                      ${isActive ? 'text-accent-visual' : 'text-text-secondary'}
-                    `}
+                    className={`font-[var(--font-mono)] text-[24px] leading-[32px] font-medium ${isActive ? 'text-pop' : 'text-text-secondary'}`}
                   >
                     {section.number}
                   </span>
                   <div className="flex-1">
-                    <div
-                      className={`
-                        font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em]
-                        ${isActive ? 'font-semibold text-text-primary' : 'text-text-secondary'}
-                      `}
-                    >
-                      {section.title.toUpperCase()}
+                    <div className="flex items-center gap-[4px]">
+                      <span
+                        className={`font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] ${isActive ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}
+                      >
+                        {section.title.toUpperCase()}
+                      </span>
+                      {section.required && (
+                        <span className="text-error text-[11px] leading-[16px]">*</span>
+                      )}
                     </div>
                   </div>
                   {isComplete && !isActive && (
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      className="text-[#388E3C]"
-                    >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#388E3C]">
                       <path
                         d="M13.5 4.5L6 12L2.5 8.5"
                         stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeDasharray="24"
-                        strokeDashoffset="0"
-                        className="animate-draw-check"
                       />
                     </svg>
                   )}
@@ -429,32 +612,31 @@ export default function CreatePitchPage() {
           })}
         </nav>
 
-        {/* Progress indicator */}
+        {/* Progress */}
         <div className="px-[24px] py-[24px] border-t border-border">
           <div className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-secondary mb-[8px]">
             {progress}
           </div>
           <div className="w-full h-[3px] bg-border rounded-full overflow-visible">
             <div
-              className="h-full bg-accent-visual transition-all duration-[500ms]"
+              className="h-full bg-pop transition-all duration-[500ms]"
               style={{
                 width: `${(completedSections.size / 8) * 100}%`,
-                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' // Spring with overshoot
+                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             />
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ─── Main content ─── */}
       <main className="ml-[240px] flex-1">
         <div className="max-w-[800px] mx-auto px-[40px] py-[64px]">
           {/* Metadata header */}
           <div className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary mb-[48px]">
-            NEW PITCH / DRAFT / v1.0
+            NEW PROJECT / DRAFT / v1.0
           </div>
 
-          {/* Section content */}
           <form onSubmit={handleSubmit}>
             {/* Section number */}
             <div className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary mb-[8px]">
@@ -471,21 +653,31 @@ export default function CreatePitchPage() {
               {currentSectionData.description}
             </p>
 
-            {/* Section fields */}
+            {/* ─── Section fields ─── */}
             <div className="mb-[48px]">
+              {/* 01 — Project Name + Poster */}
               {currentSection === 'project' && (
-                <div>
-                  <TextInput
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    error={errors.projectName}
-                    placeholder="Enter project name"
-                    className="text-[18px] leading-[28px]"
+                <div className="flex flex-col gap-[32px]">
+                  <div>
+                    <TextInput
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      error={errors.projectName}
+                      placeholder="Enter project name"
+                      className="text-[18px] leading-[28px]"
+                    />
+                    <CharacterCounter current={projectName.length} max={100} />
+                  </div>
+
+                  <PosterUpload
+                    file={posterFile}
+                    onSelect={setPosterFile}
+                    onRemove={() => setPosterFile(null)}
                   />
-                  <CharacterCounter current={projectName.length} max={100} />
                 </div>
               )}
 
+              {/* 02 — Logline */}
               {currentSection === 'logline' && (
                 <div>
                   <Textarea
@@ -499,6 +691,7 @@ export default function CreatePitchPage() {
                 </div>
               )}
 
+              {/* 03 — Synopsis */}
               {currentSection === 'synopsis' && (
                 <div>
                   <Textarea
@@ -512,6 +705,7 @@ export default function CreatePitchPage() {
                 </div>
               )}
 
+              {/* 04 — Genre & Format */}
               {currentSection === 'genre' && (
                 <div className="flex flex-col gap-[16px]">
                   <TextInput
@@ -531,19 +725,31 @@ export default function CreatePitchPage() {
                 </div>
               )}
 
+              {/* 05 — Director's Vision + Reference Images */}
               {currentSection === 'vision' && (
-                <div>
-                  <Textarea
-                    value={vision}
-                    onChange={(e) => setVision(e.target.value)}
-                    error={errors.vision}
-                    placeholder="Why this project? Why you? What's the tone, style, aesthetic?"
-                    className="min-h-[200px]"
+                <div className="flex flex-col gap-[24px]">
+                  <div>
+                    <Textarea
+                      value={vision}
+                      onChange={(e) => setVision(e.target.value)}
+                      error={errors.vision}
+                      placeholder="Why this project? Why you? What's the tone, style, aesthetic?"
+                      className="min-h-[200px]"
+                    />
+                    <CharacterCounter current={getWordCount(vision)} type="words" />
+                  </div>
+
+                  <InlineImageUpload
+                    files={visionImages}
+                    onAdd={(newFiles) => setVisionImages((prev) => [...prev, ...newFiles])}
+                    onRemove={(i) => setVisionImages((prev) => prev.filter((_, idx) => idx !== i))}
+                    maxFiles={5}
+                    label="Reference Images (optional)"
                   />
-                  <CharacterCounter current={getWordCount(vision)} type="words" />
                 </div>
               )}
 
+              {/* 06 — Cast & Characters */}
               {currentSection === 'cast' && (
                 <div className="flex flex-col gap-[24px]">
                   {castMembers.map((member, index) => (
@@ -596,6 +802,7 @@ export default function CreatePitchPage() {
                 </div>
               )}
 
+              {/* 07 — Budget & Status */}
               {currentSection === 'budget' && (
                 <div className="flex flex-col gap-[32px]">
                   <div>
@@ -613,6 +820,7 @@ export default function CreatePitchPage() {
                 </div>
               )}
 
+              {/* 08 — Key Team */}
               {currentSection === 'team' && (
                 <div className="flex flex-col gap-[24px]">
                   {teamMembers.map((member, index) => (
@@ -665,178 +873,6 @@ export default function CreatePitchPage() {
                 </div>
               )}
             </div>
-
-            {/* Optional Sections (shown only on team section) */}
-            {currentSection === 'team' && completedSections.size >= 7 && (
-              <div className="mt-[64px] pt-[64px] border-t border-border">
-                <h2 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[8px]">
-                  Optional Sections
-                </h2>
-                <p className="text-[14px] leading-[20px] text-text-secondary mb-[32px]">
-                  Add additional context to your pitch. All sections are optional.
-                </p>
-
-                {/* Flow Section */}
-                <div className="mb-[32px]">
-                  <label className="flex items-center gap-[12px] cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={flowEnabled}
-                      onChange={(e) => {
-                        setFlowEnabled(e.target.checked)
-                        if (e.target.checked && flowBeats.length === 0) {
-                          addFlowBeat()
-                        }
-                      }}
-                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
-                    />
-                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
-                      Flow
-                    </span>
-                  </label>
-                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
-                    Story beats, character arcs, narrative structure
-                  </p>
-
-                  {flowEnabled && (
-                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
-                      {flowBeats.map((beat, index) => (
-                        <div key={beat.id} className="border border-border rounded-[4px] p-[16px] bg-white">
-                          <div className="flex items-center justify-between mb-[12px]">
-                            <span className="font-[var(--font-mono)] text-[11px] text-text-secondary">
-                              BEAT {index + 1}
-                            </span>
-                            {flowBeats.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeFlowBeat(beat.id)}
-                                className="text-[12px] text-error hover:underline"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-[12px]">
-                            <TextInput
-                              value={beat.caption}
-                              onChange={(e) => updateFlowBeat(beat.id, 'caption', e.target.value)}
-                              placeholder="Beat description"
-                            />
-                            <TextInput
-                              value={beat.arcLabel || ''}
-                              onChange={(e) => updateFlowBeat(beat.id, 'arcLabel', e.target.value)}
-                              placeholder="Character arc label (optional)"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      <Button type="button" variant="secondary" onClick={addFlowBeat}>
-                        + Add beat
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Companion Documents Section */}
-                <div className="mb-[32px]">
-                  <label className="flex items-center gap-[12px] cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={companionDocsEnabled}
-                      onChange={(e) => setCompanionDocsEnabled(e.target.checked)}
-                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
-                    />
-                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
-                      Companion Documents
-                    </span>
-                  </label>
-                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
-                    Script, treatment, design documents (PDF only)
-                  </p>
-
-                  {companionDocsEnabled && (
-                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
-                      <Textarea
-                        value={companionDocsDescription}
-                        onChange={(e) => setCompanionDocsDescription(e.target.value)}
-                        placeholder="Brief description of the document (optional)"
-                        className="min-h-[80px]"
-                      />
-                      {/* PDF upload will be added after pitch is created */}
-                      <p className="text-[13px] text-text-secondary italic">
-                        Upload document after creating pitch
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Locations Section */}
-                <div className="mb-[32px]">
-                  <label className="flex items-center gap-[12px] cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={locationsEnabled}
-                      onChange={(e) => setLocationsEnabled(e.target.checked)}
-                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
-                    />
-                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
-                      Locations
-                    </span>
-                  </label>
-                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
-                    Shooting locations, requirements, permits
-                  </p>
-
-                  {locationsEnabled && (
-                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
-                      <Textarea
-                        value={locationsContent}
-                        onChange={(e) => setLocationsContent(e.target.value)}
-                        placeholder="Describe your locations, requirements, etc."
-                        className="min-h-[120px]"
-                      />
-                      {/* Image upload will be added after pitch is created */}
-                      <p className="text-[13px] text-text-secondary italic">
-                        Upload location images after creating pitch
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Art Direction Section */}
-                <div className="mb-[32px]">
-                  <label className="flex items-center gap-[12px] cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={artDirectionEnabled}
-                      onChange={(e) => setArtDirectionEnabled(e.target.checked)}
-                      className="w-[20px] h-[20px] rounded-[4px] border-2 border-border checked:bg-accent-visual checked:border-accent-visual"
-                    />
-                    <span className="font-[var(--font-body)] text-[16px] font-medium text-text-primary group-hover:text-accent-visual transition-colors">
-                      Art Direction & Set Design
-                    </span>
-                  </label>
-                  <p className="text-[13px] text-text-secondary ml-[32px] mt-[4px]">
-                    Visual style, set pieces, color palette
-                  </p>
-
-                  {artDirectionEnabled && (
-                    <div className="ml-[32px] mt-[16px] flex flex-col gap-[16px]">
-                      <Textarea
-                        value={artDirectionContent}
-                        onChange={(e) => setArtDirectionContent(e.target.value)}
-                        placeholder="Describe your visual style, set design, etc."
-                        className="min-h-[120px]"
-                      />
-                      {/* Image upload will be added after pitch is created */}
-                      <p className="text-[13px] text-text-secondary italic">
-                        Upload reference images after creating pitch
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Error message */}
             {errors.general && (

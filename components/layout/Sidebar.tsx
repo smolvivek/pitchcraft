@@ -34,7 +34,7 @@ function Sidebar({ sections, activeId, onSelect }: SidebarProps) {
                   cursor-pointer
                   ${
                     isActive
-                      ? "border-l-2 border-accent text-text-primary font-medium bg-background"
+                      ? "border-l-2 border-pop text-text-primary font-medium bg-background"
                       : "border-l-2 border-transparent text-text-secondary hover:bg-background hover:text-text-primary"
                   }
                 `}

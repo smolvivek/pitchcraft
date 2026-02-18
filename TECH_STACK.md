@@ -118,7 +118,8 @@ For transactional emails (password reset, funding received, pitch viewed). Free 
   "react": "19.2.3",
   "react-dom": "19.2.3",
   "typescript": "^5",
-  "@supabase/supabase-js": "^2",
+  "@supabase/supabase-js": "^2.95.3",
+  "@supabase/ssr": "^0.8.0",
   "tailwindcss": "^4",
   "@tailwindcss/postcss": "^4"
 }
@@ -127,7 +128,6 @@ For transactional emails (password reset, funding received, pitch viewed). Free 
 **To install (when features require them):**
 ```json
 {
-  "@supabase/ssr": "latest",
   "stripe": "latest",
   "@stripe/stripe-js": "latest",
   "zod": "latest",

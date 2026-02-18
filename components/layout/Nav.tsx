@@ -53,7 +53,7 @@ function Nav({ links = [], user = null }: NavProps) {
               text-[14px] leading-[20px] transition-colors duration-[200ms] ease-out
               ${
                 link.active
-                  ? "text-text-primary border-b-2 border-accent pb-[2px]"
+                  ? "text-text-primary border-b-2 border-pop pb-[2px]"
                   : "text-text-secondary hover:text-text-primary"
               }
             `}

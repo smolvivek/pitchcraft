@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { MarqueeSection } from "@/components/landing/MarqueeSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { CTASection } from "@/components/landing/CTASection";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -20,9 +17,15 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-surface">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="fixed top-[24px] left-[24px] z-50">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-[24px] md:px-[48px] h-[64px]">
+        <Link
+          href="/"
+          className="font-[var(--font-heading)] text-[18px] font-semibold text-text-primary"
+        >
+          Pitchcraft
+        </Link>
         {user && profile ? (
           <Link
             href="/dashboard"
@@ -40,7 +43,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/signup"
-              className="font-[var(--font-mono)] text-[13px] leading-[20px] text-accent-visual hover:opacity-70 transition-opacity duration-[200ms] ease-out"
+              className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
             >
               Sign up
             </Link>
@@ -50,15 +53,6 @@ export default async function Home() {
 
       {/* Hero Section */}
       <LandingHero />
-
-      {/* Marquee Section */}
-      <MarqueeSection />
-
-      {/* What It Does */}
-      <FeaturesSection />
-
-      {/* Final CTA */}
-      <CTASection />
     </div>
   );
 }

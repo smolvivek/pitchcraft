@@ -82,16 +82,16 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="bg-white border border-border rounded-[8px] p-[32px]">
+      <div className="bg-white border border-border rounded-[4px] p-[32px]">
         <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
-          Check your email
+          Check your inbox
         </h2>
         <p className="text-[14px] leading-[24px] text-text-secondary mb-[24px]">
           We&apos;ve sent you a confirmation link. Please check your inbox and click the link to activate your account.
         </p>
         <Link href="/login">
           <Button variant="primary" className="w-full">
-            Go to Login
+            Back to login
           </Button>
         </Link>
       </div>
@@ -99,7 +99,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="bg-white border border-border rounded-[8px] p-[32px]">
+    <div className="bg-white border border-border rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[24px]">
         Create your account
       </h2>
@@ -172,13 +172,13 @@ export default function SignupPage() {
           disabled={loading}
           className="w-full mt-[8px]"
         >
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? "Signing up..." : "Sign up"}
         </Button>
 
         <div className="text-center mt-[8px]">
           <p className="text-[14px] leading-[20px] text-text-secondary">
             Already have an account?{" "}
-            <Link href="/login" className="text-accent-text hover:underline font-medium">
+            <Link href="/login" className="text-link hover:underline font-medium">
               Log in
             </Link>
           </p>

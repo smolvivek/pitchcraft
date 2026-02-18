@@ -86,7 +86,7 @@ CREATE INDEX idx_pitch_versions_number ON pitch_versions(pitch_id, version_numbe
 CREATE TABLE pitch_sections (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pitch_id UUID NOT NULL REFERENCES pitches(id) ON DELETE CASCADE,
-  section_name VARCHAR(100) NOT NULL, -- locations, cast, art_direction, etc.
+  section_name VARCHAR(100) NOT NULL, -- flow, script_documents, locations, art_direction, set_design, costume, makeup_hair, props, vehicles_animals, stunts_sfx, camera, sound_design, music, setting_world, schedule, crew, custom_1, custom_2, custom_3
   data JSONB NOT NULL,
   order_index INT,
   created_at TIMESTAMPTZ DEFAULT now(),

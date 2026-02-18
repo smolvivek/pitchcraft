@@ -42,7 +42,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
             placeholder:text-text-disabled
             transition-colors duration-[200ms] ease-out
             disabled:bg-surface disabled:text-text-disabled disabled:border-border
-            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-accent focus:px-[15px] focus:py-[11px]"}
+            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -104,7 +104,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             resize-y
             transition-colors duration-[200ms] ease-out
             disabled:bg-surface disabled:text-text-disabled disabled:border-border
-            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-accent focus:px-[15px] focus:py-[11px]"}
+            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -170,14 +170,14 @@ const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
             text-[14px] leading-[20px] text-text-primary
             font-[var(--font-body)]
             appearance-none
-            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23D4654A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
+            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23FF5C36%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
             bg-[position:right_16px_center]
             bg-no-repeat
             pr-[40px]
             transition-colors duration-[200ms] ease-out
             hover:bg-surface
             disabled:bg-surface disabled:text-text-disabled disabled:border-border
-            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-accent focus:px-[15px] focus:py-[11px]"}
+            ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -232,7 +232,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           className="
             w-[20px] h-[20px] rounded-[4px]
             border-2 border-border
-            accent-accent
+            accent-pop
             cursor-pointer
             disabled:cursor-not-allowed disabled:opacity-50
           "

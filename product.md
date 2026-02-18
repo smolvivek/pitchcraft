@@ -134,7 +134,19 @@ Creators select which sections to include. Each section is optional. Creators ch
 
 A single interface works for all creator types. A filmmaker adds "Cast & Characters." A game dev adds "Game Mechanics." A photographer adds "Portfolio & Previous Work." The tool doesn't change—only the sections they fill.
 
-### **Flow (Optional, Prominently Featured)**
+**Total: 8 required + 18 optional + 3 custom = 29 sections**
+
+### Per-Section Capabilities (All Optional Sections)
+
+Every optional section includes these capabilities:
+- **Notes field** — textarea for written context
+- **Reference image uploads** — multiple images per section
+- **Video/link embeds** — YouTube, Vimeo, or any URL for reference material
+- **Per-image captions** (optional) — brief note on each uploaded image
+
+---
+
+### 09. **Flow** (Prominently Featured)
 
 The Flow is a horizontal-scroll experience showing the emotional, narrative, or visual arc of the project.
 
@@ -166,9 +178,9 @@ The Flow is a horizontal-scroll experience showing the emotional, narrative, or 
 
 ---
 
-### **Companion Documents**
+### 10. **Script & Documents**
 
-One optional document upload (script, design doc, treatment, design bible, etc.).
+PDF/document uploads supporting the pitch — script, treatment, lookbook, design bible.
 
 **What it is:**
 - PDF or document (any format creator chooses)
@@ -183,89 +195,81 @@ One optional document upload (script, design doc, treatment, design bible, etc.)
 
 ---
 
-### **Locations**
-- Primary shooting locations
-- Number of unique locations
+### 11. **Locations**
+- Where you're shooting
 - Interior vs. exterior breakdown
 - Special location requirements
 - Permit/access considerations
-- Media: Images of locations or mood references
 
-### **Art Direction & Set Design**
+### 12. **Art Direction**
 - Visual style and aesthetic
-- Key set pieces
-- Production design references
 - Color palette
-- Special construction needs
-- Media: Reference images, mood board, design concepts
+- Production design references
 
-### **Costumes & Wardrobe**
+### 13. **Set Design**
+- Key sets and construction needs
+- Set dressing and environment design
+- Physical space requirements
+
+### 14. **Costume**
 - Period/style (contemporary, period, futuristic, etc.)
 - Key costume changes
 - Special costume requirements
-- Media: Reference images, mood board, design sketches
 
-### **Makeup & Hair**
-- Special makeup requirements
-- Prosthetics or SFX makeup
+### 15. **Makeup & Hair**
+- SFX makeup and prosthetics
 - Hair changes across scenes
 - Period or style guidance
-- Media: Reference images, mood board
 
-### **Props & Set Dressing**
+### 16. **Props**
 - Key props (script-essential vs. decorative)
 - Special or period props
-- Set dressing aesthetic
-- Media: Reference images
 
-### **Vehicles & Animals**
+### 17. **Vehicles & Animals**
 - Picture vehicles (cars, motorcycles, boats, etc.)
-- Animals (trained animals, handlers required)
+- Trained animals and handlers
 - Special vehicle modifications
-- Media: Reference images
 
-### **Stunts & Special Effects**
-- Action sequences and complexity
-- Stunt coordination needs
-- SFX makeup (blood, wounds, aging, etc.)
-- VFX requirements (CGI, compositing, color grading notes)
-- Media: Reference videos, mood board
+### 18. **Stunts & SFX**
+- Action sequences and stunt coordination
+- Practical effects (SFX)
+- VFX requirements (CGI, compositing)
 
-### **Camera & Cinematography**
+### 19. **Camera**
 - Visual style (handheld, locked-off, drone, etc.)
 - Lens/aspect ratio preferences
 - Lighting style and mood
 - Special camera techniques
-- Media: Reference films, cinematography mood board
 
-### **Sound & Music**
+### 20. **Sound Design**
 - Sound design notes
-- Music style and mood
 - Ambient sound requirements
 - Voice-over requirements
-- Media: Music references, sound design mood board
+- Foley needs
 
-### **World Building & Lore**
-- World rules (for fantasy, sci-fi, or complex narratives)
-- Mythology or history
-- Cultural or environmental details
-- Media: Visual references, world-building mood board
+### 21. **Music**
+- Score style and soundtrack mood
+- Temp tracks and music references
+- Licensing considerations
 
-### **Timeline & Schedule**
+### 22. **Setting & World**
+- World rules, environment, cultural details
+- Period specifics
+- For any project that needs context beyond locations
+
+### 23. **Schedule**
 - Shooting days needed
-- Pre-production duration
-- Post-production timeline
-- Production phases (pre-pro, production, post) with dates
+- Pre-production and post-production phases
+- Key dates and milestones
 
-### **Crew & Team** (Expanded)
-- Director (already in Key Team, optional detail here)
-- All department heads attached
+### 24. **Crew**
+- Department heads (distinct from Key Team section 08 which covers creative leads)
 - Crew size estimates
-- Key hires needed
+- Key hires still needed
 
 ---
 
-## Custom Sections
+## Custom Sections (25–27)
 
 Creators may add up to **3 custom sections** for anything project-specific:
 - Research notes
@@ -433,7 +437,7 @@ Pitchcraft is **not:**
 - A marketplace (no creator discovery, no ranking)
 - A script judging algorithm
 - A generic AI SaaS
-- A Canva competitor
+- A presentation design tool or deck generator
 - An analytics or surveillance tool
 - A collaboration platform (Phase 2+)
 
@@ -464,7 +468,7 @@ Trust is a core feature.
 
 ### **Phase 1 (MVP)**
 - 8 required fields
-- Optional production sections (10+)
+- Optional production sections (18)
 - Custom sections (max 3)
 - Media upload (images, videos)
 - AI image generation (optional, pay-as-you-go)

@@ -75,19 +75,19 @@ Brand personality is now locked. All new code must follow [BRAND.md](./BRAND.md)
 
 ### 3. Fix Terracotta Usage (TE Strategy)
 
-**Audit all terracotta usage and enforce rules from BRAND.md:**
+**Audit all pop colour usage and enforce rules from BRAND.md:**
 
-**✅ KEEP terracotta for:**
+**✅ KEEP pop colour for:**
 1. Sidebar active section border (`/app/dashboard/pitches/create/page.tsx`)
 2. Primary CTA buttons (ONE per page)
 3. Progress indicators and completion checkmarks
 4. Focus states on form inputs
 
-**❌ REMOVE terracotta from:**
-1. Hover states - replace with `bg-surface` (#F3EDE6)
+**❌ REMOVE pop colour from:**
+1. Hover states - replace with `bg-surface` (#D0D2C5)
 2. Secondary/tertiary buttons - keep monochrome
 3. Any decorative usage
-4. Multiple buttons on same page (only primary gets terracotta)
+4. Multiple buttons on same page (only primary gets pop colour)
 
 **Files to audit:**
 - `/components/ui/Button.tsx` - Check hover states
@@ -162,7 +162,7 @@ Brand personality is now locked. All new code must follow [BRAND.md](./BRAND.md)
 **Tier 1 (ship now):**
 1. Section completion checkmark draw (300ms SVG animation)
 2. Progress bar spring overshoot (5% overshoot, settle back)
-3. Budget segment selection (scale + terracotta slide-in)
+3. Budget segment selection (scale + pop colour slide-in)
 4. Status radio dot scale (0 → 1.2x spring, settle to 1.0x)
 
 **Tier 2 (polish later):**
@@ -205,14 +205,14 @@ After implementing changes:
 - `/ROADMAP_BRAND_IMPLEMENTATION.md` (this file)
 
 **Updated:**
-- `/DESIGN.md` (added terracotta rules, voice reference, motion quality bar)
+- `/DESIGN.md` (added pop colour rules, voice reference, motion quality bar)
 
 **Need to update:**
 - `/app/page.tsx` (remove metadata, await copy refinement)
 - `/app/dashboard/page.tsx` (pitch→project, empty state copy)
 - `/app/dashboard/pitches/create/page.tsx` (pitch→project)
 - `/app/dashboard/pitches/[id]/edit/page.tsx` (pitch→project, save copy)
-- `/components/ui/Button.tsx` (audit terracotta hovers)
+- `/components/ui/Button.tsx` (audit pop colour hovers)
 - `/components/landing/*.tsx` (marquee refinement, feature section simplification)
 - `/COPY.md` (global pitch→project, status terminology)
 
@@ -230,7 +230,7 @@ After implementing changes:
 ## Next Steps
 
 1. User provides final landing page copy direction
-2. Sonnet implements priority tasks 1-4 (copy updates, terracotta audit, status terminology)
+2. Sonnet implements priority tasks 1-4 (copy updates, pop colour audit, status terminology)
 3. User reviews and approves
 4. Sonnet implements landing page refinements (task 5)
 5. Sonnet implements Tier 1 animations (task 6)

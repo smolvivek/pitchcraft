@@ -80,17 +80,17 @@ export default function DesignShowcase() {
         <Section title="Colors">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-[16px]">
             {[
-              { name: "Background", value: "#FAF8F5", className: "bg-background border border-border" },
-              { name: "Surface", value: "#F3EDE6", className: "bg-surface" },
-              { name: "Border", value: "#D9D0C7", className: "bg-border" },
+              { name: "Background", value: "#DBDDD0", className: "bg-background border border-border" },
+              { name: "Surface", value: "#D0D2C5", className: "bg-surface" },
+              { name: "Border", value: "#B3B5A8", className: "bg-border" },
               { name: "Text Primary", value: "#1A1A1A", className: "bg-text-primary" },
               { name: "Text Secondary", value: "#6B6560", className: "bg-text-secondary" },
               { name: "Text Disabled", value: "#A8A29E", className: "bg-text-disabled" },
-              { name: "Accent (visual)", value: "#D4654A", className: "bg-accent" },
-              { name: "Accent Text", value: "#A8432D", className: "bg-accent-text" },
-              { name: "Accent Btn", value: "#B8503A", className: "bg-accent-btn" },
-              { name: "Accent Btn Hover", value: "#9C3F2E", className: "bg-accent-btn-hover" },
-              { name: "Accent Btn Active", value: "#863525", className: "bg-accent-btn-active" },
+              { name: "Pop (visual)", value: "#AF2E1B", className: "bg-pop" },
+              { name: "Link", value: "#AF2E1B", className: "bg-link" },
+              { name: "Button", value: "#1A1A1A", className: "bg-btn" },
+              { name: "Button Hover", value: "#333333", className: "bg-btn-hover" },
+              { name: "Button Active", value: "#000000", className: "bg-btn-active" },
               { name: "Status: Looking", value: "#D32F2F", className: "bg-status-looking" },
               { name: "Status: In Progress", value: "#E8A817", className: "bg-status-progress" },
               { name: "Status: Complete", value: "#388E3C", className: "bg-status-complete" },
@@ -369,7 +369,7 @@ export default function DesignShowcase() {
               <div key={size} className="flex items-center gap-[16px]">
                 <MonoText className="w-[48px] text-right">{size}px</MonoText>
                 <div
-                  className="h-[8px] bg-accent rounded-[2px]"
+                  className="h-[8px] bg-pop rounded-[2px]"
                   style={{ width: `${size * 2}px` }}
                 />
               </div>

@@ -4,21 +4,19 @@
 
 @theme inline {
   /* Colors */
-  --color-background: #FAF8F5;
-  --color-surface: #F3EDE6;
-  --color-border: #D9D0C7;
+  --color-background: #DBDDD0;
+  --color-surface: #D0D2C5;
+  --color-border: #B3B5A8;
   --color-text-primary: #1A1A1A;
   --color-text-secondary: #6B6560;
   --color-text-disabled: #A8A29E;
-  --color-accent: #D4654A;
-  --color-accent-visual: #D4654A;
-  --color-accent-hover: #B8503A;
-  --color-accent-active: #9C3F2E;
-  --color-accent-text: #A8432D;
-  --color-accent-btn: #B8503A;
-  --color-accent-btn-hover: #9C3F2E;
-  --color-accent-btn-active: #863525;
-  --color-accent-button: #B8503A;
+  --color-pop: #AF2E1B;
+  --color-pop-hover: #952717;
+  --color-pop-active: #7E2213;
+  --color-link: #AF2E1B;
+  --color-btn: #1A1A1A;
+  --color-btn-hover: #333333;
+  --color-btn-active: #000000;
   --color-status-looking: #D32F2F;
   --color-status-progress: #E8A817;
   --color-status-complete: #388E3C;
@@ -81,7 +79,7 @@ body::before {
 /* ── Focus Styles ── */
 
 *:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-pop);
   outline-offset: 2px;
 }
 
@@ -142,21 +140,50 @@ body::before {
   }
 }
 
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* ── Animation Utilities ── */
-
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
 
 .animate-draw-check {
   animation: draw-check 300ms ease-out forwards;
+}
+
+/* ── Landing Page Animations ── */
+
+@keyframes reveal-up {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(40px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes line-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal-up {
+  animation: reveal-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-line-draw {
+  animation: line-draw 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

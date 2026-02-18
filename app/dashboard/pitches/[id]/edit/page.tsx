@@ -105,9 +105,9 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
   ]
 
   const statusOptions = [
-    { value: 'looking', label: 'Looking' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'complete', label: 'Complete' },
+    { value: 'development', label: 'Development' },
+    { value: 'production', label: 'Production' },
+    { value: 'completed', label: 'Completed' },
   ]
 
   // Fetch pitch on load
@@ -157,7 +157,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                 setFlowBeats(section.data.beats)
               }
               break
-            case 'companion_documents':
+            case 'script_documents':
               setCompanionDocsEnabled(true)
               setCompanionDocsContent(content)
               if (section.data.mediaId) {
@@ -178,14 +178,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                 setArtDirectionMediaIds(section.data.mediaIds)
               }
               break
-            case 'costumes':
+            case 'costume':
               setCostumesEnabled(true)
               setCostumesContent(content)
               if (section.data.mediaIds) {
                 setCostumesMediaIds(section.data.mediaIds)
               }
               break
-            case 'makeup':
+            case 'makeup_hair':
               setMakeupEnabled(true)
               setMakeupContent(content)
               if (section.data.mediaIds) {
@@ -199,14 +199,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                 setPropsMediaIds(section.data.mediaIds)
               }
               break
-            case 'vehicles':
+            case 'vehicles_animals':
               setVehiclesEnabled(true)
               setVehiclesContent(content)
               if (section.data.mediaIds) {
                 setVehiclesMediaIds(section.data.mediaIds)
               }
               break
-            case 'stunts':
+            case 'stunts_sfx':
               setStuntsEnabled(true)
               setStuntsContent(content)
               if (section.data.mediaIds) {
@@ -220,22 +220,22 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                 setCameraMediaIds(section.data.mediaIds)
               }
               break
-            case 'sound':
+            case 'sound_design':
               setSoundEnabled(true)
               setSoundContent(content)
               if (section.data.mediaIds) {
                 setSoundMediaIds(section.data.mediaIds)
               }
               break
-            case 'world_building':
+            case 'setting_world':
               setWorldBuildingEnabled(true)
               setWorldBuildingContent(content)
               break
-            case 'timeline':
+            case 'schedule':
               setTimelineEnabled(true)
               setTimelineContent(content)
               break
-            case 'crew_expanded':
+            case 'crew':
               setCrewEnabled(true)
               setCrewContent(content)
               break
@@ -330,7 +330,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (companionDocsEnabled && (companionDocsContent.trim() || companionDocMediaId)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'companion_documents',
+          section_name: 'script_documents',
           data: {
             content: companionDocsContent,
             mediaId: companionDocMediaId || undefined,
@@ -366,7 +366,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (costumesEnabled && (costumesContent.trim() || costumesMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'costumes',
+          section_name: 'costume',
           data: {
             content: costumesContent,
             mediaIds: costumesMediaIds.length > 0 ? costumesMediaIds : undefined,
@@ -378,7 +378,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (makeupEnabled && (makeupContent.trim() || makeupMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'makeup',
+          section_name: 'makeup_hair',
           data: {
             content: makeupContent,
             mediaIds: makeupMediaIds.length > 0 ? makeupMediaIds : undefined,
@@ -402,7 +402,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (vehiclesEnabled && (vehiclesContent.trim() || vehiclesMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'vehicles',
+          section_name: 'vehicles_animals',
           data: {
             content: vehiclesContent,
             mediaIds: vehiclesMediaIds.length > 0 ? vehiclesMediaIds : undefined,
@@ -414,7 +414,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (stuntsEnabled && (stuntsContent.trim() || stuntsMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'stunts',
+          section_name: 'stunts_sfx',
           data: {
             content: stuntsContent,
             mediaIds: stuntsMediaIds.length > 0 ? stuntsMediaIds : undefined,
@@ -438,7 +438,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (soundEnabled && (soundContent.trim() || soundMediaIds.length > 0)) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'sound',
+          section_name: 'sound_design',
           data: {
             content: soundContent,
             mediaIds: soundMediaIds.length > 0 ? soundMediaIds : undefined,
@@ -450,7 +450,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (worldBuildingEnabled && worldBuildingContent.trim()) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'world_building',
+          section_name: 'setting_world',
           data: { content: worldBuildingContent },
           order_index: 12
         })
@@ -459,7 +459,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (timelineEnabled && timelineContent.trim()) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'timeline',
+          section_name: 'schedule',
           data: { content: timelineContent },
           order_index: 13
         })
@@ -468,7 +468,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       if (crewEnabled && crewContent.trim()) {
         sectionsToInsert.push({
           pitch_id: params.id,
-          section_name: 'crew_expanded',
+          section_name: 'crew',
           data: { content: crewContent },
           order_index: 14
         })
@@ -544,9 +544,9 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
     <>
       <div className="min-h-screen bg-background">
         <div className="max-w-[800px] mx-auto px-[24px] py-[40px]">
-          <div className="bg-white border border-border rounded-[8px] p-[32px]">
+          <div className="bg-white border border-border rounded-[4px] p-[32px]">
             <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[32px]">
-              Edit Pitch
+              Edit Project
             </h1>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-[24px]">
@@ -662,7 +662,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
 
-                  {/* Companion Documents */}
+                  {/* Script & Documents */}
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-[8px] cursor-pointer">
                       <input
@@ -671,14 +671,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setCompanionDocsEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Companion Documents</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Script & Documents</span>
                     </label>
                     {companionDocsEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
                         <Textarea
                           value={companionDocsContent}
                           onChange={(e) => setCompanionDocsContent(e.target.value)}
-                          helpText="Description of attached script/design doc"
+                          helpText="Script, treatment, lookbook, design bible"
                         />
                         <PDFUpload
                           pitchId={params.id}
@@ -730,14 +730,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setArtDirectionEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Art Direction & Set Design</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Art Direction</span>
                     </label>
                     {artDirectionEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
                         <Textarea
                           value={artDirectionContent}
                           onChange={(e) => setArtDirectionContent(e.target.value)}
-                          helpText="Visual style, set pieces, color palette"
+                          helpText="Visual style, color palette, design references"
                         />
                         <ImageUpload
                           pitchId={params.id}
@@ -760,7 +760,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setCostumesEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Costumes & Wardrobe</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Costume</span>
                     </label>
                     {costumesEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
@@ -820,14 +820,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setPropsEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Props & Set Dressing</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Props</span>
                     </label>
                     {propsEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
                         <Textarea
                           value={propsContent}
                           onChange={(e) => setPropsContent(e.target.value)}
-                          helpText="Key props, set dressing aesthetic"
+                          helpText="Key props, script-essential vs. decorative"
                         />
                         <ImageUpload
                           pitchId={params.id}
@@ -880,14 +880,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setStuntsEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Stunts & Special Effects</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Stunts & SFX</span>
                     </label>
                     {stuntsEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
                         <Textarea
                           value={stuntsContent}
                           onChange={(e) => setStuntsContent(e.target.value)}
-                          helpText="Action sequences, SFX, VFX requirements"
+                          helpText="Action sequences, stunt coordination, practical and visual effects"
                         />
                         <ImageUpload
                           pitchId={params.id}
@@ -910,7 +910,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setCameraEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Camera & Cinematography</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Camera</span>
                     </label>
                     {cameraEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
@@ -940,14 +940,14 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setSoundEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Sound & Music</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Sound Design</span>
                     </label>
                     {soundEnabled && (
                       <div className="mt-[8px] flex flex-col gap-[12px]">
                         <Textarea
                           value={soundContent}
                           onChange={(e) => setSoundContent(e.target.value)}
-                          helpText="Sound design, music style, voice-over"
+                          helpText="Ambience, foley, voice-over"
                         />
                         <ImageUpload
                           pitchId={params.id}
@@ -970,13 +970,13 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setWorldBuildingEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">World Building & Lore</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Setting & World</span>
                     </label>
                     {worldBuildingEnabled && (
                       <Textarea
                         value={worldBuildingContent}
                         onChange={(e) => setWorldBuildingContent(e.target.value)}
-                        helpText="World rules, mythology, cultural details"
+                        helpText="World rules, environment, cultural details, period specifics"
                         className="mt-[8px]"
                       />
                     )}
@@ -991,7 +991,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setTimelineEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Timeline & Schedule</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Schedule</span>
                     </label>
                     {timelineEnabled && (
                       <Textarea
@@ -1012,7 +1012,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setCrewEnabled(e.target.checked)}
                         className="w-[16px] h-[16px]"
                       />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Crew & Team (Expanded)</span>
+                      <span className="text-[14px] leading-[20px] text-text-primary">Crew</span>
                     </label>
                     {crewEnabled && (
                       <Textarea

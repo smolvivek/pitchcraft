@@ -12,17 +12,17 @@ Right now, here's what happens:
 
 1. A filmmaker finishes a script for a short film or feature.
 2. They want to pitch it to producers, funders, or collaborators.
-3. They grab Canva or PowerPoint.
+3. They open a generic presentation tool.
 4. They build a deck: title slide, synopsis, some reference images, maybe a budget.
 5. They send it via email.
-6. Feedback comes back via WhatsApp, email threads, voice memos—scattered, vague, hard to act on.
+6. Feedback comes back via messaging apps, email threads, voice memos — scattered, vague, hard to act on.
 7. They update the deck. Send again. Feedback again. Chaos.
-8. If they want to raise money, they either use Kickstarter (generic, not built for creatives) or email fundraising pages individually.
+8. If they want to raise money, they either use a generic crowdfunding platform (not built for creatives) or email fundraising pages individually.
 9. There's no single source of truth. No version history. No way to see "what changed and why."
 
 The result: **Creative pitches are messy, unstructured, and frustrating.**
 
-Worse: The tools that exist (Canva, Pitch.com, generic presentation software) treat all pitches the same way. They optimize for *perfect slides*, not *clear communication of creative intent*. They flatten unique visions into templates.
+Worse: Existing tools treat all pitches the same way. They optimize for *perfect slides*, not *clear communication of creative intent*. They flatten unique visions into templates.
 
 ---
 
@@ -82,7 +82,7 @@ But creators come first. Every feature serves creator intent.
 
 ### For Creators:
 - Can build a comprehensive, professional pitch in under 30 minutes
-- Can share one link instead of juggling emails/PDFs/Canva decks
+- Can share one link instead of juggling emails, PDFs, and presentation decks
 - Can raise money through the platform without external tools
 - Can see version history and understand what changed
 - Feel confident showing their pitch to producers, funders, collaborators
@@ -104,11 +104,11 @@ But creators come first. Every feature serves creator intent.
 ## What Pitchcraft Is NOT
 
 Pitchcraft is **not** a replacement for:
-- Screenwriting software (Final Draft, Celtx)
-- Shooting schedule software (Movie Magic)
-- Budget management tools (Filmustage)
-- Collaboration platforms (Frame.io)
-- Pitch deck generators (Canva, Pitch.com)
+- Screenwriting software
+- Shooting schedule software
+- Budget management tools
+- Collaboration platforms
+- Pitch deck generators or generic presentation tools
 
 Pitchcraft is **specifically** a presentation + funding + versioning tool for creative work.
 
