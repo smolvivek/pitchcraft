@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useEffect, useCallback, useMemo, use, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
@@ -8,10 +8,80 @@ import { TextInput, Textarea, SelectInput } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { ImageUpload } from '@/components/ui/ImageUpload'
 import { PDFUpload } from '@/components/ui/PDFUpload'
-import type { BudgetRange, PitchStatus, PitchSection, MediaRecord, FlowBeat } from '@/lib/types/pitch'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { SectionTransition } from '@/components/ui/SectionTransition'
+import { OPTIONAL_SECTIONS, CUSTOM_SECTION_KEYS } from '@/lib/sections'
+import type { SidebarSection } from '@/components/layout/Sidebar'
+import type { BudgetRange, PitchStatus, PitchSection, FlowBeat } from '@/lib/types/pitch'
 
-export default function EditPitchPage({ params }: { params: { id: string } }) {
+/* ─── Required section keys (sidebar navigation) ─── */
+type RequiredSectionKey =
+  | 'logline'
+  | 'synopsis'
+  | 'genre'
+  | 'vision'
+  | 'cast'
+  | 'budget'
+  | 'status'
+  | 'team'
+
+const REQUIRED_SECTIONS: { key: RequiredSectionKey; label: string }[] = [
+  { key: 'logline', label: 'Logline' },
+  { key: 'synopsis', label: 'Synopsis' },
+  { key: 'genre', label: 'Genre & Format' },
+  { key: 'vision', label: "Director's Vision" },
+  { key: 'cast', label: 'Cast & Characters' },
+  { key: 'budget', label: 'Budget Range' },
+  { key: 'status', label: 'Production Status' },
+  { key: 'team', label: 'Key Team' },
+]
+
+/* ─── Optional section state ─── */
+interface OptionalSectionState {
+  enabled: boolean
+  content: string
+  mediaIds: string[]
+  videoUrl: string
+  title?: string
+  beats?: FlowBeat[]
+  mediaId?: string | null
+}
+
+function defaultSectionState(): OptionalSectionState {
+  return {
+    enabled: false,
+    content: '',
+    mediaIds: [],
+    videoUrl: '',
+  }
+}
+
+/* ─── All toggleable keys (optional + custom) ─── */
+const ALL_TOGGLEABLE_KEYS = [
+  ...OPTIONAL_SECTIONS.map((s) => s.key),
+  ...CUSTOM_SECTION_KEYS,
+]
+
+const budgetOptions = [
+  { value: 'under-5k', label: 'Under $5K' },
+  { value: '5k-50k', label: '$5K–$50K' },
+  { value: '50k-250k', label: '$50K–$250K' },
+  { value: '250k-1m', label: '$250K–$1M' },
+  { value: '1m-plus', label: '$1M+' },
+]
+
+const statusOptions = [
+  { value: 'development', label: 'Development' },
+  { value: 'production', label: 'Production' },
+  { value: 'completed', label: 'Completed' },
+]
+
+export default function EditPitchPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: pitchId } = use(params)
   const router = useRouter()
+
+  // Active section for sidebar navigation
+  const [activeSection, setActiveSection] = useState<string>('logline')
 
   // 8 Required fields
   const [logline, setLogline] = useState('')
@@ -20,106 +90,110 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
   const [vision, setVision] = useState('')
   const [castAndCharacters, setCastAndCharacters] = useState('')
   const [budgetRange, setBudgetRange] = useState<BudgetRange | ''>('')
-  const [status, setStatus] = useState<PitchStatus>('development')
+  const [pitchStatus, setPitchStatus] = useState<PitchStatus>('development')
   const [team, setTeam] = useState('')
 
-  // 15 Optional sections (enabled state + content)
-  const [flowEnabled, setFlowEnabled] = useState(false)
-  const [flowContent, setFlowContent] = useState('')
-
-  const [companionDocsEnabled, setCompanionDocsEnabled] = useState(false)
-  const [companionDocsContent, setCompanionDocsContent] = useState('')
-
-  const [locationsEnabled, setLocationsEnabled] = useState(false)
-  const [locationsContent, setLocationsContent] = useState('')
-
-  const [artDirectionEnabled, setArtDirectionEnabled] = useState(false)
-  const [artDirectionContent, setArtDirectionContent] = useState('')
-
-  const [costumesEnabled, setCostumesEnabled] = useState(false)
-  const [costumesContent, setCostumesContent] = useState('')
-
-  const [makeupEnabled, setMakeupEnabled] = useState(false)
-  const [makeupContent, setMakeupContent] = useState('')
-
-  const [propsEnabled, setPropsEnabled] = useState(false)
-  const [propsContent, setPropsContent] = useState('')
-
-  const [vehiclesEnabled, setVehiclesEnabled] = useState(false)
-  const [vehiclesContent, setVehiclesContent] = useState('')
-
-  const [stuntsEnabled, setStuntsEnabled] = useState(false)
-  const [stuntsContent, setStuntsContent] = useState('')
-
-  const [cameraEnabled, setCameraEnabled] = useState(false)
-  const [cameraContent, setCameraContent] = useState('')
-
-  const [soundEnabled, setSoundEnabled] = useState(false)
-  const [soundContent, setSoundContent] = useState('')
-
-  const [worldBuildingEnabled, setWorldBuildingEnabled] = useState(false)
-  const [worldBuildingContent, setWorldBuildingContent] = useState('')
-
-  const [timelineEnabled, setTimelineEnabled] = useState(false)
-  const [timelineContent, setTimelineContent] = useState('')
-
-  const [crewEnabled, setCrewEnabled] = useState(false)
-  const [crewContent, setCrewContent] = useState('')
-
-  const [custom1Enabled, setCustom1Enabled] = useState(false)
-  const [custom1Title, setCustom1Title] = useState('')
-  const [custom1Content, setCustom1Content] = useState('')
-
-  const [custom2Enabled, setCustom2Enabled] = useState(false)
-  const [custom2Title, setCustom2Title] = useState('')
-  const [custom2Content, setCustom2Content] = useState('')
-
-  const [custom3Enabled, setCustom3Enabled] = useState(false)
-  const [custom3Title, setCustom3Title] = useState('')
-  const [custom3Content, setCustom3Content] = useState('')
-
-  // Media state for sections
-  const [flowBeats, setFlowBeats] = useState<FlowBeat[]>([])
-  const [companionDocMediaId, setCompanionDocMediaId] = useState<string | null>(null)
-  const [locationsMediaIds, setLocationsMediaIds] = useState<string[]>([])
-  const [artDirectionMediaIds, setArtDirectionMediaIds] = useState<string[]>([])
-  const [costumesMediaIds, setCostumesMediaIds] = useState<string[]>([])
-  const [makeupMediaIds, setMakeupMediaIds] = useState<string[]>([])
-  const [propsMediaIds, setPropsMediaIds] = useState<string[]>([])
-  const [vehiclesMediaIds, setVehiclesMediaIds] = useState<string[]>([])
-  const [stuntsMediaIds, setStuntsMediaIds] = useState<string[]>([])
-  const [cameraMediaIds, setCameraMediaIds] = useState<string[]>([])
-  const [soundMediaIds, setSoundMediaIds] = useState<string[]>([])
+  // Optional sections — single data-driven map
+  const [sections, setSections] = useState<Record<string, OptionalSectionState>>(() => {
+    const initial: Record<string, OptionalSectionState> = {}
+    for (const key of ALL_TOGGLEABLE_KEYS) {
+      initial[key] = defaultSectionState()
+    }
+    return initial
+  })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const budgetOptions = [
-    { value: 'under-5k', label: 'Under $5K' },
-    { value: '5k-50k', label: '$5K–$50K' },
-    { value: '50k-250k', label: '$50K–$250K' },
-    { value: '250k-1m', label: '$250K–$1M' },
-    { value: '1m-plus', label: '$1M+' },
-  ]
+  // Share link state
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [sharingLoading, setSharingLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
-  const statusOptions = [
-    { value: 'development', label: 'Development' },
-    { value: 'production', label: 'Production' },
-    { value: 'completed', label: 'Completed' },
-  ]
+  // Helper to update a single section
+  const updateSection = (key: string, update: Partial<OptionalSectionState>) => {
+    setSections((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], ...update },
+    }))
+  }
 
-  // Fetch pitch on load
+  // Enabled optional keys in definition order
+  const enabledOptionalKeys = useMemo(() => {
+    return ALL_TOGGLEABLE_KEYS.filter((key) => sections[key]?.enabled)
+  }, [sections])
+
+  const enabledKeysSet = useMemo(() => new Set(enabledOptionalKeys), [enabledOptionalKeys])
+
+  // Custom section labels for sidebar
+  const customSectionLabels = useMemo(() => {
+    const labels: Record<string, string> = {}
+    for (const key of CUSTOM_SECTION_KEYS) {
+      if (sections[key]?.title) {
+        labels[key] = sections[key].title!
+      }
+    }
+    return labels
+  }, [sections])
+
+  // Build sidebar sections
+  const requiredSidebarSections: SidebarSection[] = REQUIRED_SECTIONS.map((s) => ({
+    id: s.key,
+    label: s.label,
+    completed: isRequiredFieldFilled(s.key),
+  }))
+
+  const optionalSidebarSections: SidebarSection[] = enabledOptionalKeys.map((key) => {
+    const def = OPTIONAL_SECTIONS.find((d) => d.key === key)
+    const customIdx = CUSTOM_SECTION_KEYS.indexOf(key as typeof CUSTOM_SECTION_KEYS[number])
+    const label = def
+      ? def.label
+      : sections[key]?.title || `Custom Section ${customIdx + 1}`
+    return {
+      id: key,
+      label,
+      completed: !!(sections[key]?.content?.trim() || sections[key]?.mediaIds?.length || sections[key]?.beats?.length || sections[key]?.mediaId),
+    }
+  })
+
+  function isRequiredFieldFilled(key: RequiredSectionKey): boolean {
+    switch (key) {
+      case 'logline': return !!logline.trim()
+      case 'synopsis': return !!synopsis.trim()
+      case 'genre': return !!genre.trim()
+      case 'vision': return !!vision.trim()
+      case 'cast': return !!castAndCharacters.trim()
+      case 'budget': return !!budgetRange
+      case 'status': return !!pitchStatus
+      case 'team': return !!team.trim()
+    }
+  }
+
+  // Toggle a section on/off
+  const handleToggleSection = (key: string) => {
+    const current = sections[key]
+    if (current?.enabled) {
+      updateSection(key, { enabled: false })
+      // If the disabled section was active, go back to first required
+      if (activeSection === key) {
+        setActiveSection('logline')
+      }
+    } else {
+      updateSection(key, { enabled: true })
+    }
+  }
+
+  // ─── Fetch pitch on load ───
   useEffect(() => {
     const fetchPitch = async () => {
       const supabase = createClient()
 
-      // Fetch pitch
       const { data: pitch, error: pitchError } = await supabase
         .from('pitches')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', pitchId)
         .single()
 
       if (pitchError || !pitch) {
@@ -127,11 +201,10 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
         return
       }
 
-      // Fetch sections
-      const { data: sections } = await supabase
+      const { data: fetchedSections } = await supabase
         .from('pitch_sections')
         .select('*')
-        .eq('pitch_id', params.id)
+        .eq('pitch_id', pitchId)
 
       // Populate required fields
       setLogline(pitch.logline)
@@ -140,133 +213,96 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       setVision(pitch.vision)
       setCastAndCharacters(pitch.cast_and_characters)
       setBudgetRange(pitch.budget_range)
-      setStatus(pitch.status)
+      setPitchStatus(pitch.status)
       setTeam(pitch.team)
 
-      // Populate optional sections
-      if (sections) {
-        sections.forEach((section: PitchSection) => {
-          const content = section.data.content || ''
-          const title = section.data.title || ''
-
-          switch (section.section_name) {
-            case 'flow':
-              setFlowEnabled(true)
-              setFlowContent(content)
-              if (section.data.beats) {
-                setFlowBeats(section.data.beats)
-              }
-              break
-            case 'script_documents':
-              setCompanionDocsEnabled(true)
-              setCompanionDocsContent(content)
-              if (section.data.mediaId) {
-                setCompanionDocMediaId(section.data.mediaId)
-              }
-              break
-            case 'locations':
-              setLocationsEnabled(true)
-              setLocationsContent(content)
-              if (section.data.mediaIds) {
-                setLocationsMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'art_direction':
-              setArtDirectionEnabled(true)
-              setArtDirectionContent(content)
-              if (section.data.mediaIds) {
-                setArtDirectionMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'costume':
-              setCostumesEnabled(true)
-              setCostumesContent(content)
-              if (section.data.mediaIds) {
-                setCostumesMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'makeup_hair':
-              setMakeupEnabled(true)
-              setMakeupContent(content)
-              if (section.data.mediaIds) {
-                setMakeupMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'props':
-              setPropsEnabled(true)
-              setPropsContent(content)
-              if (section.data.mediaIds) {
-                setPropsMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'vehicles_animals':
-              setVehiclesEnabled(true)
-              setVehiclesContent(content)
-              if (section.data.mediaIds) {
-                setVehiclesMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'stunts_sfx':
-              setStuntsEnabled(true)
-              setStuntsContent(content)
-              if (section.data.mediaIds) {
-                setStuntsMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'camera':
-              setCameraEnabled(true)
-              setCameraContent(content)
-              if (section.data.mediaIds) {
-                setCameraMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'sound_design':
-              setSoundEnabled(true)
-              setSoundContent(content)
-              if (section.data.mediaIds) {
-                setSoundMediaIds(section.data.mediaIds)
-              }
-              break
-            case 'setting_world':
-              setWorldBuildingEnabled(true)
-              setWorldBuildingContent(content)
-              break
-            case 'schedule':
-              setTimelineEnabled(true)
-              setTimelineContent(content)
-              break
-            case 'crew':
-              setCrewEnabled(true)
-              setCrewContent(content)
-              break
-            case 'custom_1':
-              setCustom1Enabled(true)
-              setCustom1Title(title)
-              setCustom1Content(content)
-              break
-            case 'custom_2':
-              setCustom2Enabled(true)
-              setCustom2Title(title)
-              setCustom2Content(content)
-              break
-            case 'custom_3':
-              setCustom3Enabled(true)
-              setCustom3Title(title)
-              setCustom3Content(content)
-              break
-          }
+      // Populate optional sections from DB
+      if (fetchedSections) {
+        setSections((prev) => {
+          const next = { ...prev }
+          fetchedSections.forEach((section: PitchSection) => {
+            const key = section.section_name
+            if (!(key in next)) {
+              next[key] = defaultSectionState()
+            }
+            next[key] = {
+              ...next[key],
+              enabled: true,
+              content: section.data.content || '',
+              mediaIds: section.data.mediaIds || [],
+              videoUrl: section.data.videoUrl || '',
+              title: section.data.title,
+              beats: section.data.beats,
+              mediaId: section.data.mediaId,
+            }
+          })
+          return next
         })
       }
     }
 
     fetchPitch()
-  }, [params.id, router])
+  }, [pitchId, router])
 
+  // ─── Share link ───
+  const fetchShareLink = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/share`)
+      const data = await res.json()
+      if (data.shareLink) {
+        setShareUrl(`${window.location.origin}/p/${pitchId}`)
+      } else {
+        setShareUrl(null)
+      }
+    } catch {
+      // Silently fail — share UI just shows "not shared"
+    }
+  }, [pitchId])
+
+  useEffect(() => {
+    fetchShareLink()
+  }, [fetchShareLink])
+
+  const handleCreateShareLink = async () => {
+    setSharingLoading(true)
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/share`, { method: 'POST' })
+      if (res.ok) {
+        setShareUrl(`${window.location.origin}/p/${pitchId}`)
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, share: 'Failed to create share link' }))
+    } finally {
+      setSharingLoading(false)
+    }
+  }
+
+  const handleRevokeShareLink = async () => {
+    setSharingLoading(true)
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/share`, { method: 'DELETE' })
+      if (res.ok) {
+        setShareUrl(null)
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, share: 'Failed to revoke share link' }))
+    } finally {
+      setSharingLoading(false)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+
+  // ─── Submit ───
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setErrors({})
 
-    // Client validation (8 required fields)
     const newErrors: Record<string, string> = {}
     if (!logline.trim()) newErrors.logline = 'Logline is required'
     if (logline.length > 500) newErrors.logline = 'Max 500 characters'
@@ -275,11 +311,19 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
     if (!vision.trim()) newErrors.vision = 'Vision is required'
     if (!castAndCharacters.trim()) newErrors.castAndCharacters = 'Cast & Characters is required'
     if (!budgetRange) newErrors.budgetRange = 'Budget range is required'
-    if (!status) newErrors.status = 'Status is required'
+    if (!pitchStatus) newErrors.status = 'Status is required'
     if (!team.trim()) newErrors.team = 'Team is required'
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
+      // Navigate to the first section with an error
+      const errorKeys = Object.keys(newErrors)
+      const firstErrorSection = REQUIRED_SECTIONS.find((s) => {
+        if (s.key === 'cast' && errorKeys.includes('castAndCharacters')) return true
+        if (s.key === 'budget' && errorKeys.includes('budgetRange')) return true
+        return errorKeys.includes(s.key)
+      })
+      if (firstErrorSection) setActiveSection(firstErrorSection.key)
       return
     }
 
@@ -288,7 +332,6 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
     try {
       const supabase = createClient()
 
-      // Update pitch (8 required fields)
       const { error: pitchError } = await supabase
         .from('pitches')
         .update({
@@ -298,11 +341,11 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
           vision,
           cast_and_characters: castAndCharacters,
           budget_range: budgetRange,
-          status,
+          status: pitchStatus,
           team,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', params.id)
+        .eq('id', pitchId)
 
       if (pitchError) throw pitchError
 
@@ -310,196 +353,43 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       await supabase
         .from('pitch_sections')
         .delete()
-        .eq('pitch_id', params.id)
+        .eq('pitch_id', pitchId)
 
-      // Insert enabled optional sections
-      const sectionsToInsert = []
+      // Build insert array from sections map
+      const sectionsToInsert: {
+        pitch_id: string
+        section_name: string
+        data: Record<string, unknown>
+        order_index: number
+      }[] = []
 
-      if (flowEnabled && (flowContent.trim() || flowBeats.length > 0)) {
+      enabledOptionalKeys.forEach((key, index) => {
+        const s = sections[key]
+        if (!s) return
+
+        const hasContent = s.content?.trim()
+        const hasMedia = s.mediaIds?.length > 0
+        const hasBeats = s.beats && s.beats.length > 0
+        const hasDoc = !!s.mediaId
+        const hasVideo = !!s.videoUrl?.trim()
+
+        if (!hasContent && !hasMedia && !hasBeats && !hasDoc && !hasVideo) return
+
+        const data: Record<string, unknown> = {}
+        if (hasContent) data.content = s.content
+        if (hasMedia) data.mediaIds = s.mediaIds
+        if (hasBeats) data.beats = s.beats
+        if (hasDoc) data.mediaId = s.mediaId
+        if (hasVideo) data.videoUrl = s.videoUrl
+        if (s.title) data.title = s.title
+
         sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'flow',
-          data: {
-            content: flowContent,
-            beats: flowBeats.length > 0 ? flowBeats : undefined,
-          },
-          order_index: 1
+          pitch_id: pitchId,
+          section_name: key,
+          data,
+          order_index: index + 1,
         })
-      }
-
-      if (companionDocsEnabled && (companionDocsContent.trim() || companionDocMediaId)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'script_documents',
-          data: {
-            content: companionDocsContent,
-            mediaId: companionDocMediaId || undefined,
-          },
-          order_index: 2
-        })
-      }
-
-      if (locationsEnabled && (locationsContent.trim() || locationsMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'locations',
-          data: {
-            content: locationsContent,
-            mediaIds: locationsMediaIds.length > 0 ? locationsMediaIds : undefined,
-          },
-          order_index: 3
-        })
-      }
-
-      if (artDirectionEnabled && (artDirectionContent.trim() || artDirectionMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'art_direction',
-          data: {
-            content: artDirectionContent,
-            mediaIds: artDirectionMediaIds.length > 0 ? artDirectionMediaIds : undefined,
-          },
-          order_index: 4
-        })
-      }
-
-      if (costumesEnabled && (costumesContent.trim() || costumesMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'costume',
-          data: {
-            content: costumesContent,
-            mediaIds: costumesMediaIds.length > 0 ? costumesMediaIds : undefined,
-          },
-          order_index: 5
-        })
-      }
-
-      if (makeupEnabled && (makeupContent.trim() || makeupMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'makeup_hair',
-          data: {
-            content: makeupContent,
-            mediaIds: makeupMediaIds.length > 0 ? makeupMediaIds : undefined,
-          },
-          order_index: 6
-        })
-      }
-
-      if (propsEnabled && (propsContent.trim() || propsMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'props',
-          data: {
-            content: propsContent,
-            mediaIds: propsMediaIds.length > 0 ? propsMediaIds : undefined,
-          },
-          order_index: 7
-        })
-      }
-
-      if (vehiclesEnabled && (vehiclesContent.trim() || vehiclesMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'vehicles_animals',
-          data: {
-            content: vehiclesContent,
-            mediaIds: vehiclesMediaIds.length > 0 ? vehiclesMediaIds : undefined,
-          },
-          order_index: 8
-        })
-      }
-
-      if (stuntsEnabled && (stuntsContent.trim() || stuntsMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'stunts_sfx',
-          data: {
-            content: stuntsContent,
-            mediaIds: stuntsMediaIds.length > 0 ? stuntsMediaIds : undefined,
-          },
-          order_index: 9
-        })
-      }
-
-      if (cameraEnabled && (cameraContent.trim() || cameraMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'camera',
-          data: {
-            content: cameraContent,
-            mediaIds: cameraMediaIds.length > 0 ? cameraMediaIds : undefined,
-          },
-          order_index: 10
-        })
-      }
-
-      if (soundEnabled && (soundContent.trim() || soundMediaIds.length > 0)) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'sound_design',
-          data: {
-            content: soundContent,
-            mediaIds: soundMediaIds.length > 0 ? soundMediaIds : undefined,
-          },
-          order_index: 11
-        })
-      }
-
-      if (worldBuildingEnabled && worldBuildingContent.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'setting_world',
-          data: { content: worldBuildingContent },
-          order_index: 12
-        })
-      }
-
-      if (timelineEnabled && timelineContent.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'schedule',
-          data: { content: timelineContent },
-          order_index: 13
-        })
-      }
-
-      if (crewEnabled && crewContent.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'crew',
-          data: { content: crewContent },
-          order_index: 14
-        })
-      }
-
-      if (custom1Enabled && custom1Content.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'custom_1',
-          data: { content: custom1Content, title: custom1Title },
-          order_index: 15
-        })
-      }
-
-      if (custom2Enabled && custom2Content.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'custom_2',
-          data: { content: custom2Content, title: custom2Title },
-          order_index: 16
-        })
-      }
-
-      if (custom3Enabled && custom3Content.trim()) {
-        sectionsToInsert.push({
-          pitch_id: params.id,
-          section_name: 'custom_3',
-          data: { content: custom3Content, title: custom3Title },
-          order_index: 17
-        })
-      }
+      })
 
       if (sectionsToInsert.length > 0) {
         const { error: sectionsError } = await supabase
@@ -519,6 +409,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
     }
   }
 
+  // ─── Delete ───
   const handleDelete = async () => {
     setDeleting(true)
 
@@ -527,7 +418,7 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
       await supabase
         .from('pitches')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', params.id)
+        .eq('id', pitchId)
 
       router.push('/dashboard')
       router.refresh()
@@ -540,605 +431,271 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
     }
   }
 
+  // ─── Determine what to render based on active section ───
+  const isRequiredSection = REQUIRED_SECTIONS.some((s) => s.key === activeSection)
+  const optionalDef = OPTIONAL_SECTIONS.find((d) => d.key === activeSection)
+  const isCustomSection = CUSTOM_SECTION_KEYS.includes(activeSection as typeof CUSTOM_SECTION_KEYS[number])
+  const currentSectionState = sections[activeSection]
+
+  // Compute section number for A24 transition
+  const activeSectionNumber = (() => {
+    const reqIdx = REQUIRED_SECTIONS.findIndex((s) => s.key === activeSection)
+    if (reqIdx !== -1) return String(reqIdx + 1).padStart(2, '0')
+    const optIdx = enabledOptionalKeys.indexOf(activeSection)
+    if (optIdx !== -1) return String(REQUIRED_SECTIONS.length + optIdx + 1).padStart(2, '0')
+    return '01'
+  })()
+
   return (
     <>
-      <div className="min-h-screen bg-background">
-        <div className="max-w-[800px] mx-auto px-[24px] py-[40px]">
-          <div className="bg-white border border-border rounded-[4px] p-[32px]">
-            <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[32px]">
-              Edit Project
-            </h1>
+      <div className="min-h-screen bg-background flex">
+        {/* ─── Sidebar ─── */}
+        <Sidebar
+          sections={requiredSidebarSections}
+          optionalSections={optionalSidebarSections}
+          activeId={activeSection}
+          onSelect={setActiveSection}
+          allOptionalDefs={OPTIONAL_SECTIONS}
+          enabledKeys={enabledKeysSet}
+          onToggleSection={handleToggleSection}
+          customSectionLabels={customSectionLabels}
+          className="fixed left-0 top-0 h-screen z-10"
+        />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-[24px]">
-              {/* Core Fields */}
-              <div className="flex flex-col gap-[16px]">
-                <TextInput
-                  label="Logline"
-                  value={logline}
-                  onChange={(e) => setLogline(e.target.value)}
-                  error={errors.logline}
-                  helpText="One-sentence pitch (max 500 characters)"
-                  required
-                />
+        {/* ─── Main content ─── */}
+        <main className="ml-[240px] flex-1">
+          <div className="max-w-[800px] mx-auto px-[40px] py-[40px]">
+            <div className="bg-white border border-border rounded-[4px] p-[32px]">
+              <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[32px]">
+                Edit Project
+              </h1>
 
-                <Textarea
-                  label="Synopsis"
-                  value={synopsis}
-                  onChange={(e) => setSynopsis(e.target.value)}
-                  error={errors.synopsis}
-                  helpText="2–5 paragraphs"
-                  required
-                />
-              </div>
+              <form onSubmit={handleSubmit}>
+                <SectionTransition sectionNumber={activeSectionNumber} sectionKey={activeSection}>
+                {/* ═══ Required sections ═══ */}
 
-              {/* Format Fields */}
-              <div className="flex flex-col gap-[16px]">
-                <TextInput
-                  label="Genre & Format"
-                  value={genre}
-                  onChange={(e) => setGenre(e.target.value)}
-                  error={errors.genre}
-                  helpText="e.g., Drama / Feature Film"
-                  required
-                />
-
-                <SelectInput
-                  label="Budget Range"
-                  value={budgetRange}
-                  onChange={(e) => setBudgetRange(e.target.value as BudgetRange)}
-                  options={budgetOptions}
-                  error={errors.budgetRange}
-                  required
-                />
-
-                <SelectInput
-                  label="Status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as PitchStatus)}
-                  options={statusOptions}
-                  error={errors.status}
-                  required
-                />
-              </div>
-
-              {/* Creative Fields */}
-              <div className="flex flex-col gap-[16px]">
-                <Textarea
-                  label="Director's Vision"
-                  value={vision}
-                  onChange={(e) => setVision(e.target.value)}
-                  error={errors.vision}
-                  helpText="Why this project, why you"
-                  required
-                />
-              </div>
-
-              {/* People Fields */}
-              <div className="flex flex-col gap-[16px]">
-                <Textarea
-                  label="Cast & Characters"
-                  value={castAndCharacters}
-                  onChange={(e) => setCastAndCharacters(e.target.value)}
-                  error={errors.castAndCharacters}
-                  helpText="Key characters and roles"
-                  required
-                />
-
-                <Textarea
-                  label="Key Team"
-                  value={team}
-                  onChange={(e) => setTeam(e.target.value)}
-                  error={errors.team}
-                  helpText="Director, producer, writer, etc."
-                  required
-                />
-              </div>
-
-              {/* Optional Sections */}
-              <div className="border-t border-border pt-[24px] mt-[8px]">
-                <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
-                  Optional Sections
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-                  {/* Flow */}
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={flowEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setFlowEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Flow</span>
-                    </label>
-                    {flowEnabled && (
-                      <Textarea
-                        value={flowContent}
-                        onChange={(e) => setFlowContent(e.target.value)}
-                        helpText="Beat descriptions, character arc labels, captions"
-                        className="mt-[8px]"
-                      />
-                    )}
+                {activeSection === 'logline' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <TextInput
+                      label="Logline"
+                      value={logline}
+                      onChange={(e) => setLogline(e.target.value)}
+                      error={errors.logline}
+                      helpText="One-sentence pitch (max 500 characters)"
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Script & Documents */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={companionDocsEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCompanionDocsEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Script & Documents</span>
-                    </label>
-                    {companionDocsEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={companionDocsContent}
-                          onChange={(e) => setCompanionDocsContent(e.target.value)}
-                          helpText="Script, treatment, lookbook, design bible"
-                        />
-                        <PDFUpload
-                          pitchId={params.id}
-                          sectionName="companion_documents"
-                          existingMedia={null}
-                          onUploadComplete={(mediaId) => setCompanionDocMediaId(mediaId)}
-                          onDeleteComplete={() => setCompanionDocMediaId(null)}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'synopsis' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <Textarea
+                      label="Synopsis"
+                      value={synopsis}
+                      onChange={(e) => setSynopsis(e.target.value)}
+                      error={errors.synopsis}
+                      helpText="2–5 paragraphs"
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Locations */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={locationsEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setLocationsEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Locations</span>
-                    </label>
-                    {locationsEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={locationsContent}
-                          onChange={(e) => setLocationsContent(e.target.value)}
-                          helpText="Shooting locations, requirements, permit notes"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="locations"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setLocationsMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setLocationsMediaIds(locationsMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'genre' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <TextInput
+                      label="Genre & Format"
+                      value={genre}
+                      onChange={(e) => setGenre(e.target.value)}
+                      error={errors.genre}
+                      helpText="e.g., Drama / Feature Film"
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Art Direction */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={artDirectionEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setArtDirectionEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Art Direction</span>
-                    </label>
-                    {artDirectionEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={artDirectionContent}
-                          onChange={(e) => setArtDirectionContent(e.target.value)}
-                          helpText="Visual style, color palette, design references"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="art_direction"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setArtDirectionMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setArtDirectionMediaIds(artDirectionMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'vision' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <Textarea
+                      label="Director's Vision"
+                      value={vision}
+                      onChange={(e) => setVision(e.target.value)}
+                      error={errors.vision}
+                      helpText="Why this project, why you"
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Costumes */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={costumesEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCostumesEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Costume</span>
-                    </label>
-                    {costumesEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={costumesContent}
-                          onChange={(e) => setCostumesContent(e.target.value)}
-                          helpText="Period/style, key changes, requirements"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="costumes"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setCostumesMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setCostumesMediaIds(costumesMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'cast' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <Textarea
+                      label="Cast & Characters"
+                      value={castAndCharacters}
+                      onChange={(e) => setCastAndCharacters(e.target.value)}
+                      error={errors.castAndCharacters}
+                      helpText="Key characters and roles"
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Makeup */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={makeupEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setMakeupEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Makeup & Hair</span>
-                    </label>
-                    {makeupEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={makeupContent}
-                          onChange={(e) => setMakeupContent(e.target.value)}
-                          helpText="Special requirements, prosthetics, period guidance"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="makeup"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setMakeupMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setMakeupMediaIds(makeupMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'budget' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <SelectInput
+                      label="Budget Range"
+                      value={budgetRange}
+                      onChange={(e) => setBudgetRange(e.target.value as BudgetRange)}
+                      options={budgetOptions}
+                      error={errors.budgetRange}
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Props */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={propsEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setPropsEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Props</span>
-                    </label>
-                    {propsEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={propsContent}
-                          onChange={(e) => setPropsContent(e.target.value)}
-                          helpText="Key props, script-essential vs. decorative"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="props"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setPropsMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setPropsMediaIds(propsMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'status' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <SelectInput
+                      label="Production Status"
+                      value={pitchStatus}
+                      onChange={(e) => setPitchStatus(e.target.value as PitchStatus)}
+                      options={statusOptions}
+                      error={errors.status}
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Vehicles */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={vehiclesEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setVehiclesEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Vehicles & Animals</span>
-                    </label>
-                    {vehiclesEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={vehiclesContent}
-                          onChange={(e) => setVehiclesContent(e.target.value)}
-                          helpText="Picture vehicles, animals, handlers"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="vehicles"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setVehiclesMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setVehiclesMediaIds(vehiclesMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {activeSection === 'team' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <Textarea
+                      label="Key Team"
+                      value={team}
+                      onChange={(e) => setTeam(e.target.value)}
+                      error={errors.team}
+                      helpText="Director, producer, writer, etc."
+                      required
+                    />
                   </div>
+                )}
 
-                  {/* Stunts */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={stuntsEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setStuntsEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Stunts & SFX</span>
-                    </label>
-                    {stuntsEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={stuntsContent}
-                          onChange={(e) => setStuntsContent(e.target.value)}
-                          helpText="Action sequences, stunt coordination, practical and visual effects"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="stunts"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setStuntsMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setStuntsMediaIds(stuntsMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
-                  </div>
+                {/* ═══ Optional sections (from OPTIONAL_SECTIONS config) ═══ */}
+                {optionalDef && currentSectionState?.enabled && (
+                  <OptionalSectionContent
+                    sectionKey={optionalDef.key}
+                    def={optionalDef}
+                    state={currentSectionState}
+                    pitchId={pitchId}
+                    onUpdate={(update) => updateSection(optionalDef.key, update)}
+                  />
+                )}
 
-                  {/* Camera */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={cameraEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCameraEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Camera</span>
-                    </label>
-                    {cameraEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={cameraContent}
-                          onChange={(e) => setCameraContent(e.target.value)}
-                          helpText="Visual style, lens choices, lighting mood"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="camera"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setCameraMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setCameraMediaIds(cameraMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
+                {/* ═══ Custom sections ═══ */}
+                {isCustomSection && currentSectionState?.enabled && (
+                  <div className="flex flex-col gap-[16px]">
+                    <TextInput
+                      label="Section Title"
+                      value={currentSectionState.title || ''}
+                      onChange={(e) => updateSection(activeSection, { title: e.target.value })}
+                      placeholder="Name your section"
+                    />
+                    <Textarea
+                      label="Content"
+                      value={currentSectionState.content}
+                      onChange={(e) => updateSection(activeSection, { content: e.target.value })}
+                    />
+                    <TextInput
+                      label="Video / Reference Link"
+                      value={currentSectionState.videoUrl}
+                      onChange={(e) => updateSection(activeSection, { videoUrl: e.target.value })}
+                      placeholder="https://..."
+                    />
                   </div>
+                )}
 
-                  {/* Sound */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={soundEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setSoundEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Sound Design</span>
-                    </label>
-                    {soundEnabled && (
-                      <div className="mt-[8px] flex flex-col gap-[12px]">
-                        <Textarea
-                          value={soundContent}
-                          onChange={(e) => setSoundContent(e.target.value)}
-                          helpText="Ambience, foley, voice-over"
-                        />
-                        <ImageUpload
-                          pitchId={params.id}
-                          sectionName="sound"
-                          maxFiles={10}
-                          existingMedia={[]}
-                          onUploadComplete={(mediaIds) => setSoundMediaIds(mediaIds)}
-                          onDeleteComplete={(mediaId) => setSoundMediaIds(soundMediaIds.filter(id => id !== mediaId))}
-                        />
-                      </div>
-                    )}
-                  </div>
+                </SectionTransition>
 
-                  {/* World Building */}
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={worldBuildingEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setWorldBuildingEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Setting & World</span>
-                    </label>
-                    {worldBuildingEnabled && (
-                      <Textarea
-                        value={worldBuildingContent}
-                        onChange={(e) => setWorldBuildingContent(e.target.value)}
-                        helpText="World rules, environment, cultural details, period specifics"
-                        className="mt-[8px]"
-                      />
-                    )}
-                  </div>
+                {/* Error message */}
+                {errors.general && (
+                  <p className="text-[14px] leading-[20px] text-error mt-[16px]">{errors.general}</p>
+                )}
 
-                  {/* Timeline */}
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={timelineEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setTimelineEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Schedule</span>
-                    </label>
-                    {timelineEnabled && (
-                      <Textarea
-                        value={timelineContent}
-                        onChange={(e) => setTimelineContent(e.target.value)}
-                        helpText="Shooting days, production phases, dates"
-                        className="mt-[8px]"
-                      />
-                    )}
-                  </div>
-
-                  {/* Crew Expanded */}
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={crewEnabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCrewEnabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Crew</span>
-                    </label>
-                    {crewEnabled && (
-                      <Textarea
-                        value={crewContent}
-                        onChange={(e) => setCrewContent(e.target.value)}
-                        helpText="Department heads, crew size, key hires"
-                        className="mt-[8px]"
-                      />
-                    )}
-                  </div>
+                {/* Actions */}
+                <div className="flex gap-[12px] pt-[24px] mt-[24px] border-t border-border">
+                  <Button variant="primary" type="submit" disabled={loading}>
+                    {loading ? 'Saving...' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => router.push('/dashboard')}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
                 </div>
 
-                {/* Custom Sections */}
-                <div className="mt-[16px] flex flex-col gap-[16px]">
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={custom1Enabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCustom1Enabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Custom Section 1</span>
-                    </label>
-                    {custom1Enabled && (
-                      <div className="mt-[8px] flex flex-col gap-[8px]">
-                        <TextInput
-                          value={custom1Title}
-                          onChange={(e) => setCustom1Title(e.target.value)}
-                          placeholder="Section title"
+                {/* Share */}
+                <div className="border-t border-border pt-[24px] mt-[16px]">
+                  <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
+                    Share
+                  </h2>
+                  {shareUrl ? (
+                    <div className="flex flex-col gap-[12px]">
+                      <div className="flex items-center gap-[8px]">
+                        <input
+                          type="text"
+                          readOnly
+                          value={shareUrl}
+                          className="flex-1 bg-surface border border-border rounded-[4px] px-[12px] py-[8px] font-[var(--font-mono)] text-[13px] text-text-secondary"
                         />
-                        <Textarea
-                          value={custom1Content}
-                          onChange={(e) => setCustom1Content(e.target.value)}
-                        />
+                        <Button
+                          variant="secondary"
+                          type="button"
+                          onClick={handleCopyLink}
+                          disabled={sharingLoading}
+                        >
+                          {copied ? 'Copied' : 'Copy link'}
+                        </Button>
                       </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={custom2Enabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCustom2Enabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Custom Section 2</span>
-                    </label>
-                    {custom2Enabled && (
-                      <div className="mt-[8px] flex flex-col gap-[8px]">
-                        <TextInput
-                          value={custom2Title}
-                          onChange={(e) => setCustom2Title(e.target.value)}
-                          placeholder="Section title"
-                        />
-                        <Textarea
-                          value={custom2Content}
-                          onChange={(e) => setCustom2Content(e.target.value)}
-                        />
+                      <div>
+                        <Button
+                          variant="tertiary"
+                          type="button"
+                          onClick={handleRevokeShareLink}
+                          disabled={sharingLoading}
+                        >
+                          {sharingLoading ? 'Revoking...' : 'Revoke link'}
+                        </Button>
                       </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="flex items-center gap-[8px] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={custom3Enabled}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setCustom3Enabled(e.target.checked)}
-                        className="w-[16px] h-[16px]"
-                      />
-                      <span className="text-[14px] leading-[20px] text-text-primary">Custom Section 3</span>
-                    </label>
-                    {custom3Enabled && (
-                      <div className="mt-[8px] flex flex-col gap-[8px]">
-                        <TextInput
-                          value={custom3Title}
-                          onChange={(e) => setCustom3Title(e.target.value)}
-                          placeholder="Section title"
-                        />
-                        <Textarea
-                          value={custom3Content}
-                          onChange={(e) => setCustom3Content(e.target.value)}
-                        />
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={handleCreateShareLink}
+                      disabled={sharingLoading}
+                    >
+                      {sharingLoading ? 'Creating...' : 'Share project'}
+                    </Button>
+                  )}
                 </div>
-              </div>
 
-              {/* Error message */}
-              {errors.general && (
-                <p className="text-[14px] leading-[20px] text-error">{errors.general}</p>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-[12px] pt-[8px]">
-                <Button variant="primary" type="submit" disabled={loading}>
-                  {loading ? 'Saving...' : 'Save'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => router.push('/dashboard')}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-              </div>
-
-              {/* Delete Section */}
-              <div className="border-t border-border pt-[24px] mt-[16px]">
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => setDeleteModalOpen(true)}
-                  disabled={loading}
-                  className="text-error hover:bg-error/10"
-                >
-                  Delete project
-                </Button>
-              </div>
-            </form>
+                {/* Delete */}
+                <div className="border-t border-border pt-[24px] mt-[16px]">
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => setDeleteModalOpen(true)}
+                    disabled={loading}
+                    className="text-error hover:bg-error/10"
+                  >
+                    Delete project
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -1169,5 +726,75 @@ export default function EditPitchPage({ params }: { params: { id: string } }) {
         </div>
       </Modal>
     </>
+  )
+}
+
+/* ─── Optional section content renderer ─── */
+function OptionalSectionContent({
+  sectionKey,
+  def,
+  state,
+  pitchId,
+  onUpdate,
+}: {
+  sectionKey: string
+  def: { key: string; label: string; description: string; hasImages: boolean; hasPDF: boolean }
+  state: OptionalSectionState
+  pitchId: string
+  onUpdate: (update: Partial<OptionalSectionState>) => void
+}) {
+  return (
+    <div className="flex flex-col gap-[16px]">
+      <p className="text-[13px] leading-[18px] text-text-secondary">{def.description}</p>
+
+      {/* Flow section has beats instead of plain content */}
+      {sectionKey === 'flow' ? (
+        <Textarea
+          label="Flow Notes"
+          value={state.content}
+          onChange={(e) => onUpdate({ content: e.target.value })}
+          helpText="Beat descriptions, character arc labels, captions"
+        />
+      ) : (
+        <Textarea
+          label={def.label}
+          value={state.content}
+          onChange={(e) => onUpdate({ content: e.target.value })}
+        />
+      )}
+
+      {/* PDF upload for script_documents */}
+      {def.hasPDF && (
+        <PDFUpload
+          pitchId={pitchId}
+          sectionName="companion_documents"
+          existingMedia={null}
+          onUploadComplete={(mediaId) => onUpdate({ mediaId })}
+          onDeleteComplete={() => onUpdate({ mediaId: null })}
+        />
+      )}
+
+      {/* Image upload for sections that support it */}
+      {def.hasImages && (
+        <ImageUpload
+          pitchId={pitchId}
+          sectionName={sectionKey}
+          maxFiles={10}
+          existingMedia={[]}
+          onUploadComplete={(mediaIds) => onUpdate({ mediaIds })}
+          onDeleteComplete={(mediaId) =>
+            onUpdate({ mediaIds: state.mediaIds.filter((id) => id !== mediaId) })
+          }
+        />
+      )}
+
+      {/* Video / Reference Link — every optional section gets this */}
+      <TextInput
+        label="Video / Reference Link"
+        value={state.videoUrl}
+        onChange={(e) => onUpdate({ videoUrl: e.target.value })}
+        placeholder="https://..."
+      />
+    </div>
   )
 }

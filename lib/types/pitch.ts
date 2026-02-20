@@ -82,6 +82,7 @@ export interface PitchSection {
     beats?: FlowBeat[] // For flow section
     mediaIds?: string[] // For production sections
     mediaId?: string // For companion_documents (single PDF)
+    videoUrl?: string // Per-section video/reference link
   }
   order_index: number | null
   created_at: string
@@ -90,4 +91,14 @@ export interface PitchSection {
 
 export interface PitchSectionWithMedia extends PitchSection {
   media?: MediaRecord[]
+}
+
+export interface ShareLink {
+  id: string
+  pitch_id: string
+  visibility: 'public' | 'private' | 'invite-only'
+  allow_version_history: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
 }
