@@ -67,13 +67,14 @@ body {
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -256px;
   z-index: 9999;
   pointer-events: none;
   opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
+  animation: grain-drift 30s linear infinite;
 }
 
 /* ── Focus Styles ── */
@@ -146,23 +147,7 @@ body::before {
   animation: draw-check 300ms ease-out forwards;
 }
 
-/* ── Landing Page Animations ── */
-
-@keyframes reveal-up {
-  from {
-    clip-path: inset(100% 0 0 0);
-    transform: translateY(40px);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-    transform: translateY(0);
-  }
-}
-
-@keyframes line-draw {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
+/* ── Page Animations ── */
 
 @keyframes fade-up {
   from {
@@ -175,15 +160,41 @@ body::before {
   }
 }
 
-.animate-reveal-up {
-  animation: reveal-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-line-draw {
-  animation: line-draw 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transform-origin: left;
-}
-
 .animate-fade-up {
-  animation: fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ── Constant / Living Animations ── */
+
+/* Grain texture slow drift — analog film feel */
+@keyframes grain-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 256px 256px; }
+}
+
+/* Accent lines breathe in width */
+@keyframes line-breathe {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.4); }
+}
+
+/* Pop-colored accent slides across section divider */
+@keyframes line-slide {
+  0% { transform: translateX(-100%); width: 30%; }
+  50% { transform: translateX(200%); width: 30%; }
+  100% { transform: translateX(-100%); width: 30%; }
+}
+
+/* Numbers breathe — slow vertical oscillation */
+@keyframes number-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Auth page background text slow drift */
+@keyframes text-drift {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  33% { transform: translateX(8px) translateY(-4px); }
+  66% { transform: translateX(-4px) translateY(6px); }
+}
+

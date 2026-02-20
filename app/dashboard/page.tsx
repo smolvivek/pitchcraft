@@ -49,9 +49,9 @@ export default async function DashboardPage() {
           </div>
 
           {!pitches || pitches.length === 0 ? (
-            <div className="text-center py-[80px]">
+            <div className="py-[80px]">
               <p className="text-[16px] leading-[24px] text-text-secondary">
-                Nothing here. Time to fix that.
+                Nothing here yet. Create your first project.
               </p>
             </div>
           ) : (
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
                 <Link key={pitch.id} href={`/dashboard/pitches/${pitch.id}/edit`}>
                   <div
                     style={{
-                      animationDelay: `${i * 80}ms`,
+                      animationDelay: `${i * 150}ms`,
                     }}
                     className="animate-fade-up opacity-0 [animation-fill-mode:forwards]"
                   >

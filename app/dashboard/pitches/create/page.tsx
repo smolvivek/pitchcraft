@@ -9,10 +9,14 @@ import { BudgetSegments } from '@/components/ui/BudgetSegments'
 import { StatusRadio } from '@/components/ui/StatusRadio'
 import { CharacterCounter } from '@/components/ui/CharacterCounter'
 import { validateImageFile } from '@/lib/utils/fileValidation'
+import { SectionTransition } from '@/components/ui/SectionTransition'
+import { AITextAssist } from '@/components/ui/AITextAssist'
+import { AIImageGenerate } from '@/components/ui/AIImageGenerate'
+import { OPTIONAL_SECTIONS, CUSTOM_SECTION_KEYS } from '@/lib/sections'
 import type { BudgetRange, PitchStatus, CastMember, TeamMember } from '@/lib/types/pitch'
 
 /* ─── Types ─── */
-type SectionKey =
+type RequiredSectionKey =
   | 'project'
   | 'logline'
   | 'synopsis'
@@ -22,6 +26,8 @@ type SectionKey =
   | 'budget'
   | 'team'
 
+type SectionKey = RequiredSectionKey | string
+
 interface Section {
   key: SectionKey
   number: string
@@ -30,7 +36,7 @@ interface Section {
   required: boolean
 }
 
-const sections: Section[] = [
+const REQUIRED_SECTIONS: Section[] = [
   {
     key: 'project',
     number: '01',
@@ -87,6 +93,24 @@ const sections: Section[] = [
     description: "Director, producer, writer, and other key creative leads. Who's making this with you?",
     required: true,
   },
+]
+
+const ALL_SECTIONS: Section[] = [
+  ...REQUIRED_SECTIONS,
+  ...OPTIONAL_SECTIONS.map((def, i) => ({
+    key: def.key,
+    number: String(9 + i).padStart(2, '0'),
+    title: def.label,
+    description: def.description,
+    required: false,
+  })),
+  ...CUSTOM_SECTION_KEYS.map((key, i) => ({
+    key,
+    number: String(25 + i).padStart(2, '0'),
+    title: `Custom Section ${i + 1}`,
+    description: 'Your own section. Name it anything.',
+    required: false,
+  })),
 ]
 
 /* ─── Inline image drop zone (works without pitchId) ─── */
@@ -334,22 +358,44 @@ export default function CreatePitchPage() {
     { id: '1', name: '', role: '', bio: '' },
   ])
 
+  // ─── Optional sections content ───
+  const [optionalContent, setOptionalContent] = useState<Record<string, { content: string; videoUrl: string; title?: string }>>(
+    {}
+  )
+  const [optionalImages, setOptionalImages] = useState<Record<string, File[]>>({})
+
+  const updateOptionalContent = (key: string, field: string, value: string) => {
+    setOptionalContent((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], content: prev[key]?.content || '', videoUrl: prev[key]?.videoUrl || '', [field]: value },
+    }))
+  }
+
+  const [moreOpen, setMoreOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
   // ─── Helpers ───
-  const getSectionIndex = (key: SectionKey) => sections.findIndex((s) => s.key === key)
+  const getSectionIndex = (key: string) => ALL_SECTIONS.findIndex((s) => s.key === key)
   const getCurrentSectionIndex = () => getSectionIndex(currentSection)
+  const isRequiredSection = (key: string): key is RequiredSectionKey => REQUIRED_SECTIONS.some((s) => s.key === key)
+  const isOnOptionalSection = !isRequiredSection(currentSection)
+  const isLastSection = getCurrentSectionIndex() === ALL_SECTIONS.length - 1
+  const isFirstSection = getCurrentSectionIndex() === 0
 
   const goToSection = (key: SectionKey) => {
     setCurrentSection(key)
     setErrors({})
+    // Auto-expand "More" if navigating to an optional section
+    if (!REQUIRED_SECTIONS.some((s) => s.key === key)) {
+      setMoreOpen(true)
+    }
   }
 
   const goToNextSection = () => {
     const idx = getCurrentSectionIndex()
-    if (idx < sections.length - 1) {
-      setCurrentSection(sections[idx + 1].key)
+    if (idx < ALL_SECTIONS.length - 1) {
+      setCurrentSection(ALL_SECTIONS[idx + 1].key)
       setErrors({})
     }
   }
@@ -357,7 +403,7 @@ export default function CreatePitchPage() {
   const goToPreviousSection = () => {
     const idx = getCurrentSectionIndex()
     if (idx > 0) {
-      setCurrentSection(sections[idx - 1].key)
+      setCurrentSection(ALL_SECTIONS[idx - 1].key)
       setErrors({})
     }
   }
@@ -389,6 +435,14 @@ export default function CreatePitchPage() {
   }
 
   const getWordCount = (text: string) => text.trim().split(/\s+/).filter((w) => w.length > 0).length
+
+  // AI context shared across all AI assist components
+  const aiContext = {
+    projectName: projectName || undefined,
+    genre: genre || undefined,
+    format: format || undefined,
+    logline: logline || undefined,
+  }
 
   // ─── Validation ───
   const validateCurrentSection = (): boolean => {
@@ -433,7 +487,12 @@ export default function CreatePitchPage() {
   }
 
   const handleContinue = () => {
-    if (validateCurrentSection()) {
+    if (isRequiredSection(currentSection)) {
+      if (validateCurrentSection()) {
+        markSectionComplete(currentSection)
+        goToNextSection()
+      }
+    } else {
       markSectionComplete(currentSection)
       goToNextSection()
     }
@@ -521,6 +580,42 @@ export default function CreatePitchPage() {
       // Upload any pending files (poster, vision images)
       await uploadPendingFiles(pitch.id)
 
+      // Save optional sections (all sections beyond the 8 required)
+      const optionalSectionDefs = ALL_SECTIONS.filter((s) => !s.required)
+      const sectionsToInsert: { pitch_id: string; section_name: string; data: Record<string, unknown>; order_index: number }[] = []
+      optionalSectionDefs.forEach((def, index) => {
+        const content = optionalContent[def.key]
+        const images = optionalImages[def.key]
+        if (!content?.content?.trim() && !content?.videoUrl?.trim() && !images?.length) return
+
+        const data: Record<string, unknown> = {}
+        if (content?.content?.trim()) data.content = content.content
+        if (content?.videoUrl?.trim()) data.videoUrl = content.videoUrl
+        if (content?.title) data.title = content.title
+
+        sectionsToInsert.push({
+          pitch_id: pitch.id,
+          section_name: def.key,
+          data,
+          order_index: index + 1,
+        })
+
+        // Upload optional section images
+        if (images?.length) {
+          for (const file of images) {
+            const fd = new FormData()
+            fd.append('file', file)
+            fd.append('pitchId', pitch.id)
+            fd.append('sectionName', def.key)
+            fetch('/api/media/upload', { method: 'POST', body: fd })
+          }
+        }
+      })
+
+      if (sectionsToInsert.length > 0) {
+        await supabase.from('pitch_sections').insert(sectionsToInsert)
+      }
+
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
@@ -531,36 +626,29 @@ export default function CreatePitchPage() {
     }
   }
 
-  const currentSectionData = sections.find((s) => s.key === currentSection)!
-  const progress = `${completedSections.size}/8 COMPLETE`
+  // Current section data — unified lookup
+  const currentSectionData = ALL_SECTIONS.find((s) => s.key === currentSection)
+  const currentOptionalDef = OPTIONAL_SECTIONS.find((d) => d.key === currentSection)
+  const isCustom = CUSTOM_SECTION_KEYS.includes(currentSection as typeof CUSTOM_SECTION_KEYS[number])
+
+  const currentSectionNumber = currentSectionData?.number || '01'
+
+  const currentSectionTitle = isCustom
+    ? (optionalContent[currentSection]?.title || currentSectionData?.title || 'Custom Section')
+    : (currentSectionData?.title || 'Section')
+
+  const currentSectionDescription = currentSectionData?.description || ''
+
+  const requiredComplete = REQUIRED_SECTIONS.filter((s) => completedSections.has(s.key)).length
+  const progress = `${requiredComplete}/${REQUIRED_SECTIONS.length} REQUIRED`
 
   return (
     <div className="min-h-screen bg-background flex relative overflow-hidden">
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-[15%] right-[-5%] w-[300px] h-[300px] rounded-full border border-border opacity-[0.12] animate-[create-drift_25s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[25%] left-[20%] w-[180px] h-[180px] rounded-full border border-pop/10 opacity-[0.14] animate-[create-drift-2_18s_ease-in-out_infinite]" />
-        <div className="absolute top-[50%] right-[30%] w-[4px] h-[4px] rounded-full bg-pop opacity-[0.2] animate-[create-dot_5s_ease-in-out_infinite]" />
-        <style jsx global>{`
-          @keyframes create-drift {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-20px, 15px); }
-          }
-          @keyframes create-drift-2 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(10px, -12px); }
-          }
-          @keyframes create-dot {
-            0%, 100% { transform: scale(1); opacity: 0.2; }
-            50% { transform: scale(1.4); opacity: 0.35; }
-          }
-        `}</style>
-      </div>
-
       {/* ─── Sidebar ─── */}
       <aside className="fixed left-0 top-0 h-screen w-[240px] bg-surface border-r border-border flex flex-col z-10">
         <nav className="flex-1 py-[32px] overflow-y-auto">
-          {sections.map((section, sectionIndex) => {
+          {/* Required sections (01–08) */}
+          {REQUIRED_SECTIONS.map((section, sectionIndex) => {
             const isActive = section.key === currentSection
             const isComplete = completedSections.has(section.key)
 
@@ -590,9 +678,7 @@ export default function CreatePitchPage() {
                       >
                         {section.title.toUpperCase()}
                       </span>
-                      {section.required && (
-                        <span className="text-error text-[11px] leading-[16px]">*</span>
-                      )}
+                      <span className="text-error text-[11px] leading-[16px]">*</span>
                     </div>
                   </div>
                   {isComplete && !isActive && (
@@ -610,6 +696,72 @@ export default function CreatePitchPage() {
               </button>
             )
           })}
+
+          {/* More — disclosure toggle for optional sections (09–27) */}
+          <div className="mt-[8px]">
+            <div className="mx-[24px] border-t border-border" />
+            <button
+              type="button"
+              onClick={() => setMoreOpen(!moreOpen)}
+              className="w-full flex items-center justify-between px-[24px] py-[12px] text-[13px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            >
+              <span className="font-[var(--font-mono)] uppercase tracking-wider">More</span>
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none"
+                className={`transition-transform duration-[200ms] ${moreOpen ? 'rotate-180' : ''}`}
+              >
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {moreOpen && ALL_SECTIONS.filter((s) => !s.required).map((section) => {
+              const isActive = section.key === currentSection
+              const isComplete = completedSections.has(section.key)
+              const isCustomKey = CUSTOM_SECTION_KEYS.includes(section.key as typeof CUSTOM_SECTION_KEYS[number])
+              const displayTitle = isCustomKey
+                ? (optionalContent[section.key]?.title || section.title)
+                : section.title
+
+              return (
+                <button
+                  key={section.key}
+                  type="button"
+                  onClick={() => goToSection(section.key)}
+                  className={`
+                    w-full px-[24px] py-[12px] text-left
+                    border-l-[3px] transition-all duration-[200ms] ease-out
+                    ${isActive ? 'border-pop bg-white/50' : 'border-transparent hover:bg-white/30'}
+                  `}
+                >
+                  <div className="flex items-center gap-[12px]">
+                    <span
+                      className={`font-[var(--font-mono)] text-[24px] leading-[32px] font-medium ${isActive ? 'text-pop' : 'text-text-secondary'}`}
+                    >
+                      {section.number}
+                    </span>
+                    <div className="flex-1">
+                      <span
+                        className={`font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] ${isActive ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}
+                      >
+                        {displayTitle.toUpperCase()}
+                      </span>
+                    </div>
+                    {isComplete && !isActive && (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#388E3C]">
+                        <path
+                          d="M13.5 4.5L6 12L2.5 8.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </nav>
 
         {/* Progress */}
@@ -621,7 +773,7 @@ export default function CreatePitchPage() {
             <div
               className="h-full bg-pop transition-all duration-[500ms]"
               style={{
-                width: `${(completedSections.size / 8) * 100}%`,
+                width: `${(requiredComplete / REQUIRED_SECTIONS.length) * 100}%`,
                 transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             />
@@ -638,20 +790,23 @@ export default function CreatePitchPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
+            <SectionTransition sectionNumber={currentSectionNumber} sectionKey={currentSection}>
             {/* Section number */}
             <div className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary mb-[8px]">
-              {currentSectionData.number}
+              {currentSectionNumber}
             </div>
 
             {/* Section title */}
             <h1 className="font-[var(--font-heading)] text-[32px] font-semibold leading-[40px] text-text-primary mb-[16px] tracking-[-0.02em]">
-              {currentSectionData.title}
+              {currentSectionTitle}
             </h1>
 
             {/* Section description */}
-            <p className="text-[14px] leading-[20px] text-text-secondary mb-[32px]">
-              {currentSectionData.description}
-            </p>
+            {currentSectionDescription && (
+              <p className="text-[14px] leading-[20px] text-text-secondary mb-[32px]">
+                {currentSectionDescription}
+              </p>
+            )}
 
             {/* ─── Section fields ─── */}
             <div className="mb-[48px]">
@@ -674,6 +829,12 @@ export default function CreatePitchPage() {
                     onSelect={setPosterFile}
                     onRemove={() => setPosterFile(null)}
                   />
+                  <AIImageGenerate
+                    fieldName="Project poster concept"
+                    onAccept={(file) => setPosterFile(file)}
+                    maxReached={posterFile !== null}
+                    context={aiContext}
+                  />
                 </div>
               )}
 
@@ -688,6 +849,12 @@ export default function CreatePitchPage() {
                     className="min-h-[120px]"
                   />
                   <CharacterCounter current={logline.length} max={500} />
+                  <AITextAssist
+                    fieldName="Logline"
+                    currentText={logline}
+                    onAccept={setLogline}
+                    context={aiContext}
+                  />
                 </div>
               )}
 
@@ -702,6 +869,12 @@ export default function CreatePitchPage() {
                     className="min-h-[240px]"
                   />
                   <CharacterCounter current={getWordCount(synopsis)} type="words" />
+                  <AITextAssist
+                    fieldName="Synopsis"
+                    currentText={synopsis}
+                    onAccept={setSynopsis}
+                    context={aiContext}
+                  />
                 </div>
               )}
 
@@ -737,6 +910,12 @@ export default function CreatePitchPage() {
                       className="min-h-[200px]"
                     />
                     <CharacterCounter current={getWordCount(vision)} type="words" />
+                    <AITextAssist
+                      fieldName="Director's Vision"
+                      currentText={vision}
+                      onAccept={setVision}
+                      context={aiContext}
+                    />
                   </div>
 
                   <InlineImageUpload
@@ -745,6 +924,12 @@ export default function CreatePitchPage() {
                     onRemove={(i) => setVisionImages((prev) => prev.filter((_, idx) => idx !== i))}
                     maxFiles={5}
                     label="Reference Images (optional)"
+                  />
+                  <AIImageGenerate
+                    fieldName="Director's Vision references"
+                    onAccept={(file) => setVisionImages((prev) => [...prev, file])}
+                    maxReached={visionImages.length >= 5}
+                    context={aiContext}
                   />
                 </div>
               )}
@@ -789,6 +974,12 @@ export default function CreatePitchPage() {
                           onChange={(e) => updateCastMember(member.id, 'description', e.target.value)}
                           placeholder="Brief description (optional)"
                           className="min-h-[80px]"
+                        />
+                        <AITextAssist
+                          fieldName={`Cast character description (${member.name || `Character ${index + 1}`})`}
+                          currentText={member.description || ''}
+                          onAccept={(text) => updateCastMember(member.id, 'description', text)}
+                          context={aiContext}
                         />
                       </div>
                     </div>
@@ -861,6 +1052,12 @@ export default function CreatePitchPage() {
                           placeholder="Brief bio or credits (optional)"
                           className="min-h-[80px]"
                         />
+                        <AITextAssist
+                          fieldName={`Team member bio (${member.name || `Member ${index + 1}`})`}
+                          currentText={member.bio || ''}
+                          onAccept={(text) => updateTeamMember(member.id, 'bio', text)}
+                          context={aiContext}
+                        />
                       </div>
                     </div>
                   ))}
@@ -872,7 +1069,96 @@ export default function CreatePitchPage() {
                   )}
                 </div>
               )}
+
+              {/* ═══ Optional sections (09–24) ═══ */}
+              {isOnOptionalSection && currentOptionalDef && !isCustom && (
+                <div className="flex flex-col gap-[16px]">
+                  <div>
+                    <Textarea
+                      label={currentOptionalDef.label}
+                      value={optionalContent[currentSection]?.content || ''}
+                      onChange={(e) => updateOptionalContent(currentSection, 'content', e.target.value)}
+                      placeholder={`Add your ${currentOptionalDef.label.toLowerCase()} notes...`}
+                      className="min-h-[160px]"
+                    />
+                    <AITextAssist
+                      fieldName={currentOptionalDef.label}
+                      currentText={optionalContent[currentSection]?.content || ''}
+                      onAccept={(text) => updateOptionalContent(currentSection, 'content', text)}
+                      context={aiContext}
+                    />
+                  </div>
+
+                  {currentOptionalDef.hasImages && (
+                    <>
+                      <InlineImageUpload
+                        files={optionalImages[currentSection] || []}
+                        onAdd={(newFiles) => setOptionalImages((prev) => ({
+                          ...prev,
+                          [currentSection]: [...(prev[currentSection] || []), ...newFiles],
+                        }))}
+                        onRemove={(i) => setOptionalImages((prev) => ({
+                          ...prev,
+                          [currentSection]: (prev[currentSection] || []).filter((_, idx) => idx !== i),
+                        }))}
+                        maxFiles={10}
+                        label="Reference Images"
+                      />
+                      <AIImageGenerate
+                        fieldName={`${currentOptionalDef.label} references`}
+                        onAccept={(file) => setOptionalImages((prev) => ({
+                          ...prev,
+                          [currentSection]: [...(prev[currentSection] || []), file],
+                        }))}
+                        maxReached={(optionalImages[currentSection] || []).length >= 10}
+                        context={aiContext}
+                      />
+                    </>
+                  )}
+
+                  <TextInput
+                    label="Video / Reference Link"
+                    value={optionalContent[currentSection]?.videoUrl || ''}
+                    onChange={(e) => updateOptionalContent(currentSection, 'videoUrl', e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              )}
+
+              {/* ═══ Custom sections (25–27) ═══ */}
+              {isOnOptionalSection && isCustom && (
+                <div className="flex flex-col gap-[16px]">
+                  <TextInput
+                    label="Section Title"
+                    value={optionalContent[currentSection]?.title || ''}
+                    onChange={(e) => updateOptionalContent(currentSection, 'title', e.target.value)}
+                    placeholder="Name your section"
+                  />
+                  <div>
+                    <Textarea
+                      label="Content"
+                      value={optionalContent[currentSection]?.content || ''}
+                      onChange={(e) => updateOptionalContent(currentSection, 'content', e.target.value)}
+                      placeholder="What do you want to say?"
+                      className="min-h-[160px]"
+                    />
+                    <AITextAssist
+                      fieldName={optionalContent[currentSection]?.title || 'Custom Section'}
+                      currentText={optionalContent[currentSection]?.content || ''}
+                      onAccept={(text) => updateOptionalContent(currentSection, 'content', text)}
+                      context={aiContext}
+                    />
+                  </div>
+                  <TextInput
+                    label="Video / Reference Link"
+                    value={optionalContent[currentSection]?.videoUrl || ''}
+                    onChange={(e) => updateOptionalContent(currentSection, 'videoUrl', e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              )}
             </div>
+            </SectionTransition>
 
             {/* Error message */}
             {errors.general && (
@@ -881,26 +1167,20 @@ export default function CreatePitchPage() {
 
             {/* Navigation buttons */}
             <div className="flex gap-[12px]">
-              {currentSectionData.key !== 'team' ? (
-                <>
-                  {getCurrentSectionIndex() > 0 && (
-                    <Button variant="secondary" type="button" onClick={goToPreviousSection}>
-                      Previous
-                    </Button>
-                  )}
-                  <Button variant="primary" type="button" onClick={handleContinue}>
-                    Save & Continue
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="secondary" type="button" onClick={goToPreviousSection}>
-                    Previous
-                  </Button>
-                  <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? 'Creating...' : 'Create Project'}
-                  </Button>
-                </>
+              {!isFirstSection && (
+                <Button variant="secondary" type="button" onClick={goToPreviousSection}>
+                  Previous
+                </Button>
+              )}
+              {!isLastSection && (
+                <Button variant="primary" type="button" onClick={handleContinue}>
+                  Save & Continue
+                </Button>
+              )}
+              {(isLastSection || requiredComplete >= REQUIRED_SECTIONS.length) && (
+                <Button variant="primary" type="submit" disabled={loading}>
+                  {loading ? 'Creating...' : 'Create Project'}
+                </Button>
               )}
             </div>
           </form>

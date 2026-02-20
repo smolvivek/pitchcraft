@@ -26,8 +26,9 @@ CREATE POLICY "share_links_select_own"
   USING (
     EXISTS (
       SELECT 1 FROM pitches
+      JOIN users ON users.id = pitches.user_id
       WHERE pitches.id = share_links.pitch_id
-        AND pitches.user_id = auth.current_user_id()
+        AND users.auth_id = auth.uid()
     )
   );
 
@@ -36,8 +37,9 @@ CREATE POLICY "share_links_insert_own"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM pitches
+      JOIN users ON users.id = pitches.user_id
       WHERE pitches.id = share_links.pitch_id
-        AND pitches.user_id = auth.current_user_id()
+        AND users.auth_id = auth.uid()
     )
   );
 
@@ -46,8 +48,9 @@ CREATE POLICY "share_links_update_own"
   USING (
     EXISTS (
       SELECT 1 FROM pitches
+      JOIN users ON users.id = pitches.user_id
       WHERE pitches.id = share_links.pitch_id
-        AND pitches.user_id = auth.current_user_id()
+        AND users.auth_id = auth.uid()
     )
   );
 
@@ -56,8 +59,9 @@ CREATE POLICY "share_links_delete_own"
   USING (
     EXISTS (
       SELECT 1 FROM pitches
+      JOIN users ON users.id = pitches.user_id
       WHERE pitches.id = share_links.pitch_id
-        AND pitches.user_id = auth.current_user_id()
+        AND users.auth_id = auth.uid()
     )
   );
 

@@ -24,7 +24,7 @@ If a feature request conflicts with these constraints, the answer is no. Even if
 - AI summarization of creator-written text (optional, reversible)
 - AI suggestions for section completion (always optional, never enforced)
 
-**Hard line:** No AI writes the logline, synopsis, or any narrative-essential text. Creators write. AI suggests at most.
+**Hard line:** AI may draft or refine text only when explicitly invoked by the creator. All AI output is presented as a suggestion — never injected directly. The creator reviews, edits, and accepts before it becomes part of their pitch. Creators own their final content.
 
 ---
 
