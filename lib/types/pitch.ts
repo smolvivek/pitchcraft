@@ -102,3 +102,25 @@ export interface ShareLink {
   updated_at: string
   deleted_at: string | null
 }
+
+export interface Funding {
+  id: string
+  pitch_id: string
+  funding_goal: number
+  description: string | null
+  end_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Donation {
+  id: string
+  funding_id: string
+  amount: number
+  email: string
+  name: string
+  message: string | null
+  razorpay_payment_id: string | null
+  razorpay_order_id: string | null
+  created_at: string
+}

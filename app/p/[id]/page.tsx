@@ -10,6 +10,7 @@ import { PitchViewMetadata } from '@/components/pitch-view/PitchViewMetadata'
 import { PitchViewSection } from '@/components/pitch-view/PitchViewSection'
 import { PitchViewCards } from '@/components/pitch-view/PitchViewCards'
 import { PitchViewFooter } from '@/components/pitch-view/PitchViewFooter'
+import { PitchViewFunding } from '@/components/pitch-view/PitchViewFunding'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -139,8 +140,46 @@ export default async function PitchViewPage({ params }: PageProps) {
     sectionLabels.set(def.key, def.label)
   }
 
+  // Build JSON-LD structured data
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pitchcraft.app'
+  const creativeWorkJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: pitch.project_name,
+    description: pitch.logline,
+    abstract: pitch.synopsis,
+    genre: pitch.genre,
+    version: pitch.current_version,
+    url: `${siteUrl}/p/${pitch.id}`,
+    dateCreated: pitch.created_at,
+    dateModified: pitch.updated_at,
+    ...(posterMedia && { image: posterMedia.signedUrl }),
+  }
+
+  // Add team members as contributors
+  if (teamItems.length > 0) {
+    creativeWorkJsonLd.contributor = teamItems.map((t) => ({
+      '@type': 'Person',
+      name: t.name,
+      jobTitle: t.role,
+    }))
+  }
+
+  // Add cast as characters
+  if (castItems.length > 0) {
+    creativeWorkJsonLd.character = castItems.map((c) => ({
+      '@type': 'Person',
+      name: c.name,
+      description: c.detail ?? c.role,
+    }))
+  }
+
   return (
     <PitchViewLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(creativeWorkJsonLd) }}
+      />
       <PitchViewTopBar version={pitch.current_version} />
 
       <PitchViewHero
@@ -202,6 +241,8 @@ export default async function PitchViewPage({ params }: PageProps) {
           />
         )
       })}
+
+      <PitchViewFunding pitchId={pitch.id} projectName={pitch.project_name} />
 
       <PitchViewFooter />
     </PitchViewLayout>

@@ -112,6 +112,14 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [sharingLoading, setSharingLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Funding state
+  const [fundingEnabled, setFundingEnabled] = useState(false)
+  const [fundingGoal, setFundingGoal] = useState('')
+  const [fundingDescription, setFundingDescription] = useState('')
+  const [fundingEndDate, setFundingEndDate] = useState('')
+  const [fundingLoading, setFundingLoading] = useState(false)
+  const [fundingTotalRaised, setFundingTotalRaised] = useState(0)
+
   // Helper to update a single section
   const updateSection = (key: string, update: Partial<OptionalSectionState>) => {
     setSections((prev) => ({
@@ -296,6 +304,98 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
     await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 1200)
+  }
+
+  // ─── Funding ───
+  const fetchFunding = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/funding`)
+      const data = await res.json()
+      if (data.funding) {
+        setFundingEnabled(true)
+        setFundingGoal(String(data.funding.funding_goal))
+        setFundingDescription(data.funding.description || '')
+        setFundingEndDate(data.funding.end_date?.split('T')[0] || '')
+        setFundingTotalRaised(data.totalRaised || 0)
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [pitchId])
+
+  useEffect(() => {
+    fetchFunding()
+  }, [fetchFunding])
+
+  const handleEnableFunding = async () => {
+    const goal = parseInt(fundingGoal, 10)
+    if (!goal || goal < 1) {
+      setErrors((prev) => ({ ...prev, funding: 'Enter a valid funding goal' }))
+      return
+    }
+    setFundingLoading(true)
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/funding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funding_goal: goal,
+          description: fundingDescription || null,
+          end_date: fundingEndDate || null,
+        }),
+      })
+      if (res.ok) {
+        setFundingEnabled(true)
+        setErrors((prev) => { const { funding: _, ...rest } = prev; return rest })
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, funding: 'Failed to enable funding' }))
+    } finally {
+      setFundingLoading(false)
+    }
+  }
+
+  const handleUpdateFunding = async () => {
+    const goal = parseInt(fundingGoal, 10)
+    if (!goal || goal < 1) {
+      setErrors((prev) => ({ ...prev, funding: 'Enter a valid funding goal' }))
+      return
+    }
+    setFundingLoading(true)
+    try {
+      await fetch(`/api/pitches/${pitchId}/funding`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funding_goal: goal,
+          description: fundingDescription || null,
+          end_date: fundingEndDate || null,
+        }),
+      })
+      setErrors((prev) => { const { funding: _, ...rest } = prev; return rest })
+    } catch {
+      setErrors((prev) => ({ ...prev, funding: 'Failed to update funding' }))
+    } finally {
+      setFundingLoading(false)
+    }
+  }
+
+  const handleDisableFunding = async () => {
+    setFundingLoading(true)
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/funding`, { method: 'DELETE' })
+      if (res.ok) {
+        setFundingEnabled(false)
+        setFundingGoal('')
+        setFundingDescription('')
+        setFundingEndDate('')
+        setFundingTotalRaised(0)
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, funding: 'Failed to disable funding' }))
+    } finally {
+      setFundingLoading(false)
+    }
   }
 
   // ─── Submit ───
@@ -677,6 +777,93 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                     >
                       {sharingLoading ? 'Creating...' : 'Share project'}
                     </Button>
+                  )}
+                </div>
+
+                {/* Funding */}
+                <div className="border-t border-border pt-[24px] mt-[16px]">
+                  <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
+                    Funding
+                  </h2>
+                  {fundingEnabled ? (
+                    <div className="flex flex-col gap-[12px]">
+                      {fundingTotalRaised > 0 && (
+                        <p className="font-[var(--font-mono)] text-[13px] text-text-secondary">
+                          Raised: {'\u20B9'}{fundingTotalRaised.toLocaleString()} of {'\u20B9'}{parseInt(fundingGoal || '0', 10).toLocaleString()}
+                        </p>
+                      )}
+                      <TextInput
+                        label="Goal amount (INR)"
+                        value={fundingGoal}
+                        onChange={(e) => setFundingGoal(e.target.value)}
+                        placeholder="50000"
+                      />
+                      <Textarea
+                        label="Why support this project?"
+                        value={fundingDescription}
+                        onChange={(e) => setFundingDescription(e.target.value)}
+                        helpText="Shown to potential supporters"
+                      />
+                      <TextInput
+                        label="End date (optional)"
+                        value={fundingEndDate}
+                        onChange={(e) => setFundingEndDate(e.target.value)}
+                        placeholder="YYYY-MM-DD"
+                      />
+                      {errors.funding && (
+                        <p className="text-[14px] leading-[20px] text-error">{errors.funding}</p>
+                      )}
+                      <div className="flex gap-[12px]">
+                        <Button
+                          variant="secondary"
+                          type="button"
+                          onClick={handleUpdateFunding}
+                          disabled={fundingLoading}
+                        >
+                          {fundingLoading ? 'Saving...' : 'Update funding'}
+                        </Button>
+                        <Button
+                          variant="tertiary"
+                          type="button"
+                          onClick={handleDisableFunding}
+                          disabled={fundingLoading}
+                        >
+                          Disable funding
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-[12px]">
+                      <TextInput
+                        label="Goal amount (INR)"
+                        value={fundingGoal}
+                        onChange={(e) => setFundingGoal(e.target.value)}
+                        placeholder="50000"
+                      />
+                      <Textarea
+                        label="Why support this project?"
+                        value={fundingDescription}
+                        onChange={(e) => setFundingDescription(e.target.value)}
+                        helpText="Shown to potential supporters"
+                      />
+                      <TextInput
+                        label="End date (optional)"
+                        value={fundingEndDate}
+                        onChange={(e) => setFundingEndDate(e.target.value)}
+                        placeholder="YYYY-MM-DD"
+                      />
+                      {errors.funding && (
+                        <p className="text-[14px] leading-[20px] text-error">{errors.funding}</p>
+                      )}
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={handleEnableFunding}
+                        disabled={fundingLoading}
+                      >
+                        {fundingLoading ? 'Enabling...' : 'Enable funding'}
+                      </Button>
+                    </div>
                   )}
                 </div>
 
