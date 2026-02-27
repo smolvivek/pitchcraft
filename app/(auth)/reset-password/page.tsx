@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="bg-white border border-border rounded-[4px] p-[32px]">
+      <div className="bg-surface border border-border rounded-[4px] p-[32px]">
         <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
           Check your inbox
         </h2>
@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="bg-white border border-border rounded-[4px] p-[32px]">
+    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
         Reset password
       </h2>

@@ -59,7 +59,7 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="bg-white border border-border rounded-[8px] p-[32px]">
+    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
         Set new password
       </h2>

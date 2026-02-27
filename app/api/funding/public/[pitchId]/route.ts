@@ -26,7 +26,7 @@ export async function GET(
     // Fetch funding
     const { data: funding } = await supabase
       .from('funding')
-      .select('id, funding_goal, description, end_date')
+      .select('id, funding_goal, description, end_date, stretch_goals, rewards')
       .eq('pitch_id', pitchId)
       .single()
 
@@ -52,6 +52,8 @@ export async function GET(
         funding_goal: funding.funding_goal,
         description: funding.description,
         end_date: funding.end_date,
+        stretch_goals: funding.stretch_goals || [],
+        rewards: funding.rewards || [],
         total_raised: totalRaised,
         donor_count: donorCount,
       },

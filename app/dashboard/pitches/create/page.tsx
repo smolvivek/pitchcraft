@@ -177,7 +177,7 @@ function InlineImageUpload({
               <button
                 type="button"
                 onClick={() => onRemove(i)}
-                className="absolute top-[4px] right-[4px] w-[22px] h-[22px] bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:text-white"
+                className="absolute top-[4px] right-[4px] w-[22px] h-[22px] bg-background/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:text-white"
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -283,7 +283,7 @@ function PosterUpload({
           <button
             type="button"
             onClick={onRemove}
-            className="absolute top-[6px] right-[6px] w-[24px] h-[24px] bg-white/90 rounded-full flex items-center justify-center hover:bg-error hover:text-white transition-colors"
+            className="absolute top-[6px] right-[6px] w-[24px] h-[24px] bg-background/90 rounded-full flex items-center justify-center hover:bg-error hover:text-white transition-colors"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -547,13 +547,16 @@ export default function CreatePitchPage() {
       } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('id')
         .eq('auth_id', user.id)
         .single()
 
-      if (!profile) throw new Error('Profile not found')
+      if (profileError) {
+        throw new Error(`Profile lookup failed: ${profileError.message} (${profileError.code})`)
+      }
+      if (!profile) throw new Error('Profile not found — users table may be empty')
 
       const validCast = castMembers.filter((m) => m.name.trim() && m.role.trim())
       const validTeam = teamMembers.filter((m) => m.name.trim() && m.role.trim())
@@ -575,7 +578,9 @@ export default function CreatePitchPage() {
         .select()
         .single()
 
-      if (pitchError) throw pitchError
+      if (pitchError) {
+        throw new Error(`${pitchError.message} (${pitchError.code}: ${pitchError.details || pitchError.hint || ''})`)
+      }
 
       // Upload any pending files (poster, vision images)
       await uploadPendingFiles(pitch.id)
@@ -619,8 +624,16 @@ export default function CreatePitchPage() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
-      console.error(err)
-      setErrors({ general: 'Failed to create project' })
+      console.error('Create project error:', err)
+      let message: string
+      if (err instanceof Error) {
+        message = err.message
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        message = String((err as { message: string }).message)
+      } else {
+        message = 'Database tables may not exist yet. Run the SQL migration in Supabase.'
+      }
+      setErrors({ general: `Failed to create project: ${message}` })
     } finally {
       setLoading(false)
     }
@@ -646,7 +659,19 @@ export default function CreatePitchPage() {
     <div className="min-h-screen bg-background flex relative overflow-hidden">
       {/* ─── Sidebar ─── */}
       <aside className="fixed left-0 top-0 h-screen w-[240px] bg-surface border-r border-border flex flex-col z-10">
-        <nav className="flex-1 py-[32px] overflow-y-auto">
+        {/* Back to dashboard */}
+        <div className="px-[24px] pt-[20px] pb-[12px] border-b border-border">
+          <a
+            href="/dashboard"
+            className="inline-flex items-center gap-[6px] text-[13px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M8.5 3L4.5 7L8.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-[var(--font-mono)] uppercase tracking-wider">Dashboard</span>
+          </a>
+        </div>
+        <nav className="flex-1 py-[16px] overflow-y-auto">
           {/* Required sections (01–08) */}
           {REQUIRED_SECTIONS.map((section, sectionIndex) => {
             const isActive = section.key === currentSection
@@ -661,7 +686,7 @@ export default function CreatePitchPage() {
                   w-full px-[24px] py-[12px] text-left
                   border-l-[3px] transition-all duration-[200ms] ease-out
                   animate-fade-up opacity-0 [animation-fill-mode:forwards]
-                  ${isActive ? 'border-pop bg-white/50' : 'border-transparent hover:bg-white/30'}
+                  ${isActive ? 'border-pop bg-surface-hover/50' : 'border-transparent hover:bg-surface-hover/30'}
                 `}
                 style={{ animationDelay: `${sectionIndex * 60}ms` }}
               >
@@ -682,7 +707,7 @@ export default function CreatePitchPage() {
                     </div>
                   </div>
                   {isComplete && !isActive && (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#388E3C]">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-status-complete">
                       <path
                         d="M13.5 4.5L6 12L2.5 8.5"
                         stroke="currentColor"
@@ -730,7 +755,7 @@ export default function CreatePitchPage() {
                   className={`
                     w-full px-[24px] py-[12px] text-left
                     border-l-[3px] transition-all duration-[200ms] ease-out
-                    ${isActive ? 'border-pop bg-white/50' : 'border-transparent hover:bg-white/30'}
+                    ${isActive ? 'border-pop bg-surface-hover/50' : 'border-transparent hover:bg-surface-hover/30'}
                   `}
                 >
                   <div className="flex items-center gap-[12px]">
@@ -747,7 +772,7 @@ export default function CreatePitchPage() {
                       </span>
                     </div>
                     {isComplete && !isActive && (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#388E3C]">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-status-complete">
                         <path
                           d="M13.5 4.5L6 12L2.5 8.5"
                           stroke="currentColor"
@@ -769,9 +794,9 @@ export default function CreatePitchPage() {
           <div className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-secondary mb-[8px]">
             {progress}
           </div>
-          <div className="w-full h-[3px] bg-border rounded-full overflow-visible">
+          <div className="w-full h-[3px] bg-border rounded-full overflow-hidden">
             <div
-              className="h-full bg-pop transition-all duration-[500ms]"
+              className={`h-full rounded-full transition-all duration-[500ms] ${requiredComplete > 0 ? 'progress-shimmer' : 'bg-pop'}`}
               style={{
                 width: `${(requiredComplete / REQUIRED_SECTIONS.length) * 100}%`,
                 transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -940,7 +965,7 @@ export default function CreatePitchPage() {
                   {castMembers.map((member, index) => (
                     <div
                       key={member.id}
-                      className="border border-border rounded-[4px] p-[20px] bg-white"
+                      className="border border-border rounded-[4px] p-[20px] bg-surface"
                     >
                       <div className="flex items-center justify-between mb-[16px]">
                         <span className="font-[var(--font-mono)] text-[12px] text-text-secondary">
@@ -1017,7 +1042,7 @@ export default function CreatePitchPage() {
                   {teamMembers.map((member, index) => (
                     <div
                       key={member.id}
-                      className="border border-border rounded-[4px] p-[20px] bg-white"
+                      className="border border-border rounded-[4px] p-[20px] bg-surface"
                     >
                       <div className="flex items-center justify-between mb-[16px]">
                         <span className="font-[var(--font-mono)] text-[12px] text-text-secondary">

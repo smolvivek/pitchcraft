@@ -27,7 +27,7 @@ export default function AuthLayout({
         aria-hidden="true"
       >
         <span
-          className="font-[var(--font-heading)] font-bold text-[18vw] leading-[1] tracking-[-0.04em] text-text-primary whitespace-nowrap"
+          className="font-[var(--font-heading)] font-bold text-[18vw] leading-[1] tracking-[-0.04em] text-text-disabled whitespace-nowrap"
           style={{
             opacity: mounted ? 0.04 : 0,
             transition: "opacity 1.5s ease-out 0.3s",

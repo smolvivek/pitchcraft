@@ -4,6 +4,7 @@ import {
   type InputHTMLAttributes,
   type TextareaHTMLAttributes,
   type SelectHTMLAttributes,
+  type ReactNode,
   forwardRef,
 } from "react";
 
@@ -36,12 +37,12 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           id={inputId}
           className={`
             w-full px-[16px] py-[12px]
-            bg-white border rounded-[4px]
+            bg-surface border rounded-[4px]
             text-[14px] leading-[20px] text-text-primary
             font-[var(--font-body)]
             placeholder:text-text-disabled
             transition-colors duration-[200ms] ease-out
-            disabled:bg-surface disabled:text-text-disabled disabled:border-border
+            disabled:bg-background disabled:text-text-disabled disabled:border-border
             ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
@@ -97,13 +98,13 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           className={`
             w-full px-[16px] py-[12px] min-h-[120px]
-            bg-white border rounded-[4px]
+            bg-surface border rounded-[4px]
             text-[14px] leading-[24px] text-text-primary
             font-[var(--font-body)]
             placeholder:text-text-disabled
             resize-y
             transition-colors duration-[200ms] ease-out
-            disabled:bg-surface disabled:text-text-disabled disabled:border-border
+            disabled:bg-background disabled:text-text-disabled disabled:border-border
             ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
@@ -166,17 +167,17 @@ const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
           id={inputId}
           className={`
             w-full px-[16px] py-[12px] h-[44px]
-            bg-white border rounded-[4px]
+            bg-surface border rounded-[4px]
             text-[14px] leading-[20px] text-text-primary
             font-[var(--font-body)]
             appearance-none
-            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23FF5C36%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
+            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23E8503A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
             bg-[position:right_16px_center]
             bg-no-repeat
             pr-[40px]
             transition-colors duration-[200ms] ease-out
-            hover:bg-surface
-            disabled:bg-surface disabled:text-text-disabled disabled:border-border
+            hover:bg-surface-hover
+            disabled:bg-background disabled:text-text-disabled disabled:border-border
             ${error ? "border-2 border-error" : "border-border focus:border-2 focus:border-pop focus:px-[15px] focus:py-[11px]"}
             ${className}
           `}
@@ -217,12 +218,12 @@ SelectInput.displayName = "SelectInput";
 /* ── Checkbox ── */
 
 interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
-  label: string;
+  label: ReactNode;
 }
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ label, id, className = "", ...props }, ref) => {
-    const inputId = id || label.toLowerCase().replace(/\s+/g, "-");
+    const inputId = id || (typeof label === "string" ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
     return (
       <div className={`flex items-center gap-[8px] ${className}`}>
         <input

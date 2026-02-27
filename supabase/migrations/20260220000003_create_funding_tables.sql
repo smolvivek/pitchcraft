@@ -78,13 +78,13 @@ CREATE TABLE IF NOT EXISTS donations (
   email VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   message TEXT,
-  razorpay_payment_id VARCHAR(255),
-  razorpay_order_id VARCHAR(255),
+  stripe_session_id VARCHAR(255),
+  stripe_payment_intent VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_donations_funding_id ON donations(funding_id);
-CREATE INDEX idx_donations_razorpay_payment ON donations(razorpay_payment_id);
+CREATE INDEX idx_donations_stripe_session ON donations(stripe_session_id);
 
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 

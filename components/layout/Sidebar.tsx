@@ -210,14 +210,14 @@ function CompletionIndicator({ completed }: { completed: boolean }) {
           fill="none"
           aria-label="Completed"
         >
-          <circle cx="8" cy="8" r="7" stroke="#388E3C" strokeWidth="1.5" fill="none" />
+          <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-status-complete" />
           <path
             d="M5 8L7 10L11 6"
-            stroke="#388E3C"
+            stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="[stroke-dasharray:24] [stroke-dashoffset:0] animate-[draw-check_300ms_ease-out]"
+            className="text-status-complete [stroke-dasharray:24] [stroke-dashoffset:0] animate-[draw-check_300ms_ease-out]"
           />
         </svg>
       ) : (

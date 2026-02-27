@@ -24,8 +24,22 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pitchcraft",
-  description: "Present, fund, and evolve your creative work.",
+  title: "Pitchcraft — Present, fund, and version your creative work",
+  description:
+    "One link for your entire project. Structure your pitch, share it with producers and collaborators, raise funding, and track versions — built for filmmakers, writers, and creators.",
+  openGraph: {
+    title: "Pitchcraft",
+    description:
+      "One link for your entire project. Structure, share, fund, and version your creative work.",
+    type: "website",
+    siteName: "Pitchcraft",
+  },
+  twitter: {
+    card: "summary",
+    title: "Pitchcraft",
+    description:
+      "One link for your entire project. Structure, share, fund, and version your creative work.",
+  },
 };
 
 export default function RootLayout({

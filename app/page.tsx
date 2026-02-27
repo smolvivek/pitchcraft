@@ -3,17 +3,24 @@ import { createClient } from "@/lib/supabase/server";
 import { LandingHero } from "@/components/landing/LandingHero";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+  let user = null;
   let profile = null;
-  if (user) {
-    const { data } = await supabase
-      .from("users")
-      .select("name, email")
-      .eq("auth_id", user.id)
-      .single();
-    profile = data;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user ?? null;
+
+    if (user) {
+      const { data: profileData } = await supabase
+        .from("users")
+        .select("name, email")
+        .eq("auth_id", user.id)
+        .single();
+      profile = profileData;
+    }
+  } catch {
+    // Supabase unreachable — render as logged-out
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitchcraft.app";

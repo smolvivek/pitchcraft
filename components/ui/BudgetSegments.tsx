@@ -33,18 +33,18 @@ export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) 
               relative overflow-hidden
               ${
                 value === option.value
-                  ? 'border-btn scale-[1.02]'
-                  : 'bg-white border-border hover:bg-surface scale-100'
+                  ? 'border-pop scale-[1.02]'
+                  : 'bg-surface border-border hover:bg-surface-hover scale-100'
               }
             `}
             style={{
               transitionTimingFunction: value === option.value ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'
             }}
           >
-            {/* Terracotta background slide-in */}
+            {/* Pop background slide-in */}
             <div
               className={`
-                absolute inset-0 bg-btn
+                absolute inset-0 bg-pop
                 transition-transform duration-[150ms] ease-out
                 ${value === option.value ? 'translate-x-0' : '-translate-x-full'}
               `}

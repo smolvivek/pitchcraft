@@ -59,6 +59,7 @@ export interface MediaRecord {
   file_type: 'image' | 'document'
   file_size: number
   order_index: number | null
+  caption: string | null
   created_at: string
   updated_at: string
 }
@@ -69,6 +70,7 @@ export interface FlowBeat {
   arcLabel?: string
   mediaIds: string[]
   videoUrl?: string
+  audioUrl?: string
   order: number
 }
 
@@ -103,12 +105,25 @@ export interface ShareLink {
   deleted_at: string | null
 }
 
+export interface StretchGoal {
+  amount: number
+  description: string
+}
+
+export interface FundingReward {
+  amount: number
+  title: string
+  description: string
+}
+
 export interface Funding {
   id: string
   pitch_id: string
   funding_goal: number
   description: string | null
   end_date: string | null
+  stretch_goals: StretchGoal[]
+  rewards: FundingReward[]
   created_at: string
   updated_at: string
 }
@@ -120,7 +135,15 @@ export interface Donation {
   email: string
   name: string
   message: string | null
-  razorpay_payment_id: string | null
-  razorpay_order_id: string | null
+  stripe_session_id: string | null
+  stripe_payment_intent: string | null
+  created_at: string
+}
+
+export interface PitchVersion {
+  id: string
+  pitch_id: string
+  version_number: number
+  data: Record<string, unknown>
   created_at: string
 }

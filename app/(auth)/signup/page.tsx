@@ -82,7 +82,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="bg-white border border-border rounded-[4px] p-[32px]">
+      <div className="bg-surface border border-border rounded-[4px] p-[32px]">
         <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
           Check your inbox
         </h2>
@@ -99,10 +99,13 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="bg-white border border-border rounded-[4px] p-[32px]">
-      <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[24px]">
-        Create your account
+    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
+      <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[8px]">
+        Start building
       </h2>
+      <p className="text-[14px] leading-[20px] text-text-secondary mb-[24px]">
+        Create your Pitchcraft account to build and share your first project.
+      </p>
 
       {errors.general && (
         <div className="mb-[24px] p-[16px] bg-error/10 border border-error rounded-[4px]">
@@ -150,7 +153,18 @@ export default function SignupPage() {
 
         <div className="flex flex-col gap-[12px] mt-[8px]">
           <Checkbox
-            label="I agree to the Terms of Service and Privacy Policy"
+            label={
+              <>
+                I agree to the{" "}
+                <a href="/terms" target="_blank" className="text-link underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" className="text-link underline">
+                  Privacy Policy
+                </a>
+              </>
+            }
             checked={gdprConsent}
             onChange={(e) => setGdprConsent(e.target.checked)}
             required

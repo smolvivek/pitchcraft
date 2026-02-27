@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getRazorpay } from '@/lib/razorpay/client'
+import { getStripe } from '@/lib/stripe/client'
 
-// POST — create a Razorpay order for a donation
+// POST — create a Stripe Checkout session for a donation
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,33 +43,47 @@ export async function POST(
     const body = await request.json()
     const { amount, name, email, message } = body
 
+    // amount is in cents (e.g., 500 = $5.00)
     if (!amount || amount < 100) {
-      return NextResponse.json({ error: 'Minimum donation is 100 (paise / cents)' }, { status: 400 })
+      return NextResponse.json({ error: 'Minimum donation is $1' }, { status: 400 })
     }
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
 
-    // Create Razorpay order
-    const razorpay = getRazorpay()
-    const order = await razorpay.orders.create({
-      amount,
-      currency: 'INR',
-      notes: {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    const pitchUrl = `${siteUrl}/p/${funding.pitch_id}`
+
+    const stripe = getStripe()
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Support this project',
+              description: message || undefined,
+            },
+            unit_amount: amount,
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: email,
+      metadata: {
         funding_id: fundingId,
         donor_name: name,
         donor_email: email,
         message: message || '',
       },
+      success_url: `${pitchUrl}?funded=true`,
+      cancel_url: pitchUrl,
     })
 
-    return NextResponse.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-    })
+    return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error('Create donation order error:', error)
+    console.error('Create donation session error:', error)
     return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 })
   }
 }

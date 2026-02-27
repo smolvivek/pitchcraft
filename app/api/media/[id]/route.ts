@@ -64,6 +64,40 @@ export async function DELETE(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { caption } = body
+
+    const { data: media, error: updateError } = await supabase
+      .from('media')
+      .update({ caption: caption ?? null, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (updateError || !media) {
+      return NextResponse.json({ error: 'Failed to update caption' }, { status: 500 })
+    }
+
+    return NextResponse.json({ media })
+  } catch (error) {
+    console.error('Caption update error:', error)
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

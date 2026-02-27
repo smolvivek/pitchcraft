@@ -12,19 +12,19 @@ const statusOptions: { value: PitchStatus; label: string; dotColor: string; desc
   {
     value: 'development',
     label: 'DEVELOPMENT',
-    dotColor: 'bg-[#D32F2F]',
+    dotColor: 'bg-status-looking',
     description: 'Seeking funding, crew, or in early stages',
   },
   {
     value: 'production',
     label: 'PRODUCTION',
-    dotColor: 'bg-[#E8A817]',
+    dotColor: 'bg-status-progress',
     description: 'Pre-production, shooting, or post-production',
   },
   {
     value: 'completed',
     label: 'COMPLETED',
-    dotColor: 'bg-[#388E3C]',
+    dotColor: 'bg-status-complete',
     description: 'Finished and ready for distribution',
   },
 ]
@@ -46,8 +46,8 @@ export function StatusRadio({ value, onChange, error }: StatusRadioProps) {
               text-left
               ${
                 value === option.value
-                  ? 'bg-surface border-pop shadow-[0_0_0_1px_rgba(255,92,54,0.2)]'
-                  : 'bg-white border-border hover:bg-surface'
+                  ? 'bg-surface-hover border-pop shadow-[0_0_0_1px_rgba(232,80,58,0.2)]'
+                  : 'bg-surface border-border hover:bg-surface-hover'
               }
             `}
           >

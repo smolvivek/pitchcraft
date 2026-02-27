@@ -198,7 +198,7 @@ export function PDFUpload({
           )}
         </div>
       ) : (
-        <div className="bg-white border border-border rounded-[4px] p-[16px]">
+        <div className="bg-surface border border-border rounded-[4px] p-[16px]">
           <div className="flex items-center gap-[12px]">
             <svg
               width="32"

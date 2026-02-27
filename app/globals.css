@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
-/* ── Design Tokens ── */
+/* ── Design Tokens (A24 × Jony Ive — Dark) ── */
 
 @theme inline {
   /* Colors */
-  --color-background: #DBDDD0;
-  --color-surface: #D0D2C5;
-  --color-border: #B3B5A8;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #6B6560;
-  --color-text-disabled: #A8A29E;
-  --color-pop: #AF2E1B;
-  --color-pop-hover: #952717;
-  --color-pop-active: #7E2213;
-  --color-link: #AF2E1B;
-  --color-btn: #1A1A1A;
-  --color-btn-hover: #333333;
-  --color-btn-active: #000000;
-  --color-status-looking: #D32F2F;
-  --color-status-progress: #E8A817;
-  --color-status-complete: #388E3C;
-  --color-error: #D32F2F;
-  --color-success: #4CAF50;
-  --color-white: #FFFFFF;
+  --color-background: #0A0A0A;
+  --color-surface: #141414;
+  --color-surface-hover: #1A1A1A;
+  --color-border: #262626;
+  --color-border-hover: #333333;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #999999;
+  --color-text-disabled: #555555;
+  --color-pop: #E8503A;
+  --color-pop-hover: #F06B55;
+  --color-pop-active: #D44030;
+  --color-link: #E8503A;
+  --color-btn: #F5F5F5;
+  --color-btn-hover: #FFFFFF;
+  --color-btn-active: #CCCCCC;
+  --color-status-looking: #FF6B6B;
+  --color-status-progress: #FFCA28;
+  --color-status-complete: #66BB6A;
+  --color-error: #FF6B6B;
+  --color-success: #66BB6A;
+  --color-white: #F5F5F5;
 
   /* Fonts */
   --font-heading: var(--font-space-grotesk), system-ui, sans-serif;
@@ -43,6 +45,7 @@
 
   /* Animation */
   --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
   --duration-normal: 200ms;
   --duration-medium: 250ms;
@@ -62,7 +65,7 @@ body {
   line-height: 24px;
 }
 
-/* ── Grain Texture ── */
+/* ── Grain Texture (analog film) ── */
 
 body::before {
   content: "";
@@ -70,11 +73,10 @@ body::before {
   inset: -256px;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.03;
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
-  animation: grain-drift 30s linear infinite;
 }
 
 /* ── Focus Styles ── */
@@ -95,7 +97,7 @@ body::before {
   font-family: var(--font-mono);
 }
 
-/* ── Scrollbar (subtle) ── */
+/* ── Scrollbar (subtle on dark) ── */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -111,7 +113,18 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-disabled);
+  background: var(--color-border-hover);
+}
+
+/* ── Scrollbar Hide (for horizontal scroll containers) ── */
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* ── Animation Keyframes ── */
@@ -160,41 +173,119 @@ body::before {
   }
 }
 
+@keyframes fade-up-subtle {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .animate-fade-up {
-  animation: fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-up 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Constant / Living Animations ── */
-
-/* Grain texture slow drift — analog film feel */
-@keyframes grain-drift {
-  0% { background-position: 0 0; }
-  100% { background-position: 256px 256px; }
+.animate-fade-up-subtle {
+  animation: fade-up-subtle 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Accent lines breathe in width */
-@keyframes line-breathe {
-  0%, 100% { transform: scaleX(1); }
-  50% { transform: scaleX(1.4); }
+.animate-slide-in-right {
+  animation: slide-in-right 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Pop-colored accent slides across section divider */
-@keyframes line-slide {
-  0% { transform: translateX(-100%); width: 30%; }
-  50% { transform: translateX(200%); width: 30%; }
-  100% { transform: translateX(-100%); width: 30%; }
+/* ── Card Hover (dark: subtle glow) ── */
+
+.card-hover {
+  transition:
+    transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 200ms ease-out;
 }
 
-/* Numbers breathe — slow vertical oscillation */
-@keyframes number-breathe {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.02), 0 1px 4px rgba(255, 255, 255, 0.01);
+  border-color: var(--color-border-hover);
 }
 
-/* Auth page background text slow drift */
+.card-hover:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* ── Auth page background text slow drift ── */
 @keyframes text-drift {
   0%, 100% { transform: translateX(0) translateY(0); }
   33% { transform: translateX(8px) translateY(-4px); }
   66% { transform: translateX(-4px) translateY(6px); }
 }
 
+/* ── Progress Bar Shimmer ── */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-pop) 0%,
+    #F06B55 50%,
+    var(--color-pop) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ── Mechanical Precision Motifs ── */
+
+@keyframes micro-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.006); }
+}
+
+@keyframes led-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes witness-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.animate-micro-pulse {
+  animation: micro-pulse 8s ease-in-out infinite;
+}
+
+.animate-led-breathe {
+  animation: led-breathe 4s ease-in-out infinite;
+}
+
+.animate-witness-draw {
+  animation: witness-draw 600ms ease-out forwards;
+  transform-origin: left;
+}
+
+/* Pause constant animations for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-micro-pulse,
+  .animate-led-breathe {
+    animation-play-state: paused;
+  }
+}

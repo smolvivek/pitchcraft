@@ -228,6 +228,8 @@ function ImageThumbnail({
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [caption, setCaption] = useState(media.caption || '')
+  const [savingCaption, setSavingCaption] = useState(false)
 
   // Fetch signed URL for image
   useState(() => {
@@ -247,42 +249,76 @@ function ImageThumbnail({
     fetchUrl()
   })
 
+  const handleCaptionBlur = async () => {
+    if (caption === (media.caption || '')) return
+    setSavingCaption(true)
+    try {
+      await fetch(`/api/media/${media.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: caption || null }),
+      })
+    } catch (err) {
+      console.error('Caption save error:', err)
+    } finally {
+      setSavingCaption(false)
+    }
+  }
+
   return (
-    <div className="relative aspect-square bg-surface rounded-[4px] overflow-hidden border border-border group">
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-[12px] text-text-secondary">Loading...</p>
-        </div>
-      )}
-      {imageUrl && (
-        <img
-          src={imageUrl}
-          alt=""
-          className="w-full h-full object-cover"
-        />
-      )}
-      <button
-        onClick={onDelete}
-        className="
-          absolute top-[8px] right-[8px]
-          w-[24px] h-[24px]
-          bg-white rounded-full
-          flex items-center justify-center
-          opacity-0 group-hover:opacity-100
-          transition-opacity duration-[200ms]
-          hover:bg-error hover:text-white
-        "
-        aria-label="Delete image"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path
-            d="M9 3L3 9M3 3L9 9"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
+    <div className="flex flex-col gap-[4px]">
+      <div className="relative aspect-square bg-surface rounded-[4px] overflow-hidden border border-border group">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-[12px] text-text-secondary">Loading...</p>
+          </div>
+        )}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={caption || ''}
+            className="w-full h-full object-cover"
           />
-        </svg>
-      </button>
+        )}
+        <button
+          onClick={onDelete}
+          className="
+            absolute top-[8px] right-[8px]
+            w-[24px] h-[24px]
+            bg-background rounded-full
+            flex items-center justify-center
+            opacity-0 group-hover:opacity-100
+            transition-opacity duration-[200ms]
+            hover:bg-error hover:text-white
+          "
+          aria-label="Delete image"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path
+              d="M9 3L3 9M3 3L9 9"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <input
+        type="text"
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
+        onBlur={handleCaptionBlur}
+        placeholder="Caption (optional)"
+        className={`
+          w-full px-[8px] py-[4px]
+          font-[var(--font-body)] text-[12px] leading-[16px]
+          text-text-secondary bg-transparent
+          border-b border-transparent
+          focus:border-border focus:outline-none
+          placeholder:text-text-disabled
+          ${savingCaption ? 'opacity-50' : ''}
+        `}
+      />
     </div>
   )
 }

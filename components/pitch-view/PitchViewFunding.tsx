@@ -3,13 +3,25 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { TextInput } from '@/components/ui/Input'
-import Script from 'next/script'
+
+interface StretchGoal {
+  amount: number
+  description: string
+}
+
+interface FundingReward {
+  amount: number
+  title: string
+  description: string
+}
 
 interface FundingData {
   id: string
   funding_goal: number
   description: string | null
   end_date: string | null
+  stretch_goals: StretchGoal[]
+  rewards: FundingReward[]
   total_raised: number
   donor_count: number
 }
@@ -17,14 +29,6 @@ interface FundingData {
 interface PitchViewFundingProps {
   pitchId: string
   projectName: string
-}
-
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => {
-      open: () => void
-    }
-  }
 }
 
 export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps) {
@@ -56,6 +60,14 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
     fetchFunding()
   }, [pitchId])
 
+  // Check for success redirect from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('funded') === 'true') {
+      setSuccess(true)
+    }
+  }, [])
+
   if (loading || !funding) return null
 
   const percentage = Math.min(
@@ -67,10 +79,14 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
     ? new Date(funding.end_date) < new Date()
     : false
 
+  const formatCurrency = (cents: number) => {
+    return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  }
+
   const handleDonate = async () => {
-    const amountInPaise = Math.round(parseFloat(amount) * 100)
-    if (!amountInPaise || amountInPaise < 100) {
-      setError('Minimum donation is \u20B91')
+    const amountInCents = Math.round(parseFloat(amount) * 100)
+    if (!amountInCents || amountInCents < 100) {
+      setError('Minimum donation is $1')
       return
     }
     if (!name.trim() || !email.trim()) {
@@ -82,72 +98,29 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
     setError('')
 
     try {
-      // Create order
-      const orderRes = await fetch(`/api/funding/${funding.id}/donate`, {
+      const res = await fetch(`/api/funding/${funding.id}/donate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: amountInPaise,
+          amount: amountInCents,
           name,
           email,
           message: message || null,
         }),
       })
 
-      if (!orderRes.ok) {
-        const data = await orderRes.json()
+      if (!res.ok) {
+        const data = await res.json()
         setError(data.error || 'Failed to create payment')
         return
       }
 
-      const { orderId, currency } = await orderRes.json()
-
-      // Open Razorpay checkout
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: amountInPaise,
-        currency,
-        name: 'Pitchcraft',
-        description: `Support: ${projectName}`,
-        order_id: orderId,
-        prefill: { name, email },
-        handler: async (response: {
-          razorpay_order_id: string
-          razorpay_payment_id: string
-          razorpay_signature: string
-        }) => {
-          // Verify payment
-          const verifyRes = await fetch('/api/funding/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              funding_id: funding.id,
-              name,
-              email,
-              message: message || null,
-              amount: amountInPaise,
-            }),
-          })
-
-          if (verifyRes.ok) {
-            setSuccess(true)
-            setShowForm(false)
-            // Refresh funding data
-            const refreshRes = await fetch(`/api/funding/public/${pitchId}`)
-            const refreshData = await refreshRes.json()
-            if (refreshData.funding) setFunding(refreshData.funding)
-          } else {
-            setError('Payment verification failed')
-          }
-        },
-        theme: { color: '#1A1A1A' },
+      const { url } = await res.json()
+      if (url) {
+        window.location.href = url
+      } else {
+        setError('Failed to create checkout session')
       }
-
-      const rzp = new window.Razorpay(options)
-      rzp.open()
     } catch {
       setError('Payment failed')
     } finally {
@@ -156,113 +129,171 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
   }
 
   return (
-    <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <section className="max-w-[680px] mx-auto w-full px-[24px]">
-        <div className="bg-white border border-border rounded-[4px] p-[24px]">
-          <h2 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[16px]">
-            Support This Project
-          </h2>
+    <section className="max-w-[680px] mx-auto w-full px-[24px]">
+      <div className="bg-surface border border-border rounded-[4px] p-[24px]">
+        <h2 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[16px]">
+          Support This Project
+        </h2>
 
-          {funding.description && (
-            <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary mb-[16px]">
-              {funding.description}
-            </p>
-          )}
+        {funding.description && (
+          <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary mb-[16px]">
+            {funding.description}
+          </p>
+        )}
 
-          {/* Progress bar */}
+        {/* Progress bar */}
+        <div className="mb-[16px]">
+          <div className="flex justify-between items-baseline mb-[8px]">
+            <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary">
+              {formatCurrency(funding.total_raised)} raised
+            </span>
+            <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+              of {formatCurrency(funding.funding_goal)}
+            </span>
+          </div>
+          <div className="h-[4px] bg-surface rounded-full overflow-hidden">
+            <div
+              className="h-full bg-pop rounded-full transition-all duration-[400ms] ease-out"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-baseline mt-[8px]">
+            <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+              {funding.donor_count} {funding.donor_count === 1 ? 'supporter' : 'supporters'}
+            </span>
+            {funding.end_date && (
+              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+                {isExpired ? 'Ended' : `Ends ${new Date(funding.end_date).toLocaleDateString()}`}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Stretch Goals */}
+        {funding.stretch_goals && funding.stretch_goals.length > 0 && (
           <div className="mb-[16px]">
-            <div className="flex justify-between items-baseline mb-[8px]">
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary">
-                {'\u20B9'}{funding.total_raised.toLocaleString()} raised
-              </span>
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
-                of {'\u20B9'}{funding.funding_goal.toLocaleString()}
-              </span>
-            </div>
-            <div className="h-[4px] bg-surface rounded-full overflow-hidden">
-              <div
-                className="h-full bg-pop rounded-full transition-all duration-[400ms] ease-out"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-baseline mt-[8px]">
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
-                {funding.donor_count} {funding.donor_count === 1 ? 'supporter' : 'supporters'}
-              </span>
-              {funding.end_date && (
-                <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
-                  {isExpired ? 'Ended' : `Ends ${new Date(funding.end_date).toLocaleDateString()}`}
-                </span>
-              )}
+            <h3 className="font-[var(--font-heading)] text-[16px] font-semibold leading-[24px] text-text-primary mb-[8px]">
+              Stretch Goals
+            </h3>
+            <div className="flex flex-col gap-[8px]">
+              {funding.stretch_goals.map((goal, i) => {
+                const reached = funding.total_raised >= goal.amount
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-[8px] py-[8px] px-[12px] rounded-[4px] ${
+                      reached ? 'bg-success/10' : 'bg-surface'
+                    }`}
+                  >
+                    <span className="font-[var(--font-mono)] text-[13px] text-text-secondary whitespace-nowrap">
+                      {formatCurrency(goal.amount)}
+                    </span>
+                    <span className={`font-[var(--font-body)] text-[14px] leading-[20px] ${
+                      reached ? 'text-success' : 'text-text-primary'
+                    }`}>
+                      {goal.description}
+                      {reached && ' \u2713'}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
+        )}
 
-          {success && (
-            <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-success mb-[16px]">
-              Thank you for your support.
-            </p>
-          )}
-
-          {!isExpired && !showForm && !success && (
-            <Button
-              variant="primary"
-              type="button"
-              onClick={() => setShowForm(true)}
-            >
-              Support this project
-            </Button>
-          )}
-
-          {showForm && (
-            <div className="flex flex-col gap-[12px] mt-[16px]">
-              <TextInput
-                label="Amount (INR)"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="500"
-              />
-              <TextInput
-                label="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <TextInput
-                label="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <TextInput
-                label="Message (optional)"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              {error && (
-                <p className="text-[14px] leading-[20px] text-error">{error}</p>
-              )}
-              <div className="flex gap-[12px]">
-                <Button
-                  variant="primary"
-                  type="button"
-                  onClick={handleDonate}
-                  disabled={donating}
+        {/* Rewards */}
+        {funding.rewards && funding.rewards.length > 0 && (
+          <div className="mb-[16px]">
+            <h3 className="font-[var(--font-heading)] text-[16px] font-semibold leading-[24px] text-text-primary mb-[8px]">
+              Rewards
+            </h3>
+            <div className="flex flex-col gap-[8px]">
+              {funding.rewards.map((reward, i) => (
+                <div
+                  key={i}
+                  className="py-[8px] px-[12px] bg-surface rounded-[4px]"
                 >
-                  {donating ? 'Processing...' : 'Pay'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  <div className="flex items-baseline justify-between mb-[4px]">
+                    <span className="font-[var(--font-heading)] text-[14px] font-semibold text-text-primary">
+                      {reward.title}
+                    </span>
+                    <span className="font-[var(--font-mono)] text-[13px] text-text-secondary">
+                      {formatCurrency(reward.amount)}+
+                    </span>
+                  </div>
+                  <p className="font-[var(--font-body)] text-[13px] leading-[18px] text-text-secondary">
+                    {reward.description}
+                  </p>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
-    </>
+          </div>
+        )}
+
+        {success && (
+          <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-success mb-[16px]">
+            Thank you for your support.
+          </p>
+        )}
+
+        {!isExpired && !showForm && !success && (
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => setShowForm(true)}
+          >
+            Support this project
+          </Button>
+        )}
+
+        {showForm && (
+          <div className="flex flex-col gap-[12px] mt-[16px]">
+            <TextInput
+              label="Amount (USD)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="25"
+            />
+            <TextInput
+              label="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <TextInput
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <TextInput
+              label="Message (optional)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            {error && (
+              <p className="text-[14px] leading-[20px] text-error">{error}</p>
+            )}
+            <div className="flex gap-[12px]">
+              <Button
+                variant="primary"
+                type="button"
+                onClick={handleDonate}
+                disabled={donating}
+              >
+                {donating ? 'Redirecting...' : 'Continue to payment'}
+              </Button>
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   )
 }

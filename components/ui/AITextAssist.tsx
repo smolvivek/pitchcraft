@@ -103,7 +103,7 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
   }
 
   return (
-    <div className="mt-[8px] border border-border rounded-[4px] bg-white p-[16px]">
+    <div className="mt-[8px] border border-border rounded-[4px] bg-surface p-[16px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-[12px]">
         <span className="font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">

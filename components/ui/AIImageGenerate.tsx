@@ -111,7 +111,7 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
   }
 
   return (
-    <div className="border border-border rounded-[4px] bg-white p-[16px]">
+    <div className="border border-border rounded-[4px] bg-surface p-[16px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-[12px]">
         <span className="font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">

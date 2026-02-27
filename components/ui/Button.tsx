@@ -8,11 +8,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-btn text-white hover:bg-btn-hover active:bg-btn-active disabled:bg-border disabled:text-text-disabled",
+    "bg-btn text-background hover:bg-btn-hover active:bg-btn-active disabled:bg-border disabled:text-text-disabled hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100",
   secondary:
-    "bg-transparent border border-border text-text-primary hover:bg-surface active:bg-[#E8E0D8] disabled:text-text-disabled disabled:border-border",
+    "bg-transparent border border-border text-text-primary hover:bg-surface-hover hover:border-border-hover active:bg-surface active:scale-[0.98] disabled:text-text-disabled disabled:border-border disabled:hover:scale-100",
   tertiary:
-    "bg-transparent text-link hover:underline active:text-btn-hover disabled:text-text-disabled disabled:no-underline",
+    "bg-transparent text-link hover:underline active:text-pop-active disabled:text-text-disabled disabled:no-underline",
 };
 
 const sizeStyles: Record<ButtonVariant, string> = {
@@ -29,7 +29,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`
           inline-flex items-center justify-center
           rounded-[4px] leading-[20px]
-          transition-colors duration-[200ms] ease-out
+          transition-all duration-[200ms] ease-out
+          transform-gpu
           cursor-pointer
           disabled:cursor-not-allowed
           ${variantStyles[variant]}

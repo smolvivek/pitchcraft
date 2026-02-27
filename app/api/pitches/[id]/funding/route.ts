@@ -56,7 +56,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { funding_goal, description, end_date } = body
+    const { funding_goal, description, end_date, stretch_goals, rewards } = body
 
     if (!funding_goal || funding_goal < 1) {
       return NextResponse.json({ error: 'Funding goal is required' }, { status: 400 })
@@ -92,6 +92,8 @@ export async function POST(
         funding_goal,
         description: description || null,
         end_date: end_date || null,
+        stretch_goals: stretch_goals || [],
+        rewards: rewards || [],
       })
       .select()
       .single()
@@ -123,7 +125,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { funding_goal, description, end_date } = body
+    const { funding_goal, description, end_date, stretch_goals, rewards } = body
 
     const { data: funding, error: updateError } = await supabase
       .from('funding')
@@ -131,6 +133,8 @@ export async function PATCH(
         ...(funding_goal !== undefined && { funding_goal }),
         ...(description !== undefined && { description }),
         ...(end_date !== undefined && { end_date }),
+        ...(stretch_goals !== undefined && { stretch_goals }),
+        ...(rewards !== undefined && { rewards }),
         updated_at: new Date().toISOString(),
       })
       .eq('pitch_id', pitchId)

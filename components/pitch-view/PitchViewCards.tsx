@@ -21,7 +21,7 @@ export function PitchViewCards({ title, items }: PitchViewCardsProps) {
         {items.map((item, i) => (
           <div
             key={i}
-            className="bg-white border border-border rounded-[4px] p-[16px]"
+            className="bg-surface border border-border rounded-[4px] p-[16px]"
           >
             <p className="font-[var(--font-body)] text-[16px] font-medium leading-[24px] text-text-primary">
               {item.name}
