@@ -535,7 +535,7 @@ export function LandingPreview() {
                       <div
                         className={`grid gap-[8px] md:gap-[12px] ${
                           section.images.length === 3
-                            ? "grid-cols-3"
+                            ? "grid-cols-1 sm:grid-cols-3"
                             : "grid-cols-2"
                         }`}
                       >
@@ -574,8 +574,8 @@ export function LandingPreview() {
                       <div
                         className={`mt-[12px] grid gap-[8px] md:gap-[12px] ${
                           section.people.length <= 3
-                            ? "grid-cols-3"
-                            : "grid-cols-2"
+                            ? "grid-cols-1 sm:grid-cols-3"
+                            : "grid-cols-1 sm:grid-cols-2"
                         }`}
                       >
                         {section.people.map((person) => (
@@ -605,7 +605,7 @@ export function LandingPreview() {
                       <h4 className="font-[var(--font-heading)] font-semibold text-[18px] md:text-[20px] leading-[28px] tracking-[-0.02em] text-text-primary">
                         {section.title}
                       </h4>
-                      <div className="mt-[12px] grid grid-cols-3 gap-[8px] md:gap-[12px]">
+                      <div className="mt-[12px] grid grid-cols-1 sm:grid-cols-3 gap-[8px] md:gap-[12px]">
                         {section.locations.map((loc) => (
                           <div
                             key={loc.name}

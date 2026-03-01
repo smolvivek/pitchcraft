@@ -230,6 +230,17 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
           </div>
         )}
 
+        {/* Trust signals */}
+        <div className="flex items-center gap-[16px] mb-[16px] py-[12px] border-t border-border">
+          <span className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            Payments secured by Stripe
+          </span>
+          <span className="text-border">·</span>
+          <span className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            Funds go directly to the creator
+          </span>
+        </div>
+
         {success && (
           <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-success mb-[16px]">
             Thank you for your support.

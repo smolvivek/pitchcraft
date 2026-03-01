@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, use, type FormEvent } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, use, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
@@ -130,6 +130,58 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [stretchGoals, setStretchGoals] = useState<StretchGoal[]>([])
   const [rewards, setRewards] = useState<FundingReward[]>([])
 
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'idle'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const isInitialLoad = useRef(true)
+
+  // Mark as unsaved when any field changes (after initial load)
+  const markUnsaved = useCallback(() => {
+    if (isInitialLoad.current) return
+    setSaveStatus('unsaved')
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(() => {
+      autoSaveDraft()
+    }, 2000)
+  }, [])
+
+  // Draft save — no validation, no version snapshot, no redirect
+  const autoSaveDraft = useCallback(async () => {
+    setSaveStatus('saving')
+    try {
+      const supabase = createClient()
+      await supabase
+        .from('pitches')
+        .update({
+          logline,
+          synopsis,
+          genre,
+          vision,
+          cast_and_characters: castAndCharacters,
+          budget_range: budgetRange || null,
+          status: pitchStatus,
+          team,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pitchId)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('unsaved')
+    }
+  }, [logline, synopsis, genre, vision, castAndCharacters, budgetRange, pitchStatus, team, pitchId])
+
+  // Trigger markUnsaved when required fields change
+  useEffect(() => {
+    markUnsaved()
+  }, [logline, synopsis, genre, vision, castAndCharacters, budgetRange, pitchStatus, team, markUnsaved])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+  }, [])
+
   // Helper to update a single section
   const updateSection = (key: string, update: Partial<OptionalSectionState>) => {
     setSections((prev) => ({
@@ -258,6 +310,9 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
           return next
         })
       }
+
+      // Allow auto-save after initial load is done
+      setTimeout(() => { isInitialLoad.current = false }, 500)
     }
 
     fetchPitch()
@@ -676,9 +731,18 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
         <main className="ml-[240px] flex-1">
           <div className="max-w-[800px] mx-auto px-[40px] py-[40px]">
             <div className="bg-surface border border-border rounded-[4px] p-[32px]">
-              <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary mb-[32px]">
-                Edit Project
-              </h1>
+              <div className="flex items-center justify-between mb-[32px]">
+                <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary">
+                  Edit Project
+                </h1>
+                {saveStatus !== 'idle' && (
+                  <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-disabled">
+                    {saveStatus === 'saving' && 'Saving...'}
+                    {saveStatus === 'saved' && 'Saved'}
+                    {saveStatus === 'unsaved' && 'Unsaved changes'}
+                  </span>
+                )}
+              </div>
 
               <form onSubmit={handleSubmit}>
                 <SectionTransition sectionNumber={activeSectionNumber} sectionKey={activeSection}>

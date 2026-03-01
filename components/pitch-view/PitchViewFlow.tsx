@@ -106,7 +106,7 @@ export function PitchViewFlow({ beats, audioUrl }: PitchViewFlowProps) {
                 </div>
               ) : (
                 /* Text-only beat (no image) */
-                <div className="aspect-[16/9] bg-[#1A1A1A] flex flex-col items-center justify-center px-[48px]">
+                <div className="aspect-[16/9] bg-[#1A1A1A] flex flex-col items-center justify-center px-[20px] md:px-[48px]">
                   {beat.arcLabel && (
                     <span className="font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] text-white/60 mb-[16px]">
                       {beat.arcLabel}

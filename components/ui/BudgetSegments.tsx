@@ -19,7 +19,7 @@ const budgetOptions: { value: BudgetRange; label: string; sublabel: string }[] =
 export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) {
   return (
     <div className="flex flex-col gap-[8px]">
-      <div className="grid grid-cols-5 gap-[8px]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[8px]">
         {budgetOptions.map((option) => (
           <button
             key={option.value}

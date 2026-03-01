@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { PitchStatus } from "@/lib/types/pitch";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { WelcomeOnboarding } from "@/components/ui/WelcomeOnboarding";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Nav user={profile} />
+      <WelcomeOnboarding />
       <DashboardShell>
         <div className="max-w-[1200px] mx-auto px-[24px] py-[40px]">
           {/* Header */}
