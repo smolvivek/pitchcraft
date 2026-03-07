@@ -1,6 +1,14 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
+import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+
+function verifyAccessCookie(pitchId: string, token: string): boolean {
+  const secret = process.env.PITCH_ACCESS_SECRET ?? 'dev-insecure-secret'
+  const expected = crypto.createHmac('sha256', secret).update(pitchId).digest('hex')
+  return token === expected
+}
 import type { Pitch, PitchSection, MediaRecord, BudgetRange, PitchStatus, FlowBeat } from '@/lib/types/pitch'
 import { OPTIONAL_SECTIONS } from '@/lib/sections'
 import { PitchViewLayout } from '@/components/pitch-view/PitchViewLayout'
@@ -11,7 +19,7 @@ import { PitchViewSection } from '@/components/pitch-view/PitchViewSection'
 import { PitchViewCards } from '@/components/pitch-view/PitchViewCards'
 import { PitchViewFooter } from '@/components/pitch-view/PitchViewFooter'
 import { PitchViewFunding } from '@/components/pitch-view/PitchViewFunding'
-import { PitchViewPasswordWrapper } from '@/components/pitch-view/PitchViewPasswordWrapper'
+import { PitchViewPasswordGate } from '@/components/pitch-view/PitchViewPasswordGate'
 import { PitchViewFlow } from '@/components/pitch-view/PitchViewFlow'
 
 interface PageProps {
@@ -70,7 +78,7 @@ async function fetchPitchData(pitchId: string) {
     const urlPromises = media.map(async (m: MediaRecord) => {
       const { data } = await supabase.storage
         .from('pitch-assets')
-        .createSignedUrl(m.storage_path, 3600)
+        .createSignedUrl(m.storage_path, 604800) // 7 days
       return { ...m, signedUrl: data?.signedUrl ?? '' }
     })
     const resolved = await Promise.all(urlPromises)
@@ -110,13 +118,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: pitch.project_name,
       description: pitch.logline,
       type: 'article',
-      ...(posterMedia && { images: [{ url: posterMedia.signedUrl }] }),
     },
     twitter: {
-      card: posterMedia ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: pitch.project_name,
       description: pitch.logline,
-      ...(posterMedia && { images: [posterMedia.signedUrl] }),
     },
   }
 }
@@ -144,6 +150,33 @@ export default async function PitchViewPage({ params }: PageProps) {
         </div>
       </div>
     )
+  }
+
+  // Password-protected: verify access cookie before fetching any pitch data.
+  // If the cookie is absent or invalid, render ONLY the gate — no content in the HTML.
+  if (linkInfo.hasPassword) {
+    const cookieStore = await cookies()
+    const accessCookie = cookieStore.get(`pitch_access_${id}`)
+    const isVerified = accessCookie && verifyAccessCookie(id, accessCookie.value)
+
+    if (!isVerified) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center px-[24px]">
+          <div className="bg-surface border border-border rounded-[4px] p-[32px] max-w-[400px] w-full">
+            <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[8px]">
+              This project is password-protected
+            </h1>
+            <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary mb-[24px]">
+              Enter the password to view.
+            </p>
+            <PitchViewPasswordGate pitchId={id} />
+            <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled mt-[24px]">
+              Pitchcraft
+            </p>
+          </div>
+        </div>
+      )
+    }
   }
 
   const data = await fetchPitchData(id)
@@ -299,15 +332,6 @@ export default async function PitchViewPage({ params }: PageProps) {
       <PitchViewFooter />
     </PitchViewLayout>
   )
-
-  // Password-protected: wrap content in password gate
-  if (linkInfo.hasPassword) {
-    return (
-      <PitchViewPasswordWrapper pitchId={id}>
-        {pitchContent}
-      </PitchViewPasswordWrapper>
-    )
-  }
 
   return pitchContent
 }

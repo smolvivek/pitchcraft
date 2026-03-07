@@ -1,19 +1,7 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
-import { PitchViewPasswordGate } from './PitchViewPasswordGate'
+// This component is no longer used.
+// Password-protected pitches are now gated server-side via httpOnly cookie.
+// See: /app/p/[id]/page.tsx and /api/pitches/[id]/verify-password/route.ts
 
-interface PitchViewPasswordWrapperProps {
-  pitchId: string
-  children: ReactNode
-}
-
-export function PitchViewPasswordWrapper({ pitchId, children }: PitchViewPasswordWrapperProps) {
-  const [verified, setVerified] = useState(false)
-
-  if (!verified) {
-    return <PitchViewPasswordGate pitchId={pitchId} onVerified={() => setVerified(true)} />
-  }
-
-  return <>{children}</>
-}
+export {}

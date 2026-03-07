@@ -119,6 +119,56 @@ Claude understands the product deeply and may spot opportunities the creator has
 
 ---
 
+### Quick-Copy Share Link from Dashboard Card
+**Type:** Design / UX
+**Problem:** To share a pitch, a creator has to go Dashboard → open pitch editor → find the Share section → copy the link. That's 3 clicks minimum. Sharing is the primary action after creating a pitch — it should be instant.
+**Solution:** Add a small "copy link" icon button to the `PitchCard` component. On click, copy the share link to clipboard and show a brief "Copied" confirmation. If no share link exists yet, open the edit page's share section.
+**Impact:** The most frequent post-creation action becomes one click. Reduces friction at the moment creators want to send their pitch. Subtle but high-frequency.
+**Implementation:** Add `shareSlug` prop to PitchCard. Icon button calls `navigator.clipboard.writeText()`. No new routes.
+**Status:** Shipped — Dashboard fetches public share links for all pitches. PitchCard shows copy icon (clipboard → checkmark animation). Only visible when a public/password-protected share link exists.
+
+---
+
+### "Upgrade Successful" Dashboard Banner
+**Type:** UX
+**Problem:** After a DodoPayments checkout completes, the user returns to `/dashboard?upgraded=true`. The dashboard currently ignores this. They see no confirmation, the nav still shows "Upgrade", and they don't know if their subscription activated.
+**Solution:** Read `?upgraded=true` from the URL. Show a dismissable banner: "You're on Pro — AI, unlimited pitches, and privacy controls are now active." Remove the "Upgrade" button from nav on same render. Remove the param from the URL after 5 seconds.
+**Impact:** Closes the payment loop. Users who just paid need confirmation — silence is alarming. This prevents support tickets and chargeback disputes.
+**Implementation:** useSearchParams in a client component on the dashboard. Banner with auto-dismiss.
+**Status:** Shipped — `UpgradeBanner` client component reads `?upgraded=true`, shows success message, auto-dismisses after 7s, cleans URL. Rendered in dashboard inside Suspense boundary.
+
+---
+
+### "Powered by Pitchcraft" Footer = Organic Growth
+**Type:** Strategy / Revenue
+**Problem:** Every public pitch has a `PitchViewFooter` that says "Made with Pitchcraft". It's not a link. Nobody clicks non-link footer text. It's a marketing touchpoint doing zero work.
+**Solution:** Make "Made with Pitchcraft" a link to the landing page for free-tier pitches. For Pro/Studio pitches, keep it as plain text (or remove it — removing the "badge" could be a Pro feature worth calling out). Every pitch viewed by a producer is a potential acquisition channel.
+**Impact:** Turns every shared pitch into passive acquisition. A producer opens 10 pitches and sees "Made with Pitchcraft" 10 times. On click 3, they might click through. This is how Canva grew.
+**Implementation:** Make the text a `<Link>` to the homepage. Consider passing `tier` prop to `PitchViewFooter` — free = linked, paid = unlinked (or "Powered by" removed entirely as a Pro perk).
+**Status:** Shipped — "Made with Pitchcraft" is now a link to the homepage on all pitches. Tier-based distinction (free = linked, paid = plain) deferred to when version/tier info is passed to pitch view.
+
+---
+
+### Pitch Duplicate Feature
+**Type:** Feature
+**Problem:** Creators often start new projects with the same team, similar budget, and same format. Currently they must create a new pitch from scratch and re-enter everything.
+**Solution:** "Duplicate" button on the pitch card. Creates a copy of the pitch with all sections, named "Copy of [original name]", status reset to "Looking". No media is duplicated (too expensive) — just text fields.
+**Impact:** Dramatically reduces friction for prolific creators (ad directors, TV writers) who run multiple projects with the same core team. Also increases pitch count per user → more engagement → more likely to upgrade.
+**Implementation:** New API route `POST /api/pitches/[id]/duplicate`. Server-side copy of pitch row + sections. Redirect to edit page of the new pitch.
+**Status:** Shipped — `POST /api/pitches/[id]/duplicate` copies pitch row + pitch_sections (text only, no media). `DuplicatePitchButton` component shown on each pitch card. Redirects to new pitch's edit page on success.
+
+---
+
+### Show Actual Commission Breakdown to Donors
+**Type:** Design / Trust
+**Problem:** The funding form has a vague "100% minus a small platform fee" message. The API already returns `creator_amount`, `commission_amount`, and `commission_rate`. This information exists but isn't surfaced.
+**Solution:** Compute and display: "You donate $25 → $23 goes to the creator (8% platform fee)" dynamically as the user types their amount. Update in real-time. This is what Seed&Spark does.
+**Impact:** Transparent fees build trust and increase conversion. Donors who understand exactly where their money goes are more likely to complete the donation. This also differentiates from platforms that hide fees.
+**Implementation:** Client-side calculation in `PitchViewFunding`. No new API calls needed — compute from `commission_rate` returned by the donate endpoint (or approximate client-side using the visible 8%/5%/3% tiers).
+**Status:** Shipped — After Razorpay order creation, stores `creator_amount` and `commission_rate` in state. Shows "You donate $X → creator receives $Y (Z% platform fee)" above the payment button. Dead `console.info` removed.
+
+---
+
 ## Archive (Rejected Ideas)
 
 *Rejected ideas are moved here with rationale, so we don't revisit them.*

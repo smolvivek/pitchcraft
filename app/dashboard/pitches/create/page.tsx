@@ -542,29 +542,15 @@ export default function CreatePitchPage() {
 
     try {
       const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_id', user.id)
-        .single()
-
-      if (profileError) {
-        throw new Error(`Profile lookup failed: ${profileError.message} (${profileError.code})`)
-      }
-      if (!profile) throw new Error('Profile not found — users table may be empty')
 
       const validCast = castMembers.filter((m) => m.name.trim() && m.role.trim())
       const validTeam = teamMembers.filter((m) => m.name.trim() && m.role.trim())
 
-      const { data: pitch, error: pitchError } = await supabase
-        .from('pitches')
-        .insert({
-          user_id: profile.id,
+      // Create pitch via server-side API — enforces tier limits server-side
+      const res = await fetch('/api/pitches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           project_name: projectName,
           logline,
           synopsis,
@@ -574,13 +560,22 @@ export default function CreatePitchPage() {
           budget_range: budgetRange,
           status,
           team: JSON.stringify(validTeam),
-        })
-        .select()
-        .single()
+        }),
+      })
 
-      if (pitchError) {
-        throw new Error(`${pitchError.message} (${pitchError.code}: ${pitchError.details || pitchError.hint || ''})`)
+      const result = await res.json()
+
+      if (res.status === 403 && result.upgrade) {
+        setErrors({ general: 'Free accounts are limited to 1 pitch. Upgrade to Pro for unlimited pitches.' })
+        setLoading(false)
+        return
       }
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to create project')
+      }
+
+      const pitch = { id: result.id }
 
       // Upload any pending files (poster, vision images)
       await uploadPendingFiles(pitch.id)

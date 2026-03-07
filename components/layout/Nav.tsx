@@ -19,9 +19,10 @@ interface User {
 interface NavProps {
   links?: NavLink[];
   user?: User | null;
+  tier?: string;
 }
 
-function Nav({ links = [], user = null }: NavProps) {
+function Nav({ links = [], user = null, tier }: NavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -38,7 +39,7 @@ function Nav({ links = [], user = null }: NavProps) {
       {/* Logo */}
       <Link
         href="/"
-        className="font-heading text-[18px] font-semibold text-text-primary"
+        className="font-heading text-[18px] font-semibold text-text-primary rounded-[2px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pop"
       >
         Pitchcraft
       </Link>
@@ -51,9 +52,10 @@ function Nav({ links = [], user = null }: NavProps) {
             href={link.href}
             className={`
               text-[14px] leading-[20px] transition-colors duration-[200ms] ease-out
+              rounded-[2px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pop
               ${
                 link.active
-                  ? "text-text-primary border-b-2 border-pop pb-[2px]"
+                  ? "text-pop font-medium"
                   : "text-text-secondary hover:text-text-primary"
               }
             `}
@@ -65,9 +67,19 @@ function Nav({ links = [], user = null }: NavProps) {
         {/* Auth buttons */}
         {user ? (
           <div className="flex items-center gap-[16px]">
-            <span className="text-[14px] leading-[20px] text-text-primary">
+            <Link
+              href="/dashboard/account"
+              className="text-[14px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors"
+            >
               {user.name}
-            </span>
+            </Link>
+            {(!tier || tier === 'free') && (
+              <Link href="/pricing">
+                <Button variant="primary" className="text-[14px]">
+                  Upgrade
+                </Button>
+              </Link>
+            )}
             <Button variant="secondary" onClick={handleSignOut} className="text-[14px]">
               Log out
             </Button>
@@ -122,9 +134,10 @@ function Nav({ links = [], user = null }: NavProps) {
                 className={`
                   px-[16px] py-[12px] rounded-[4px] text-[14px] leading-[20px]
                   transition-colors duration-[200ms] ease-out
+                  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-pop
                   ${
                     link.active
-                      ? "text-text-primary bg-surface font-medium"
+                      ? "text-pop bg-surface font-medium"
                       : "text-text-secondary hover:bg-surface hover:text-text-primary"
                   }
                 `}
@@ -137,9 +150,20 @@ function Nav({ links = [], user = null }: NavProps) {
             {/* Mobile auth buttons */}
             {user ? (
               <div className="flex flex-col gap-[8px] pt-[8px] border-t border-border mt-[8px]">
-                <div className="px-[16px] py-[8px] text-[14px] leading-[20px] text-text-primary">
+                <Link
+                  href="/dashboard/account"
+                  onClick={() => setMobileOpen(false)}
+                  className="px-[16px] py-[8px] text-[14px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors"
+                >
                   {user.name}
-                </div>
+                </Link>
+                {(!tier || tier === 'free') && (
+                  <Link href="/pricing" onClick={() => setMobileOpen(false)}>
+                    <Button variant="primary" className="w-full">
+                      Upgrade
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="secondary" onClick={handleSignOut} className="w-full">
                   Log out
                 </Button>

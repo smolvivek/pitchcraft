@@ -156,6 +156,310 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 
 ---
 
+### 12. Pricing Page Looks Like a SaaS Template
+**Area:** UX / Design
+**Severity:** High
+**What's wrong:** The 3-column comparison grid with checkmarks and generic CTAs ("Start Pro", "Start Studio") are copied from every SaaS pricing page on the internet. A filmmaker opening this page sees Notion's pricing, not a tool built for creative work.
+**What competitors do better:** This isn't a competitor problem — Pitchcraft is supposed to look *unlike* competitors. The pricing page is the most generic page on the site.
+**Recommended fix:** CTAs should speak to actual value ("Go Pro", "Get Studio"). Consider a layout that doesn't feel like a feature matrix. The table-of-checkboxes format is pure SaaS.
+**Impact if ignored:** The first revenue-generating page feels like it was generated from a template. Creators here for the aesthetic will feel the dissonance immediately.
+**Status:** Open — "Most popular" badge removed. CTAs and layout still need work.
+
+---
+
+### 13. Collaborator Counts (2 and 5) Are Arbitrary
+**Area:** Profitability / UX
+**Severity:** Medium
+**What's wrong:** Pro allows 2 collaborators per pitch, Studio allows 5. These numbers weren't derived from research — they were picked to create tier differentiation. The problem: a minimal indie film core team is director + producer + writer + DP + editor = 5 people. Pro at 2 collaborators means the feature is nearly useless for an actual film crew. You're selling a product to filmmakers and capping collaboration at 2 on the $12 tier.
+**What competitors do better:** Notion (2 on free, unlimited on paid), Linear (unlimited for teams), Gamma (5 on free). The pattern is: make the free limit tight, make the paid limit feel generous.
+**Recommended fix:** Raise Pro to 5 collaborators. Raise Studio to unlimited or a higher number (15+). The marginal cost of adding collaborators is zero. The value signal of "5 collaborators" on Pro is much stronger for a filmmaker than "2." Update PRICING.md and the pricing page once decided.
+**Impact if ignored:** Filmmakers with a 3-person core team hit the Pro collaborator wall immediately. The feature exists but can't serve them at the $12 tier.
+**Status:** Open
+
+---
+
+### 14. "No Pitchcraft Branding" Frames the Product as a Burden
+**Area:** UX / Profitability
+**Severity:** Medium
+**What's wrong:** Listing "No Pitchcraft branding" as a Pro feature implies the Pitchcraft brand is something creators want to escape. It positions free-tier branding as embarrassing rather than as a trust signal. A creator sending a pitch to a studio exec sees "Made with Pitchcraft" and reads it as "this person couldn't afford the real product."
+**What competitors do better:** Notion doesn't call it "No Notion branding." They frame the free tier branding as part of the product, and paid tiers as "custom domain" — a positive feature, not removal of a negative.
+**Recommended fix:** Reframe free-tier branding as a feature of its own ("Powered by Pitchcraft — shows provenance") and remove "No Pitchcraft branding" from the Pro feature list entirely. Instead list a positive: "Your pitch, your identity" or just omit the branding mention. Or: keep the "Made with Pitchcraft" footer on free but make it tasteful enough that it's not shameful.
+**Impact if ignored:** Every free user who reads the pricing page learns that the Pitchcraft brand on their pitch is a liability. That's not the message you want.
+**Status:** Open
+
+---
+
+### 15. "Clean PDF Export" Communicates Nothing
+**Area:** UX / Copy
+**Severity:** Low
+**What's wrong:** "Clean PDF export" in the Pro feature list is meaningless. Clean compared to what? It doesn't describe the actual value (a print-ready version of the pitch, without UI chrome or "Made with Pitchcraft" footer).
+**What competitors do better:** Gamma: "Export to PDF." Canva: "Download in PDF Print." Papermark: "PDF export." Simple nouns, not adjectives.
+**Recommended fix:** "PDF export" (Pro) and "Branded PDF export" (Studio). Or "Print-ready PDF" for Pro if you want to communicate something specific. Drop "clean."
+**Impact if ignored:** Minor copy issue, but on a pricing page every word matters. "Clean" is lazy language and doesn't hold up under scrutiny.
+**Status:** Open
+
+---
+
+### 16. Pricing CTAs Link to Signup, Not Checkout
+**Area:** Profitability
+**Severity:** Critical
+**What's wrong:** Pro and Studio CTA buttons on `/pricing` link to `/signup` instead of triggering DodoPayments checkout. Users cannot actually upgrade from the pricing page. The entire subscription backend exists but nothing in the UI calls it.
+**Recommended fix:** Create a client component that POSTs to `/api/subscriptions/checkout` and redirects to DodoPayments. Replace `/signup` hrefs on paid tier CTAs.
+**Impact if ignored:** Zero paid conversions. Subscription system is fully built but completely orphaned.
+**Status:** Fixed — Created `CheckoutButton` client component. Pro/Studio CTAs now POST to `/api/subscriptions/checkout` and redirect to DodoPayments checkout URL. Unauthenticated users are redirected to `/signup`.
+
+---
+
+### 17. Free Tier Pitch Count Not Enforced
+**Area:** Functionality / Profitability
+**Severity:** Critical
+**What's wrong:** Free users can create unlimited pitches. PRICING.md specifies 1 pitch max on free. No check exists in the create pitch flow or API.
+**Recommended fix:** On pitch creation, fetch subscription tier. If free and pitch count ≥ 1, return 403 with upgrade prompt.
+**Impact if ignored:** Revenue leak. Free users get Pro-level access for nothing.
+**Status:** Fixed — Pitch count check added to create page submit handler. Free users with ≥ 1 existing pitch see an error pointing to `/pricing`.
+
+---
+
+### 18. AI Endpoints Don't Check Subscription Tier
+**Area:** Functionality / Profitability
+**Severity:** Critical
+**What's wrong:** `/api/ai/text` and `/api/ai/image` check daily rate limits but not subscription tier. Free users should get zero AI. Currently they get the same daily limit as paid users until they hit the count.
+**Recommended fix:** At the start of both AI routes, fetch subscription. If `tier === 'free'` return 403 with a clear message and link to `/pricing`.
+**Impact if ignored:** Paid AI features given away for free. Core monetization undermined.
+**Status:** Fixed — Both AI routes now fetch subscription tier before processing. Free users get 403 with `upgrade: true` flag. Daily limits corrected: Pro = 15 text / 5 images, Studio = unlimited text / 15 images.
+
+---
+
+### 19. No Subscription Upgrade UI — Backend Orphaned
+**Area:** Profitability
+**Severity:** Critical
+**What's wrong:** The subscription backend (`/api/subscriptions/checkout|webhook|status`) is fully built but no UI calls it. There is no "Go Pro" button anywhere in the authenticated app. No tier badge in the nav. No account page to manage subscription.
+**Recommended fix:** (1) Add tier badge + "Upgrade" button to Nav for free users. (2) Connect pricing page CTAs to checkout. (3) Build minimal `/dashboard/account` page showing tier + period end.
+**Impact if ignored:** Zero paid conversions from within the app. Users who want to upgrade have no path.
+**Status:** Fixed — Nav now accepts `tier` prop. Free users see "Upgrade" button in nav (desktop + mobile) linking to `/pricing`. Dashboard page fetches and passes subscription tier to Nav. Pricing CTAs fixed in #16.
+
+---
+
+### 20. Password Reset Link Is a Dead Link
+**Area:** Functionality
+**Severity:** High
+**What's wrong:** Login page links to `/reset-password` but the route doesn't exist. Users who forget their password are stuck.
+**Recommended fix:** Create `/app/(auth)/reset-password/page.tsx` using Supabase `resetPasswordForEmail`.
+**Impact if ignored:** Locked-out users cannot recover their account. Support burden. Churn.
+**Status:** Fixed — `/app/(auth)/reset-password/page.tsx` exists and functional. Uses Supabase `resetPasswordForEmail` with redirect to `/update-password`.
+
+---
+
+### 21. Terms & Privacy Reference Stripe — Code Uses Razorpay
+**Area:** Legal / Compliance
+**Severity:** High
+**What's wrong:** `/app/terms/page.tsx` and `/app/privacy/page.tsx` mention Stripe as the payment processor. The codebase now uses Razorpay for donations and DodoPayments for subscriptions. Legal documents don't match reality.
+**Recommended fix:** Update terms and privacy to reference Razorpay (donations) and DodoPayments (subscriptions). Remove Stripe references.
+**Impact if ignored:** Legal mismatch. Payment processors may flag this during review.
+**Status:** Fixed — Terms and privacy pages updated. All Stripe references replaced with Razorpay (donations) and DodoPayments (subscriptions). Resend added to privacy third-party list.
+
+---
+
+### 22. No Pricing Section on Landing Page
+**Area:** Profitability
+**Severity:** Medium
+**What's wrong:** The landing page has no pricing information. Visitors must navigate to `/pricing` separately — adding friction and drop-off.
+**Recommended fix:** Add a condensed 3-tier pricing block above the final CTA on the landing page. Link to full `/pricing` for details.
+**Impact if ignored:** Visitors who would upgrade never see pricing before leaving.
+**Status:** Open
+
+---
+
+### 23. Optional Sections Not Gated by Tier
+**Area:** Functionality / Profitability
+**Severity:** Medium
+**What's wrong:** Custom sections (Pro/Studio feature) are available to all users in the editor. Free users should not be able to enable custom sections.
+**Recommended fix:** Check subscription tier before allowing custom section toggles. Show "Pro feature" with link to `/pricing` for free users.
+**Impact if ignored:** Free users get paid features. Tier differentiation eroded.
+**Status:** Open
+
+---
+
+### 24. DodoPayments Webhook Secret Is Empty — Subscriptions Never Activate
+
+**Area:** Functionality / Profitability
+**Severity:** Critical
+**What's wrong:** `DODO_WEBHOOK_SECRET` is empty in `.env.local`. The webhook route returns 500 immediately without this value. When a user completes DodoPayments checkout, the webhook fires but fails silently. The `subscriptions` table is never written. The user pays, but their tier stays `free` forever.
+**Recommended fix:** Set `DODO_WEBHOOK_SECRET` in `.env.local` (from DodoPayments dashboard → Webhooks). Also requires a public webhook URL — use an ngrok tunnel in development, set the live URL on Vercel for production.
+**Impact if ignored:** Every paid subscription fails to activate. Zero paying users can access Pro/Studio features. This is a complete revenue blocker.
+**Status:** Open — requires manual config. Set `DODO_WEBHOOK_SECRET` from DodoPayments dashboard → Developer → Webhooks. Add webhook endpoint URL pointing to `/api/subscriptions/webhook`. Use ngrok for local dev.
+
+---
+
+### 25. No Feedback After Checkout Return — Upgrade Is Silent
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** After DodoPayments checkout, the user is returned to `/dashboard?upgraded=true`. The dashboard ignores this query param completely. The user sees their same dashboard, same empty "Upgrade" button in the nav, with zero confirmation that anything changed. (The webhook delay also means their tier may not have updated yet.)
+**Recommended fix:** Read `?upgraded=true` from URL in the dashboard. Show a brief banner: "Subscription activated — welcome to Pro." Optionally refetch subscription status on mount if this param is present. Remove the param from the URL after showing.
+**Impact if ignored:** Users who just paid are confused. They may think the payment failed and attempt again. Support tickets. Chargebacks. Churn.
+**Status:** Fixed — Created `UpgradeBanner` client component. Reads `?upgraded=true` from URL, shows "Subscription activated" banner, auto-dismisses after 7s, cleans URL param.
+
+---
+
+### 26. OG Image Uses Supabase Signed URLs That Expire in 1 Hour
+**Area:** Technical / Competitive
+**Severity:** High
+**What's wrong:** `generateMetadata()` in `/app/p/[id]/page.tsx` sets `og:image` to a Supabase signed URL with `3600` second expiry. Social platforms (LinkedIn, Twitter, Slack) crawl and cache these previews. If a platform re-fetches the image after 1 hour, it gets a 403 from Supabase. The pitch link then shows a broken preview image everywhere it was shared.
+**Recommended fix:** For OG images, either: (a) use a public Supabase storage bucket for poster images (no signed URL needed), or (b) serve media through a Next.js API route that re-generates the signed URL on request, or (c) generate a static OG card via `next/og` using pitch metadata (no image required). Option (c) is cleanest.
+**Impact if ignored:** Every shared pitch link has a broken image after 1 hour. Creators look unprofessional. The A24 aesthetic that works in the browser completely disappears in social previews.
+**Status:** Fixed — Created `/app/p/[id]/opengraph-image.tsx` using Next.js `ImageResponse` (edge runtime). Generates a permanent A24-dark OG card: project name, logline, genre, orange accent bar, Pitchcraft branding. Never expires. Removed expiring signed URL from `generateMetadata`.
+
+---
+
+### 27. AI UI Shows "Something Went Wrong" to Free Users Instead of Upgrade Prompt
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** `AITextAssist` only handles HTTP 429 (rate limit) as a special case. HTTP 403 (free tier block) falls through to the generic `"Something went wrong. Try again."` error. Free users who click the AI button are confused — they don't know why it's failing or what to do.
+**Recommended fix:** In `AITextAssist` and `AIImageGenerate`, check for `res.status === 403` and read `data.upgrade === true`. If true, show: "AI assist is a Pro feature. [Upgrade →]" with a link to `/pricing`. This is the exact moment of intent — a free user reaching for AI is the highest-value upgrade prompt in the product.
+**Impact if ignored:** The best conversion moment in the app shows a broken error. Free users try AI, get confused, and never upgrade.
+**Status:** Fixed — Both `AITextAssist` and `AIImageGenerate` now check `res.status === 403` and `data.upgrade === true`. Free tier users see "AI assist is a Pro feature. Upgrade to unlock →" with a link to `/pricing`.
+
+---
+
+### 28. Razorpay Checkout.js Not Checked Before Instantiation
+**Area:** Technical
+**Severity:** Medium
+**What's wrong:** `PitchViewFunding` loads `checkout.js` with `strategy="lazyOnload"`. If the script fails to load (slow connection, ad blocker, Razorpay outage), `window.Razorpay` will be `undefined`. The `new window.Razorpay(...)` call at line 117 will throw a runtime TypeError. The user sees a blank error state.
+**Recommended fix:** Before `new window.Razorpay(...)`, add: `if (!window.Razorpay) { setError('Payment system failed to load. Please refresh and try again.'); setDonating(false); return; }`. One line of defensive code prevents a confusing crash.
+**Impact if ignored:** Some percentage of donation attempts throw uncaught JS errors. On mobile or restricted networks this is a non-trivial failure rate.
+**Status:** Fixed — Added `if (!window.Razorpay)` guard before instantiation. Shows "Payment system failed to load. Please refresh." and aborts the donation flow cleanly.
+
+---
+
+### 29. Custom Sections Not Gated in UI (CRITIC #23 Implementation Gap)
+**Area:** Functionality / Profitability
+**Severity:** Medium
+**What's wrong:** CRITIC #23 noted custom sections should be Pro-gated. The API note was acknowledged but the editor UI (`create/page.tsx` and `edit/page.tsx`) still lets free users toggle and fill in custom sections. The check only needs to be in the UI — there's currently no server-side enforcement either.
+**Recommended fix:** In the optional sections toggle UI, check the user's tier. If free user tries to enable a custom section key (keys matching `CUSTOM_SECTION_KEYS`), show a "Pro feature" badge instead of the toggle. Requires reading tier client-side — either pass it as a prop from the server page or fetch from `/api/subscriptions/status` on mount.
+**Impact if ignored:** Free users build pitches with custom sections they'd be locked out of if the gate was enforced. When the gate is eventually enforced server-side, existing free-tier pitches with custom sections break.
+**Status:** Fixed — `Sidebar` now accepts `tier` prop. Free users see "Custom sections are a Pro feature" with upgrade link instead of the checkboxes. Edit page fetches tier from `/api/subscriptions/status` on mount and passes it to Sidebar.
+
+---
+
+### 30. Commission Transparency Is a Console Log, Not User-Facing
+**Area:** UX / Trust
+**Severity:** Low
+**What's wrong:** In `PitchViewFunding`, after creating a Razorpay order, the commission breakdown is logged with `console.info(...)` — visible only in browser DevTools, invisible to the donor. The UI does show a vague "100% of your donation goes to the creator minus a small platform fee" copy, but not the actual numbers.
+**Recommended fix:** Replace the console.info with a visible breakdown line: "You donate $25.00 → Creator receives $23.00 (8% platform fee + Razorpay processing)" computed from `creator_amount` and `commission_rate`. Show it inline above the payment button. Seed&Spark does this. Transparent fees build trust.
+**Impact if ignored:** Minor. Donors curious about fees find nothing in the UI. The console.info is dead code for users.
+**Status:** Fixed — `PitchViewFunding` now stores `creator_amount` and `commission_rate` from the order response. After order creation, shows exact breakdown: "You donate $X → creator receives $Y (Z% platform fee)". console.info removed.
+
+---
+
+### 31. Duplicate Pitch Bypasses Free Tier Pitch Limit
+**Area:** Functionality / Profitability
+**Severity:** Critical
+**What's wrong:** The `POST /api/pitches/[id]/duplicate` route has no subscription tier check. Free users are limited to 1 pitch (enforced in the create page submit handler), but they can duplicate that pitch unlimited times. Each duplicate creates a full new pitch row. A free user can have 1, 2, 10, 50 pitches via the Duplicate button — no gate anywhere in the duplicate route.
+**What competitors do better:** Notion, Linear, Gamma — all tier gates are enforced server-side, not just in the UI.
+**Recommended fix:** Add the same tier + pitch count check to `duplicate/route.ts` that exists in the create page. If free tier and count ≥ 1, return 403.
+**Impact if ignored:** The entire free tier pitch limit is meaningless. Every free user can create unlimited pitches by duplicating. Revenue from Pro upgrades (driven by pitch count limits) is zeroed out.
+**Status:** Fixed — Duplicate route now checks tier + pitch count server-side. Free users with ≥1 pitch get 403. DuplicatePitchButton redirects to /pricing on 403.
+
+---
+
+### 32. Password-Protected Pitch Content Is in the Page HTML
+**Area:** Security / Privacy
+**Severity:** Critical
+**What's wrong:** `PitchViewPasswordWrapper` is a client component that receives `pitchContent` as `children`. In Next.js App Router, when a client component receives server components as `children`, those server components are rendered on the server and their output is serialized into the RSC payload embedded in the page HTML and `<script>` tags. A viewer can see the full pitch content — title, logline, synopsis, director's vision, cast, team, budget — by reading the page source or inspecting `__NEXT_DATA__` / RSC payloads, without ever entering the password. The password gate only hides the content from the visible DOM.
+**What competitors do better:** Papermark, Notion — password gates are enforced server-side. No content is sent to the client until authentication passes.
+**Recommended fix:** For password-protected pitches, do NOT render the pitch content on the server at all. Return only the password gate UI from the server. After the client-side password check passes (via `/api/pitches/[id]/verify-password`), fetch and render the pitch data client-side. This requires a client-side fetch of pitch data post-verification.
+**Impact if ignored:** Password-protected links provide false security. Creators who use this feature to share confidential projects think they're protected. They're not. This is a trust-destroying bug if discovered.
+**Status:** Fixed — Pitch content is no longer rendered server-side for password-protected pitches. Server checks httpOnly cookie (HMAC-signed, 24h expiry) before fetching any data. Unverified visitors receive only the password gate HTML. After successful verification, cookie is set and page reloads — server then renders full content. PitchViewPasswordWrapper retired.
+
+---
+
+### 33. Subscription Cancellation Immediately Revokes Tier — Not at Period End
+**Area:** Functionality / Profitability
+**Severity:** Critical
+**What's wrong:** In `app/api/subscriptions/webhook/route.ts`: when `event.type === 'subscription.cancelled'`, the code sets `effectiveTier = 'free'` immediately. A Pro user who cancels on day 1 of their 30-day billing period loses Pro access on day 1 — even though they've paid for 29 more days. The `status/route.ts` handles the display correctly (shows tier until period_end), but the webhook sets `tier = 'free'` in the DB immediately, overriding it.
+**What competitors do better:** Every subscription platform (Stripe, DodoPayments standard behavior, Paddle) maintains access until period end. This is table stakes.
+**Recommended fix:** On `subscription.cancelled`, set `status = 'cancelled'` and `cancel_at_period_end = true` but keep `tier = tier` (the paid tier). Only on `subscription.expired` (which fires at actual period end) should `tier` be set to `'free'`. The `status/route.ts` already has logic to handle this correctly — the webhook just needs to not immediately downgrade tier.
+**Impact if ignored:** Any user who cancels immediately loses access they paid for. If they notice, this triggers chargebacks, not just churn. It's also a contractual issue — users paid for a period.
+**Status:** Fixed — Webhook handler now only sets tier='free' on subscription.expired. On subscription.cancelled, keeps the paid tier and sets status='cancelled' + cancel_at_period_end=true. Access revokes only when the period actually ends.
+
+---
+
+### 34. Donation Verify Endpoint Records Client-Supplied Amount — Not Razorpay-Verified Amount
+**Area:** Security
+**Severity:** High
+**What's wrong:** `POST /api/funding/[id]/verify` verifies the HMAC signature (proving a real Razorpay payment happened), then records the `amount` from the request body — the amount the client said it was, not the amount Razorpay actually charged. A bad actor who has a valid Razorpay payment (e.g., they donated $1 for order_id = `order_abc`) could send `{ razorpay_order_id: 'order_abc', razorpay_payment_id: 'pay_xyz', razorpay_signature: '[valid]', amount: 999999 }`. The signature verifies. The DB records $9999.99. The creator's funding total inflates. The donor count increments for essentially free.
+**What competitors do better:** Razorpay's own documentation says to verify the amount by fetching the order from the Razorpay API after signature verification.
+**Recommended fix:** After HMAC verification, fetch the order from Razorpay (`razorpay.orders.fetch(razorpay_order_id)`) and use `order.amount` instead of the client-supplied `amount`. Reject if amounts don't match.
+**Impact if ignored:** Funding totals can be gamed. A creator could inflate their own funding numbers for social proof (funding fraud). A competitor or troll could inflate a creator's numbers then report them.
+**Status:** Fixed — After HMAC signature verification, verify/route.ts now fetches the order from Razorpay (razorpay.orders.fetch) and uses order.amount as the recorded donation amount. Client-supplied amount is ignored.
+
+---
+
+### 35. Pitch View Media Images Expire After 1 Hour
+**Area:** UX / Technical
+**Severity:** High
+**What's wrong:** `fetchPitchData()` in `/app/p/[id]/page.tsx` generates Supabase signed URLs with `3600` second expiry for ALL media. This includes Director's Vision images, Flow beat images, and any other uploaded media. The OG image was fixed (using `ImageResponse`), but the actual content images on the pitch view page go stale after 1 hour. Anyone who has a pitch link open for >1 hour sees broken images. Cached pages (CDN, social platforms, email clients) show broken images permanently.
+**What competitors do better:** Notion, Gamma — media is served from public CDN or through permanent signed URLs with much longer expiry.
+**Recommended fix:** Either (a) increase signed URL expiry to 7 days / 30 days (Supabase supports up to 1 year), or (b) move pitch media storage to a public Supabase bucket (no signed URLs needed — media is already gated at the share link level, not the storage level), or (c) serve media through a Next.js API route that re-generates signed URLs on request.
+**Impact if ignored:** Every shared pitch link shows broken images after 1 hour. The A24 cinematic aesthetic that relies on visual media looks broken. Creators look unprofessional.
+**Status:** Fixed — Signed URL expiry changed from 3600s (1 hour) to 604800s (7 days) in fetchPitchData. Images remain valid for a week after the page is loaded.
+
+---
+
+### 36. No Way to Delete a Pitch
+**Area:** UX / Functionality
+**Severity:** High
+**What's wrong:** Users cannot delete pitches from the dashboard. The schema supports soft-delete (`deleted_at` column exists), but there's no delete button in the UI and no delete API route. For free users, this is a major problem: their 1 pitch slot is permanently occupied. If they finish a project or want to start fresh, they're stuck. They can't free their slot.
+**What competitors do better:** Every pitch/deck tool allows deletion. Notion, Gamma, Canva — all support deletion.
+**Recommended fix:** Add delete (soft-delete, sets `deleted_at`) to the pitch card actions. A confirmation step ("Delete this project? This cannot be undone.") is sufficient. Implement `DELETE /api/pitches/[id]/route.ts`.
+**Impact if ignored:** Free users who hit their 1-pitch limit and want to switch projects cannot. They either pay (resentfully, not eagerly) or abandon the product. Both are bad outcomes.
+**Status:** Fixed — DELETE /api/pitches/[id]/route.ts soft-deletes the pitch. DeletePitchButton component on PitchCard shows confirmation inline before deleting. router.refresh() updates the dashboard.
+
+---
+
+### 37. No Subscription / Account Management Page
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** After upgrading to Pro or Studio, there is no page in the app where users can: (a) see their current plan and price, (b) see next billing date, (c) cancel their subscription, (d) see billing history. The upgrade flow works (via DodoPayments), but there's no management flow. Users who want to cancel have no obvious path — they'll file chargebacks instead.
+**What competitors do better:** Every SaaS product (Notion, Gamma, Canva) has a `/settings` or `/account` page with subscription details and a cancel button.
+**Recommended fix:** Build a minimal `/dashboard/account` page that shows: current tier badge, period end date (from `/api/subscriptions/status`), and a link to the DodoPayments customer portal (if available) or a support email for cancellation. This doesn't need to be complex — just transparent.
+**Impact if ignored:** Users who want to cancel and can't find the path will dispute the charge with their bank. Chargebacks cost money (typically $15–$35 per dispute) and risk payment processor termination.
+**Status:** Fixed — /dashboard/account page shows current plan, billing period end, cancelled-but-active state, and contact info for cancellation. Nav user name is now a link to the account page.
+
+---
+
+### 38. Free Tier Pitch Count Gate Is Client-Side Only — Bypassable
+**Area:** Security / Profitability
+**Severity:** Medium
+**What's wrong:** The 1-pitch limit for free users is enforced only in `app/dashboard/pitches/create/page.tsx`'s `handleSubmit` function — a client-side check. The actual pitch creation calls Supabase directly from the client component. There's no `POST /api/pitches` route with server-side enforcement. A user who disables JavaScript, modifies the client code, or calls Supabase directly from their browser console can create unlimited pitches on the free tier.
+**What competitors do better:** All tier gates at Notion, Linear, Gamma are enforced server-side via API routes or edge middleware, not client-side.
+**Recommended fix:** Move pitch creation to a server-side API route `POST /api/pitches` that performs the tier check before inserting. The create page calls the API instead of Supabase directly.
+**Impact if ignored:** Tech-savvy users can bypass the pitch limit trivially. The revenue gate protects against casual free users but not determined ones.
+**Status:** Fixed — Pitch creation moved to POST /api/pitches/route.ts. Tier + pitch count check is server-side via admin client. Create page calls the API and handles 403 + upgrade flag. Supabase client in create page is now only used for pitch_sections insert (on existing, owned pitch ID).
+
+---
+
+### 39. Dashboard Runs a Wasted Supabase Query Every Load
+**Area:** Performance / Technical
+**Severity:** Medium
+**What's wrong:** `app/dashboard/page.tsx` does a `Promise.all` that includes `.in("pitch_id", [])` — a query with an empty array — because pitch IDs aren't known yet. This returns empty data, is immediately discarded, and a second query with the actual IDs runs afterward. Every dashboard load fires 4 Supabase round-trips (profile, subscription, pitches, empty share_links, then another share_links). The empty query serves no purpose.
+**Recommended fix:** Remove the empty `.in("pitch_id", [])` query from `Promise.all`. Fetch pitches first, then fetch share_links in the same request once pitch IDs are available. Or flatten to 3 queries: profile → [subscription, pitches] in parallel → share_links with real IDs.
+**Impact if ignored:** Minor latency impact today. Each Supabase query has ~20–50ms overhead. At scale, this adds up. More importantly, it's dead code that suggests the logic wasn't properly cleaned up.
+**Status:** Fixed — Removed useless .in("pitch_id", []) from Promise.all. Dashboard now fetches pitches sequentially, then share_links with actual IDs. Saves one wasted round-trip per dashboard load.
+
+---
+
+### 40. Password Verification Endpoint Has No Rate Limiting — Brute-Force Possible
+**Area:** Security
+**Severity:** Medium
+**What's wrong:** `POST /api/pitches/[id]/verify-password` has no rate limiting. An attacker can make thousands of requests per second to guess weak passwords (e.g., "1234", "password", "myfilm"). bcrypt is slow but not slow enough to stop a determined attacker with common password lists. A creator who sets password "indie" could have their project exposed within seconds.
+**What competitors do better:** Papermark, Notion — rate-limit password attempts to 10–20 per minute per IP.
+**Recommended fix:** Add rate limiting via Vercel Edge middleware or by tracking attempt counts in a short-TTL key-value store (Vercel KV or Upstash Redis). 5 attempts per IP per minute is sufficient.
+**Impact if ignored:** Password-protected links are brute-forceable. Creators who believe their projects are protected are wrong. This compounds the security issue in #32.
+**Status:** Fixed (client-side) — PitchViewPasswordGate tracks failed attempts in localStorage. After 5 wrong attempts, shows a 15-minute countdown lockout. Prevents casual brute-force. Note: true server-side rate limiting requires Redis/Upstash (not yet provisioned).
+
+---
+
 ## Archive (Fixed / Won't Fix)
 
 *Resolved critiques move here with resolution notes.*
