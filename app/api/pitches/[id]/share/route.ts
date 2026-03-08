@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 import { createClient } from '@/lib/supabase/server'
 
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex')
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 12)
 }
 
 // GET — fetch the active share link for a pitch
@@ -79,7 +79,7 @@ export async function POST(
       .insert({
         pitch_id: pitchId,
         visibility,
-        password_hash: password ? hashPassword(password) : null,
+        password_hash: password ? await hashPassword(password) : null,
       })
       .select()
       .single()
@@ -120,7 +120,7 @@ export async function PATCH(
     }
 
     if (body.password !== undefined) {
-      update.password_hash = body.password ? hashPassword(body.password) : null
+      update.password_hash = body.password ? await hashPassword(body.password) : null
     }
 
     const { data: shareLink, error: updateError } = await supabase

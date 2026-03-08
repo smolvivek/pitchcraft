@@ -36,6 +36,12 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
         body: JSON.stringify({ prompt, fieldName, context }),
       })
 
+      if (res.status === 403) {
+        const data = await res.json()
+        setError(data.upgrade ? 'upgrade' : 'Image generation failed. Try again.')
+        return
+      }
+
       if (res.status === 429) {
         const data = await res.json()
         setError(data.error || 'Daily limit reached')
@@ -156,7 +162,13 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
       )}
 
       {/* Error */}
-      {error && (
+      {error === 'upgrade' && (
+        <p className="text-[13px] leading-[20px] text-text-secondary mb-[12px]">
+          AI image generation is a Pro feature.{' '}
+          <a href="/pricing" className="text-link hover:underline font-medium">Upgrade to unlock →</a>
+        </p>
+      )}
+      {error && error !== 'upgrade' && (
         <p className="text-[13px] leading-[20px] text-error mb-[12px]">{error}</p>
       )}
 

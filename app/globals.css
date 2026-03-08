@@ -12,10 +12,10 @@
   --color-text-primary: #F5F5F5;
   --color-text-secondary: #999999;
   --color-text-disabled: #555555;
-  --color-pop: #E8503A;
-  --color-pop-hover: #F06B55;
-  --color-pop-active: #D44030;
-  --color-link: #E8503A;
+  --color-pop: #FF6300;
+  --color-pop-hover: #FF7A1A;
+  --color-pop-active: #E55700;
+  --color-link: #FF6300;
   --color-btn: #F5F5F5;
   --color-btn-hover: #FFFFFF;
   --color-btn-active: #CCCCCC;
@@ -27,7 +27,7 @@
   --color-white: #F5F5F5;
 
   /* Fonts */
-  --font-heading: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-heading: var(--font-dm-serif), Georgia, serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 

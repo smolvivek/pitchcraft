@@ -82,7 +82,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="bg-surface border border-border rounded-[4px] p-[32px]">
+      <div className="bg-surface border border-border border-t-2 border-t-pop rounded-[4px] p-[32px]">
         <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
           Check your inbox
         </h2>
@@ -99,7 +99,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
+    <div className="bg-surface border border-border border-t-2 border-t-pop rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[8px]">
         Start building
       </h2>
@@ -108,7 +108,7 @@ export default function SignupPage() {
       </p>
 
       {errors.general && (
-        <div className="mb-[24px] p-[16px] bg-error/10 border border-error rounded-[4px]">
+        <div className="mb-[24px] p-[14px] border-l-2 border-error">
           <p className="text-[14px] leading-[20px] text-error">{errors.general}</p>
         </div>
       )}

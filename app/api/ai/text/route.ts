@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { refineText, draftText } from '@/lib/ai/text'
 
-const TEXT_DAILY_LIMIT = 50
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -12,6 +10,32 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Check subscription tier — free users cannot use AI
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('tier, status, current_period_end')
+      .eq('user_id', user.id)
+      .single()
+
+    let tier = subscription?.tier ?? 'free'
+    if (
+      subscription?.status === 'cancelled' &&
+      subscription?.current_period_end &&
+      new Date(subscription.current_period_end) < new Date()
+    ) {
+      tier = 'free'
+    }
+
+    if (tier === 'free') {
+      return NextResponse.json(
+        { error: 'AI text assist is a Pro feature. Upgrade at /pricing to unlock.', upgrade: true },
+        { status: 403 }
+      )
+    }
+
+    // Daily limits: Pro = 15, Studio = unlimited (9999)
+    const TEXT_DAILY_LIMIT = tier === 'studio' ? 9999 : 15
 
     const body = await request.json()
     const { mode, text, brief, fieldName, context } = body as {
@@ -30,8 +54,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Text is required for refine mode' }, { status: 400 })
     }
 
+    if (mode === 'refine' && text && text.length > 5000) {
+      return NextResponse.json({ error: 'Text exceeds maximum length of 5000 characters' }, { status: 400 })
+    }
+
     if (mode === 'draft' && (!brief || !brief.trim())) {
       return NextResponse.json({ error: 'Brief is required for draft mode' }, { status: 400 })
+    }
+
+    if (mode === 'draft' && brief && brief.length > 1000) {
+      return NextResponse.json({ error: 'Brief exceeds maximum length of 1000 characters' }, { status: 400 })
+    }
+
+    if (fieldName.length > 100) {
+      return NextResponse.json({ error: 'Invalid fieldName' }, { status: 400 })
     }
 
     // Rate limiting

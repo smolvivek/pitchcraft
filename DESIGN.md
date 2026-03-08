@@ -72,10 +72,10 @@ Pitchcraft's design draws from two influences:
 | **Text primary** | `#F5F5F5` | Body text and headings |
 | **Text secondary** | `#999999` | Captions, metadata, help text |
 | **Text disabled** | `#555555` | Non-interactive elements |
-| **Pop** (`--color-pop`) | `#E8503A` | Non-text: focus rings, progress bars, active indicators |
-| **Pop hover** (`--color-pop-hover`) | `#F06B55` | Pop colour hover state (lightens) |
-| **Pop active** (`--color-pop-active`) | `#D44030` | Pop colour pressed state |
-| **Link** (`--color-link`) | `#E8503A` | Text links, tertiary buttons |
+| **Pop** (`--color-pop`) | `#FF6300` | Non-text: focus rings, progress bars, active indicators. TE bright orange. |
+| **Pop hover** (`--color-pop-hover`) | `#FF7A1A` | Pop colour hover state (lightens) |
+| **Pop active** (`--color-pop-active`) | `#E55700` | Pop colour pressed state |
+| **Link** (`--color-link`) | `#FF6300` | Text links, tertiary buttons |
 | **Button** (`--color-btn`) | `#F5F5F5` | Primary button background (white on dark) |
 | **Button hover** (`--color-btn-hover`) | `#FFFFFF` | Button hover state |
 | **Button active** (`--color-btn-active`) | `#CCCCCC` | Button pressed state |

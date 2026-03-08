@@ -5,7 +5,7 @@
 
 ---
 
-## Three Tiers + 14-Day Pro Trial + Flat Commission + Metered AI
+## Three Tiers + Flat Commission + Metered AI
 
 ---
 
@@ -37,8 +37,6 @@
 6. **Commission** — 8% vs 5% on funded amounts (saves $150 per $5K raised)
 
 **Cost to PitchCraft per free user: ~$0** (1 pitch, no AI, negligible)
-
-**14-day Pro trial** included on signup. Creator experiences full Pro features, then drops to Free if they don't subscribe. No credit card required for trial.
 
 ---
 
@@ -92,16 +90,6 @@
 
 ---
 
-## 14-Day Pro Trial
-
-Every new signup gets 14 days of Pro features. No credit card required.
-
-**Why:** Creators need to experience AI, privacy controls, and unlimited pitches to understand why Pro is worth $12/month. Without a trial, conversion depends on imagination. With a trial, it depends on experience.
-
-**After trial expires:** Account drops to Free tier. All pitches remain accessible but only 1 can be edited. Private/password links revert to public. AI features lock. No data is lost.
-
----
-
 ## AI Credit Packs — Pay-as-you-go (Pro and Studio only)
 
 | Pack | Price | Per-unit |
@@ -151,7 +139,6 @@ View notifications  ✗           Basic           Detailed
 Collaborators       ✗           2/pitch         5/pitch
 PDF export          ✗           Clean           Branded
 Custom sections     ✗           3               3
-Pro trial           14 days     —               —
 ```
 
 ---

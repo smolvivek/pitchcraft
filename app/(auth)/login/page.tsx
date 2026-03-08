@@ -46,13 +46,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
+    <div className="bg-surface border border-border border-t-2 border-t-pop rounded-[4px] p-[32px]">
       <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[24px]">
         Welcome back
       </h2>
 
       {error && (
-        <div className="mb-[24px] p-[16px] bg-error/10 border border-error rounded-[4px]">
+        <div className="mb-[24px] p-[14px] border-l-2 border-error">
           <p className="text-[14px] leading-[20px] text-error">{error}</p>
         </div>
       )}

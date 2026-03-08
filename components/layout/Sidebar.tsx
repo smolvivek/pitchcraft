@@ -18,6 +18,7 @@ interface SidebarProps {
   enabledKeys?: Set<string>;
   onToggleSection?: (key: string) => void;
   customSectionLabels?: Record<string, string>;
+  tier?: string;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ function Sidebar({
   enabledKeys = new Set(),
   onToggleSection,
   customSectionLabels = {},
+  tier = "free",
   className = "",
 }: SidebarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -37,11 +39,7 @@ function Sidebar({
 
   return (
     <aside className={`w-[240px] bg-surface border-r border-border h-full overflow-y-auto py-[16px] flex flex-col ${className}`}>
-      <div className="px-[16px] mb-[16px]">
-        <span className="font-mono text-[13px] leading-[20px] text-text-secondary uppercase tracking-wider">
-          Sections
-        </span>
-      </div>
+      <div className="px-[16px] pt-[8px] mb-[8px]" />
 
       {/* Required sections (01–08) */}
       <ul className="flex flex-col" role="list">
@@ -64,7 +62,7 @@ function Sidebar({
                 `}
                 aria-current={isActive ? "step" : undefined}
               >
-                <span className="font-mono text-[13px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
+                <span className="font-mono text-[11px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span className="flex-1 truncate">{section.label}</span>
@@ -98,7 +96,7 @@ function Sidebar({
                   `}
                   aria-current={isActive ? "step" : undefined}
                 >
-                  <span className="font-mono text-[13px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
+                  <span className="font-mono text-[11px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
                     {String(number).padStart(2, "0")}
                   </span>
                   <span className="flex-1 truncate">{section.label}</span>
@@ -119,7 +117,7 @@ function Sidebar({
             onClick={() => setMoreOpen(!moreOpen)}
             className="w-full flex items-center justify-between px-[16px] py-[12px] text-[13px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
           >
-            <span className="font-mono uppercase tracking-wider">More</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em]">More</span>
             <svg
               width="12"
               height="12"
@@ -165,32 +163,41 @@ function Sidebar({
                 );
               })}
 
-              {/* Custom sections */}
-              {["custom_1", "custom_2", "custom_3"].map((key, i) => {
-                const isEnabled = enabledKeys.has(key);
-                const label = customSectionLabels[key] || `Custom Section ${i + 1}`;
-                return (
-                  <label
-                    key={key}
-                    className="flex items-start gap-[8px] py-[6px] cursor-pointer group"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isEnabled}
-                      onChange={() => onToggleSection!(key)}
-                      className="mt-[2px] w-[14px] h-[14px] shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[13px] leading-[18px] text-text-primary group-hover:text-pop transition-colors">
-                        {label}
-                      </span>
-                      <p className="text-[11px] leading-[16px] text-text-disabled mt-[1px]">
-                        Your own section. Name it anything.
-                      </p>
-                    </div>
-                  </label>
-                );
-              })}
+              {/* Custom sections — Pro/Studio only */}
+              {tier === "free" ? (
+                <div className="py-[8px]">
+                  <p className="text-[12px] leading-[18px] text-text-disabled">
+                    Custom sections are a{" "}
+                    <a href="/pricing" className="text-link hover:underline">Pro feature</a>.
+                  </p>
+                </div>
+              ) : (
+                ["custom_1", "custom_2", "custom_3"].map((key, i) => {
+                  const isEnabled = enabledKeys.has(key);
+                  const label = customSectionLabels[key] || `Custom Section ${i + 1}`;
+                  return (
+                    <label
+                      key={key}
+                      className="flex items-start gap-[8px] py-[6px] cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={() => onToggleSection!(key)}
+                        className="mt-[2px] w-[14px] h-[14px] shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[13px] leading-[18px] text-text-primary group-hover:text-pop transition-colors">
+                          {label}
+                        </span>
+                        <p className="text-[11px] leading-[16px] text-text-disabled mt-[1px]">
+                          Your own section. Name it anything.
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })
+              )}
             </div>
           )}
         </div>
@@ -201,29 +208,14 @@ function Sidebar({
 
 function CompletionIndicator({ completed }: { completed: boolean }) {
   return (
-    <span className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
-      {completed ? (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-label="Completed"
-        >
-          <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-status-complete" />
-          <path
-            d="M5 8L7 10L11 6"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-status-complete [stroke-dasharray:24] [stroke-dashoffset:0] animate-[draw-check_300ms_ease-out]"
-          />
-        </svg>
-      ) : (
-        <span className="w-[8px] h-[8px] rounded-full border border-border" aria-label="Incomplete" />
-      )}
-    </span>
+    <span
+      className="w-[5px] h-[5px] shrink-0 rounded-full"
+      style={{
+        background: completed ? 'var(--color-pop)' : 'transparent',
+        border: completed ? 'none' : '1px solid var(--color-border)',
+      }}
+      aria-label={completed ? "Completed" : "Incomplete"}
+    />
   );
 }
 

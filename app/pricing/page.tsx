@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { CheckoutButton } from '@/components/ui/CheckoutButton'
 
 export const metadata: Metadata = {
   title: 'Pricing — Pitchcraft',
   description:
-    'Free forever for your first pitch. Pro for unlimited pitches, AI, and privacy. Studio for teams.',
+    'Free forever for your first pitch. Pro for unlimited pitches, AI, and privacy. Studio for teams and serious productions.',
 }
 
 const CHECK = (
@@ -24,26 +25,23 @@ interface TierProps {
   name: string
   price: string
   period: string
-  annualNote?: string
+  annualPrice?: string
+  annualPeriod?: string
   description: string
   cta: string
   ctaHref: string
+  checkoutTier?: 'pro' | 'studio'
   highlight?: boolean
   features: { label: string; included: boolean }[]
 }
 
-function TierCard({ name, price, period, annualNote, description, cta, ctaHref, highlight, features }: TierProps) {
+function TierCard({ name, price, period, annualPrice, annualPeriod, description, cta, ctaHref, checkoutTier, highlight, features }: TierProps) {
   return (
     <div
       className={`flex flex-col rounded-[4px] border p-[24px] md:p-[32px] ${
         highlight ? 'border-pop bg-surface' : 'border-border bg-surface/50'
       }`}
     >
-      {highlight && (
-        <span className="font-[var(--font-mono)] text-[10px] leading-[14px] tracking-[0.08em] uppercase text-pop mb-[12px]">
-          Most popular
-        </span>
-      )}
       <h3 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary">
         {name}
       </h3>
@@ -53,20 +51,26 @@ function TierCard({ name, price, period, annualNote, description, cta, ctaHref, 
         </span>
         <span className="font-[var(--font-mono)] text-[13px] text-text-secondary">{period}</span>
       </div>
-      {annualNote && (
-        <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled mt-[4px]">
-          {annualNote}
+      {annualPrice && (
+        <p className="font-[var(--font-mono)] text-[12px] leading-[16px] text-text-secondary mt-[6px]">
+          or <span className="text-text-primary font-medium">{annualPrice}</span>{annualPeriod}
         </p>
       )}
       <p className="font-[var(--font-body)] text-[14px] leading-[22px] text-text-secondary mt-[16px]">
         {description}
       </p>
       <div className="mt-[24px]">
-        <Link href={ctaHref}>
-          <Button variant={highlight ? 'primary' : 'secondary'} className="w-full">
+        {checkoutTier ? (
+          <CheckoutButton tier={checkoutTier} variant={highlight ? 'primary' : 'secondary'} className="w-full">
             {cta}
-          </Button>
-        </Link>
+          </CheckoutButton>
+        ) : (
+          <Link href={ctaHref}>
+            <Button variant={highlight ? 'primary' : 'secondary'} className="w-full">
+              {cta}
+            </Button>
+          </Link>
+        )}
       </div>
       <ul className="mt-[24px] flex flex-col gap-[10px]">
         {features.map((f) => (
@@ -96,12 +100,11 @@ const tiers: TierProps[] = [
     ctaHref: '/signup',
     features: [
       { label: '1 active pitch', included: true },
-      { label: 'All sections (8 required + 18 optional)', included: true },
+      { label: 'Full pitch structure (logline to team)', included: true },
       { label: 'Image & PDF uploads', included: true },
       { label: 'Video embeds', included: true },
       { label: 'Public share link', included: true },
       { label: 'Funding (8% commission)', included: true },
-      { label: '14-day Pro trial included', included: true },
       { label: 'AI text & image generation', included: false },
       { label: 'Private or password-protected links', included: false },
       { label: 'Custom pitch slug', included: false },
@@ -114,15 +117,17 @@ const tiers: TierProps[] = [
   {
     name: 'Pro',
     price: '$12',
-    period: '/month',
-    annualNote: '$9/month billed annually',
+    period: '/mo',
+    annualPrice: '$9',
+    annualPeriod: '/mo billed annually',
     description: 'Unlimited pitches. AI features. Privacy controls. Lower commission.',
-    cta: 'Start Pro',
+    cta: 'Go Pro',
     ctaHref: '/signup',
+    checkoutTier: 'pro',
     highlight: true,
     features: [
       { label: 'Unlimited pitches', included: true },
-      { label: 'All sections + 3 custom', included: true },
+      { label: 'Custom sections (up to 3)', included: true },
       { label: 'Image & PDF uploads', included: true },
       { label: 'Video embeds', included: true },
       { label: 'Public, private, or password-protected links', included: true },
@@ -133,18 +138,19 @@ const tiers: TierProps[] = [
       { label: 'Unlimited version history', included: true },
       { label: 'View notifications', included: true },
       { label: '2 collaborators per pitch', included: true },
-      { label: 'Clean PDF export', included: true },
-      { label: 'No Pitchcraft branding', included: true },
+      { label: 'PDF export', included: true },
     ],
   },
   {
     name: 'Studio',
     price: '$29',
-    period: '/month',
-    annualNote: '$22/month billed annually',
+    period: '/mo',
+    annualPrice: '$22',
+    annualPeriod: '/mo billed annually',
     description: 'For teams and serious productions. Unlimited AI. Detailed analytics.',
-    cta: 'Start Studio',
+    cta: 'Get Studio',
     ctaHref: '/signup',
+    checkoutTier: 'studio',
     features: [
       { label: 'Everything in Pro', included: true },
       { label: 'Unlimited AI text assists', included: true },
@@ -161,12 +167,8 @@ const tiers: TierProps[] = [
 
 const faqs = [
   {
-    q: 'What happens after the 14-day Pro trial?',
-    a: 'Your account drops to the Free tier. All your pitches remain — you just can\'t edit more than one or use Pro features. No data is lost. Subscribe anytime to unlock everything again.',
-  },
-  {
-    q: 'What are the Stripe fees on funding?',
-    a: 'Stripe charges 2.9% + $0.30 per transaction. This is separate from Pitchcraft\'s commission and goes directly to Stripe, not us.',
+    q: 'Are there payment processor fees on funding?',
+    a: 'Yes. Payment processors charge their own fees (typically 2–3% per transaction) on top of Pitchcraft\'s commission. That goes to the processor, not us.',
   },
   {
     q: 'Can I change plans anytime?',
@@ -193,7 +195,6 @@ export default function PricingPage() {
           </h1>
           <p className="font-[var(--font-body)] text-[18px] leading-[28px] text-text-secondary max-w-[480px] mx-auto">
             Free forever for your first pitch. Pro when you need more.
-            Every plan includes a 14-day Pro trial.
           </p>
         </div>
 
@@ -229,7 +230,7 @@ export default function PricingPage() {
             ))}
           </div>
           <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled text-center mt-[12px]">
-            Stripe&apos;s 2.9% + $0.30 per transaction is always separate
+            Payment processor fees are always separate from Pitchcraft&apos;s commission
           </p>
         </div>
 

@@ -45,6 +45,12 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
         }),
       })
 
+      if (res.status === 403) {
+        const data = await res.json()
+        setError(data.upgrade ? 'upgrade' : 'Something went wrong. Try again.')
+        return
+      }
+
       if (res.status === 429) {
         const data = await res.json()
         setError(data.error || 'Daily limit reached')
@@ -155,7 +161,13 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
       )}
 
       {/* Error */}
-      {error && (
+      {error === 'upgrade' && (
+        <p className="text-[13px] leading-[20px] text-text-secondary mb-[12px]">
+          AI assist is a Pro feature.{' '}
+          <a href="/pricing" className="text-link hover:underline font-medium">Upgrade to unlock →</a>
+        </p>
+      )}
+      {error && error !== 'upgrade' && (
         <p className="text-[13px] leading-[20px] text-error mb-[12px]">{error}</p>
       )}
 

@@ -25,11 +25,6 @@ function Badge({ status }: BadgeProps) {
   return (
     <span className="inline-flex items-center gap-[6px]">
       <span className="relative flex h-[8px] w-[8px]">
-        {isActive && (
-          <span
-            className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-40 ${config.dotColor}`}
-          />
-        )}
         <span
           className={`relative inline-flex rounded-full h-[8px] w-[8px] ${config.dotColor}`}
           aria-hidden="true"

@@ -460,6 +460,156 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 
 ---
 
+### 41. Clipboard Copy Has No Error Handling — Silent Failure
+**Area:** UX / Functionality
+**Severity:** Medium
+**What's wrong:** `navigator.clipboard.writeText()` in `Card.tsx` has no `.catch()`. On HTTP (localhost), incognito, or when permission is denied, the promise rejects silently. The "Copied" confirmation never fires. User believes the copy worked, pastes nothing.
+**Recommended fix:** Add `.catch()` that shows an error state — or falls back to `document.execCommand('copy')` for older contexts.
+**Impact if ignored:** The key post-creation action (share the pitch) silently fails in non-HTTPS or restricted contexts. Friction at the worst moment.
+**Status:** Open
+
+---
+
+### 42. Creator Donation Email May Be Silently Skipped on Malformed Pitch Join
+**Area:** Reliability
+**Severity:** Medium
+**What's wrong:** `verify/route.ts` casts pitch creator data without validating shape. If the join returns unexpected structure, `creator.email` could be undefined, and the email is skipped silently (`Promise.allSettled` swallows it). Creator never learns someone donated.
+**Recommended fix:** Validate creator email before the conditional: `if (typeof creator?.email !== 'string') { console.error('Creator email missing for funding', fundingId) }`.
+**Impact if ignored:** Creators miss donation notifications. They don't know they're receiving support. The email is the primary value signal of the funding feature.
+**Status:** Open
+
+---
+
+### 43. Post-Signup Screen Doesn't Tell Users What to Expect After Email Confirmation
+**Area:** UX / Conversion
+**Severity:** Medium
+**What's wrong:** After signup, the screen says "Check your inbox" with only a "Back to login" button. There's no mention that clicking the email link auto-logs them in, no pending state if they return to the tab, no resend link. Users who close the tab and return are stranded on the login page with no context.
+**Recommended fix:** Improve the success screen: "We sent a confirmation to [email]. Click the link to log in automatically. Didn't get it? [Resend]." Add `?confirmed=pending` to the login redirect so the login page can surface context.
+**Impact if ignored:** Users who don't immediately click the email link lose context and abandon. Conversion leak at the last step of signup.
+**Status:** Open
+
+---
+
+### 44. `navigator.clipboard` Called Without Existence Check
+**Area:** Technical
+**Severity:** Low
+**What's wrong:** `Card.tsx` calls `navigator.clipboard.writeText()` unconditionally. On `http://` (non-localhost), `navigator.clipboard` is `undefined`. Runtime TypeError thrown, unhandled promise rejection logged.
+**Recommended fix:** Guard: `if (!navigator.clipboard) { /* fallback */ return }`.
+**Impact if ignored:** Copy button throws runtime errors in HTTP-only contexts and older browsers. Development/staging environments are affected.
+**Status:** Open
+
+---
+
+### 45. Animations Don't Respect `prefers-reduced-motion`
+**Area:** UX / Accessibility
+**Severity:** Low
+**What's wrong:** Multiple components (`animate-fade-up`, `animate-led-breathe`, `animate-fade-up-subtle`) run on every load without checking `prefers-reduced-motion: reduce`. Users who have disabled animations in OS settings see them anyway.
+**Recommended fix:** In `globals.css`, add: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }`.
+**Impact if ignored:** Accessibility violation. Affects users with vestibular disorders. WCAG 2.1 AA requires this.
+**Status:** Open
+
+---
+
+### 46. Marketing Consent Captured on Signup but Never Used
+**Area:** Functionality / Data
+**Severity:** Low
+**What's wrong:** `signup/page.tsx` captures `marketingConsent` and passes it in `options.data` to Supabase auth metadata. It's never written to the `users` table, never read back, never used to send or suppress marketing emails.
+**Recommended fix:** Either remove the checkbox (if marketing emails aren't planned yet), or add a `marketing_consent` column to the `users` table and write it there on signup.
+**Impact if ignored:** Captured consent is orphaned. If marketing emails are ever sent, consent can't be verified. Legal risk under GDPR.
+**Status:** Open
+
+---
+
+### 47. Funding Goal Has No Type Validation — Accepts Non-Numeric Values
+**Area:** Functionality / Data Integrity
+**Severity:** Medium
+**What's wrong:** In `/api/pitches/[id]/funding/route.ts`, `funding_goal` is only checked with `if (!funding_goal || funding_goal < 1)`. If the body contains `funding_goal: "abc"` (string), the check may pass due to JS type coercion. No `typeof` guard exists.
+**Recommended fix:** `if (typeof funding_goal !== 'number' || !Number.isFinite(funding_goal) || funding_goal < 1)` — reject with 400.
+**Impact if ignored:** Malformed funding records created with NaN or string goals. Progress bar and percentage calculations break at display time.
+**Status:** Open
+
+---
+
+### 48. Custom Section Count Not Enforced Per Tier
+**Area:** Functionality / Profitability
+**Severity:** Medium
+**What's wrong:** The Sidebar gates custom sections by tier (free = blocked, Pro/Studio = enabled), but doesn't enforce the 3-section limit for Pro. A Pro user can enable all 3 custom section keys. Nothing prevents a future scenario where the limit is lowered (e.g., free tier allows 1 custom section) from being enforced without changing multiple places.
+**Recommended fix:** Add a `maxCustomSections` config per tier. Sidebar checks both tier access AND count against the max before allowing a custom toggle.
+**Impact if ignored:** Tier differentiation for custom section count is cosmetic-only. Doesn't enforce limits if/when they change.
+**Status:** Open
+
+---
+
+### 49. localStorage Lockout for Password Gate Is Trivially Bypassable
+**Area:** Security
+**Severity:** Medium
+**What's wrong:** The 5-attempt lockout (CRITIC #40) stores state in localStorage. A user can open DevTools, delete `pitch_attempts_${pitchId}` and `pitch_lockout_${pitchId}`, and resume brute-forcing immediately. This was noted as partial-fix at the time.
+**Recommended fix:** Requires server-side rate limiting via Upstash Redis or Vercel KV. Track `attempts:${ip}:${pitchId}` with a 15-minute TTL. Block at the API route level, not the client.
+**Impact if ignored:** Password-protected pitches are brute-forceable by anyone with DevTools knowledge. The protection is security theater.
+**Status:** Open — requires Redis/KV provisioning
+
+---
+
+### 50. No Content Security Policy Header
+**Area:** Security
+**Severity:** Medium
+**What's wrong:** `next.config.ts` sets `X-Frame-Options`, `X-Content-Type-Options`, and `Strict-Transport-Security`, but not `Content-Security-Policy`. The app embeds third-party scripts (Razorpay `checkout.js`) and inlines JSON-LD. Without a CSP, XSS attacks can load arbitrary scripts.
+**Recommended fix:** Add CSP header: `script-src 'self' checkout.razorpay.com; object-src 'none'; base-uri 'self'`. Start strict, loosen only where needed.
+**Impact if ignored:** XSS vulnerability window remains open. Any reflected or stored XSS can load external scripts. Particular risk on pitch view pages which render user-supplied content.
+**Status:** Open
+
+---
+
+### 51. OG Image Has No Fallbacks for Empty or Overlong Content
+**Area:** UX / Technical
+**Severity:** Low
+**What's wrong:** `/app/p/[id]/opengraph-image.tsx` renders pitch title and logline without truncation or fallback. A 300-character logline or empty project name produces a broken/unreadable OG card.
+**Recommended fix:** Truncate: `title.slice(0, 60)`, `logline.slice(0, 120)`, append "..." if trimmed. Default: `"Untitled Project"` if name is empty.
+**Impact if ignored:** Some pitches have ugly or broken social preview cards. Brand impact on every share.
+**Status:** Open
+
+---
+
+### 52. Delete Pitch Has No Success Feedback
+**Area:** UX
+**Severity:** Low
+**What's wrong:** `DeletePitchButton` calls `router.refresh()` on success — the pitch disappears. No toast or message confirms the action. Users who delete accidentally have no undo and no confirmation the delete happened vs. a network error.
+**Recommended fix:** Show a brief inline success message ("Deleted") before routing away, or a dismissable toast. Undo is out of scope, but acknowledgment is not.
+**Impact if ignored:** Minor. Deletion is implied by disappearance. But for an irreversible action, silence is not ideal.
+**Status:** Open
+
+---
+
+### 53. Donation Emails Have No Retry Logic — Failed Sends Are Permanently Lost
+**Area:** Reliability
+**Severity:** Medium
+**What's wrong:** `Promise.allSettled` in `verify/route.ts` suppresses all email errors. If Resend is down, the email is gone. There's no retry, no queue, no failed-send log. A Resend outage during a donation wave means zero notifications.
+**Recommended fix:** Log failed sends to a `failed_emails` table (to: string, subject: string, payload: json, created_at). A cron job retries them. Minimum viable: add a `console.error` with the full payload so it appears in Vercel logs and can be manually replayed.
+**Impact if ignored:** Donation notifications silently fail during any Resend disruption. Creators miss donations. Donors don't get receipts.
+**Status:** Open
+
+---
+
+### 54. Donor Email Input Has No Format Validation
+**Area:** UX / Data Quality
+**Severity:** Low
+**What's wrong:** `PitchViewFunding.tsx` checks `!email.trim()` but not format. `"user"`, `"@"`, or `"user@"` all pass validation. These are recorded in the `donations` table. Resend rejects them silently (wrapped in `allSettled`). Donor receives no confirmation.
+**Recommended fix:** Add regex: `if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Enter a valid email') }`. One line, no library needed.
+**Impact if ignored:** Typo emails are recorded and never receive confirmation. Donor doesn't know their donation was received.
+**Status:** Open
+
+---
+
+### 55. `next.config.ts` Allows All `*.supabase.co` Image Hostnames — Overly Permissive
+**Area:** Security / Technical
+**Severity:** Low
+**What's wrong:** If `next.config.ts` uses a wildcard hostname pattern for Supabase (`*.supabase.co`), it allows Next.js `<Image>` optimization for any Supabase project's storage — not just this one. An attacker who knows the hostname pattern could proxy external Supabase images through PitchCraft's image optimization, wasting bandwidth.
+**Recommended fix:** Restrict to the specific project hostname: `your-project-ref.supabase.co` instead of a wildcard. Use the `NEXT_PUBLIC_SUPABASE_URL` env var to derive the hostname dynamically.
+**Impact if ignored:** Minor bandwidth/cost risk. Not a critical vulnerability.
+**Status:** Open
+
+---
+
 ## Archive (Fixed / Won't Fix)
 
 *Resolved critiques move here with resolution notes.*

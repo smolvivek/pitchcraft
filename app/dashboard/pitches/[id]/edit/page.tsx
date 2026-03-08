@@ -107,6 +107,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [subscriptionTier, setSubscriptionTier] = useState('free')
 
   // Share link state
   const [shareUrl, setShareUrl] = useState<string | null>(null)
@@ -129,6 +130,19 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [fundingTotalRaised, setFundingTotalRaised] = useState(0)
   const [stretchGoals, setStretchGoals] = useState<StretchGoal[]>([])
   const [rewards, setRewards] = useState<FundingReward[]>([])
+
+  // Payout account state
+  const [payoutConfigured, setPayoutConfigured] = useState(false)
+  const [showPayoutForm, setShowPayoutForm] = useState(false)
+  const [payoutLoading, setPayoutLoading] = useState(false)
+  const [payoutError, setPayoutError] = useState('')
+  const [payoutSuccess, setPayoutSuccess] = useState(false)
+  const [payoutName, setPayoutName] = useState('')
+  const [payoutEmail, setPayoutEmail] = useState('')
+  const [payoutPhone, setPayoutPhone] = useState('')
+  const [payoutAccount, setPayoutAccount] = useState('')
+  const [payoutIfsc, setPayoutIfsc] = useState('')
+  const [payoutPan, setPayoutPan] = useState('')
 
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'idle'>('idle')
@@ -254,6 +268,14 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
       updateSection(key, { enabled: true })
     }
   }
+
+  // ─── Fetch subscription tier on load ───
+  useEffect(() => {
+    fetch('/api/subscriptions/status')
+      .then((r) => r.json())
+      .then((d) => { if (d.tier) setSubscriptionTier(d.tier) })
+      .catch(() => {})
+  }, [])
 
   // ─── Fetch pitch on load ───
   useEffect(() => {
@@ -458,6 +480,49 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     fetchFunding()
   }, [fetchFunding])
+
+  // Check payout account status on mount
+  useEffect(() => {
+    fetch('/api/funding/account')
+      .then((r) => r.json())
+      .then((d) => setPayoutConfigured(!!d.configured))
+      .catch(() => {})
+  }, [])
+
+  const handleSetupPayout = async () => {
+    if (!payoutName.trim() || !payoutEmail.trim() || !payoutPhone.trim() || !payoutAccount.trim() || !payoutIfsc.trim() || !payoutPan.trim()) {
+      setPayoutError('All fields are required')
+      return
+    }
+    setPayoutLoading(true)
+    setPayoutError('')
+    try {
+      const res = await fetch('/api/funding/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_holder_name: payoutName,
+          email: payoutEmail,
+          phone: payoutPhone,
+          account_number: payoutAccount,
+          ifsc: payoutIfsc.toUpperCase(),
+          pan: payoutPan.toUpperCase(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setPayoutError(data.error || 'Failed to set up payout account')
+        return
+      }
+      setPayoutConfigured(true)
+      setPayoutSuccess(true)
+      setShowPayoutForm(false)
+    } catch {
+      setPayoutError('Failed to set up payout account')
+    } finally {
+      setPayoutLoading(false)
+    }
+  }
 
   const handleEnableFunding = async () => {
     const goalDollars = parseFloat(fundingGoal)
@@ -724,25 +789,26 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
           enabledKeys={enabledKeysSet}
           onToggleSection={handleToggleSection}
           customSectionLabels={customSectionLabels}
+          tier={subscriptionTier}
           className="fixed left-0 top-0 h-screen z-10"
         />
 
         {/* ─── Main content ─── */}
         <main className="ml-[240px] flex-1">
           <div className="max-w-[800px] mx-auto px-[40px] py-[40px]">
-            <div className="bg-surface border border-border rounded-[4px] p-[32px]">
-              <div className="flex items-center justify-between mb-[32px]">
-                <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] text-text-primary">
-                  Edit Project
-                </h1>
-                {saveStatus !== 'idle' && (
-                  <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-disabled">
-                    {saveStatus === 'saving' && 'Saving...'}
-                    {saveStatus === 'saved' && 'Saved'}
-                    {saveStatus === 'unsaved' && 'Unsaved changes'}
-                  </span>
-                )}
-              </div>
+            <div className="flex items-center justify-between mb-[16px]">
+              <h1 className="font-[var(--font-heading)] text-[32px] font-semibold leading-[40px] tracking-[-0.02em] text-text-primary">
+                Edit Project
+              </h1>
+              {saveStatus !== 'idle' && (
+                <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-disabled">
+                  {saveStatus === 'saving' && 'Saving...'}
+                  {saveStatus === 'saved' && 'Saved'}
+                  {saveStatus === 'unsaved' && 'Unsaved changes'}
+                </span>
+              )}
+            </div>
+            <div className="h-[1px] bg-border mb-[40px]" />
 
               <form onSubmit={handleSubmit}>
                 <SectionTransition sectionNumber={activeSectionNumber} sectionKey={activeSection}>
@@ -1082,6 +1148,99 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                   <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
                     Funding
                   </h2>
+                  {/* Payout account setup */}
+                  <div className="mb-[16px] p-[16px] bg-surface rounded-[4px] border border-border">
+                    <div className="flex items-center justify-between mb-[8px]">
+                      <div>
+                        <p className="font-[var(--font-heading)] text-[14px] font-semibold text-text-primary">
+                          Payout account
+                        </p>
+                        <p className="font-[var(--font-mono)] text-[12px] text-text-secondary mt-[2px]">
+                          {payoutConfigured
+                            ? 'Your bank account is registered. Donations will be routed automatically.'
+                            : 'Add your bank account to receive donations.'}
+                        </p>
+                      </div>
+                      {payoutConfigured ? (
+                        <span className="font-[var(--font-mono)] text-[11px] text-success bg-success/10 px-[8px] py-[4px] rounded-[4px]">
+                          Configured
+                        </span>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          type="button"
+                          onClick={() => setShowPayoutForm((v) => !v)}
+                        >
+                          {showPayoutForm ? 'Cancel' : 'Set up payouts'}
+                        </Button>
+                      )}
+                    </div>
+
+                    {payoutSuccess && (
+                      <p className="font-[var(--font-mono)] text-[12px] text-success mt-[8px]">
+                        Bank account registered. You&apos;re all set to receive donations.
+                      </p>
+                    )}
+
+                    {showPayoutForm && !payoutConfigured && (
+                      <div className="flex flex-col gap-[10px] mt-[12px] pt-[12px] border-t border-border">
+                        <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                          Your bank details are encrypted and sent directly to Razorpay (PCI-DSS Level 1). PitchCraft does not store your account number or PAN.
+                        </p>
+                        <TextInput
+                          label="Account holder name"
+                          value={payoutName}
+                          onChange={(e) => setPayoutName(e.target.value)}
+                          placeholder="As on bank records"
+                        />
+                        <TextInput
+                          label="Email"
+                          value={payoutEmail}
+                          onChange={(e) => setPayoutEmail(e.target.value)}
+                          placeholder="your@email.com"
+                        />
+                        <TextInput
+                          label="Phone"
+                          value={payoutPhone}
+                          onChange={(e) => setPayoutPhone(e.target.value)}
+                          placeholder="10-digit mobile number"
+                        />
+                        <TextInput
+                          label="Bank account number"
+                          value={payoutAccount}
+                          onChange={(e) => setPayoutAccount(e.target.value)}
+                          placeholder="Account number"
+                        />
+                        <TextInput
+                          label="IFSC code"
+                          value={payoutIfsc}
+                          onChange={(e) => setPayoutIfsc(e.target.value.toUpperCase())}
+                          placeholder="e.g. HDFC0001234"
+                        />
+                        <TextInput
+                          label="PAN number"
+                          value={payoutPan}
+                          onChange={(e) => setPayoutPan(e.target.value.toUpperCase())}
+                          placeholder="e.g. ABCDE1234F"
+                        />
+                        {payoutError && (
+                          <p className="text-[13px] leading-[20px] text-error">{payoutError}</p>
+                        )}
+                        <Button
+                          variant="secondary"
+                          type="button"
+                          onClick={handleSetupPayout}
+                          disabled={payoutLoading}
+                        >
+                          {payoutLoading ? 'Registering...' : 'Save bank account'}
+                        </Button>
+                        <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                          Payouts are processed within 7 business days of each donation.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {fundingEnabled ? (
                     <div className="flex flex-col gap-[12px]">
                       {fundingTotalRaised > 0 && (
@@ -1222,7 +1381,6 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                   </Button>
                 </div>
               </form>
-            </div>
           </div>
         </main>
       </div>

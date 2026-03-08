@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-[20px] flex flex-col gap-[4px]">
               <li><strong className="text-text-primary">Account information:</strong> email address, name (for authentication via Supabase)</li>
               <li><strong className="text-text-primary">Pitch content:</strong> text, images, PDFs, and media you upload (stored in Supabase)</li>
-              <li><strong className="text-text-primary">Payment information:</strong> processed by Stripe &mdash; we never see or store your card details</li>
+              <li><strong className="text-text-primary">Payment information:</strong> processed by Razorpay (donations) and DodoPayments (subscriptions) &mdash; we never see or store your card details</li>
               <li><strong className="text-text-primary">Basic usage:</strong> AI feature usage counts (for rate limiting only, not behavioral tracking)</li>
             </ul>
           </section>
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
             </h2>
             <ul className="list-disc pl-[20px] flex flex-col gap-[4px]">
               <li>To provide the service (storing and displaying your pitches)</li>
-              <li>To process payments through Stripe</li>
+              <li>To process payments through Razorpay (donations) and DodoPayments (subscriptions)</li>
               <li>To enforce rate limits on AI features</li>
               <li>To send transactional emails (funding received, password reset)</li>
             </ul>
@@ -77,7 +77,9 @@ export default function PrivacyPage() {
             </h2>
             <ul className="list-disc pl-[20px] flex flex-col gap-[4px]">
               <li><strong className="text-text-primary">Supabase:</strong> database, authentication, file storage</li>
-              <li><strong className="text-text-primary">Stripe:</strong> payment processing</li>
+              <li><strong className="text-text-primary">Razorpay:</strong> donation payment processing</li>
+              <li><strong className="text-text-primary">DodoPayments:</strong> subscription billing</li>
+              <li><strong className="text-text-primary">Resend:</strong> transactional email (donation confirmations)</li>
               <li><strong className="text-text-primary">Vercel:</strong> hosting</li>
               <li><strong className="text-text-primary">OpenAI:</strong> AI image generation (only when you explicitly request it)</li>
               <li><strong className="text-text-primary">Anthropic:</strong> AI text assistance (only when you explicitly request it)</li>

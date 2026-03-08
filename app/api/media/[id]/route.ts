@@ -80,6 +80,31 @@ export async function PATCH(
     const body = await request.json()
     const { caption } = body
 
+    if (typeof caption !== 'undefined' && caption !== null && typeof caption !== 'string') {
+      return NextResponse.json({ error: 'Invalid caption' }, { status: 400 })
+    }
+
+    if (typeof caption === 'string' && caption.length > 500) {
+      return NextResponse.json({ error: 'Caption exceeds 500 characters' }, { status: 400 })
+    }
+
+    // Verify ownership before updating
+    const { data: mediaRecord } = await supabase
+      .from('media')
+      .select('id, pitches!inner(user_id)')
+      .eq('id', id)
+      .single()
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single()
+
+    if (!profile || !mediaRecord || (mediaRecord.pitches as unknown as { user_id: string }).user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
     const { data: media, error: updateError } = await supabase
       .from('media')
       .update({ caption: caption ?? null, updated_at: new Date().toISOString() })
@@ -106,15 +131,31 @@ export async function GET(
     const { id } = await params
     const supabase = await createClient()
 
-    // Fetch media record (RLS will check ownership)
+    // Auth check — this endpoint is owner-only (public media uses /api/media/public/[id])
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Fetch media with ownership check via pitch join
     const { data: media, error: fetchError } = await supabase
       .from('media')
-      .select('storage_path')
+      .select('storage_path, pitches!inner(user_id)')
       .eq('id', id)
       .single()
 
     if (fetchError || !media) {
       return NextResponse.json({ error: 'Media not found' }, { status: 404 })
+    }
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single()
+
+    if (!profile || (media.pitches as unknown as { user_id: string }).user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Generate signed URL (1 hour expiry)

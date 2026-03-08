@@ -370,14 +370,14 @@ export function LandingPreview() {
               <span
                 className="block w-[6px] h-[6px] rounded-full transition-all duration-[300ms]"
                 style={{
-                  backgroundColor: i === activeIndex ? "#E8503A" : "#333333",
+                  backgroundColor: i === activeIndex ? "var(--color-pop)" : "var(--color-border)",
                   transform: i === activeIndex ? "scale(1.3)" : "scale(1)",
                 }}
               />
               <span
                 className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.04em] uppercase transition-colors duration-[300ms]"
                 style={{
-                  color: i === activeIndex ? "#F5F5F5" : "#555555",
+                  color: i === activeIndex ? "var(--color-text-primary)" : "var(--color-text-disabled)",
                 }}
               >
                 {proj.genre.split(" / ")[0]}
@@ -401,7 +401,7 @@ export function LandingPreview() {
           }}
         >
           {/* Browser chrome */}
-          <div className="bg-[#1A1A1A] rounded-t-[8px] border border-border border-b-0 px-[16px] py-[10px] flex items-center gap-[12px]">
+          <div className="bg-[#242424] rounded-t-[4px] border border-border border-b-0 px-[16px] py-[10px] flex items-center gap-[12px]">
             <div className="flex gap-[6px]">
               <div className="w-[10px] h-[10px] rounded-full bg-[#333333]" />
               <div className="w-[10px] h-[10px] rounded-full bg-[#333333]" />
@@ -415,7 +415,7 @@ export function LandingPreview() {
           </div>
 
           {/* Pitch content */}
-          <div className="bg-background border border-border border-t-0 rounded-b-[8px] overflow-hidden">
+          <div className="bg-background border border-border border-t-0 rounded-b-[4px] overflow-hidden">
             <div
               className="flex flex-col gap-[32px] md:gap-[40px] pb-[40px]"
               style={{
@@ -672,9 +672,9 @@ export function LandingPreview() {
                         of {p.funding.goal}
                       </span>
                     </div>
-                    <div className="h-[3px] bg-surface rounded-full overflow-hidden">
+                    <div className="h-[3px] bg-border rounded-[2px] overflow-hidden">
                       <div
-                        className="h-full bg-pop rounded-full"
+                        className="h-full bg-pop rounded-[2px]"
                         style={{ width: `${p.funding.percent}%` }}
                       />
                     </div>

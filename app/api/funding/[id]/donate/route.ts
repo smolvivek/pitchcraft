@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getStripe } from '@/lib/stripe/client'
+import { getRazorpay } from '@/lib/razorpay/client'
 
-// POST — create a Stripe Checkout session for a donation
+const COMMISSION_RATES: Record<string, number> = {
+  free: 0.08,
+  pro: 0.05,
+  studio: 0.03,
+}
+
+// POST — create a Razorpay order for a donation
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,7 +17,7 @@ export async function POST(
     const { id: fundingId } = await params
     const supabase = createAdminClient()
 
-    // Verify funding exists and pitch has an active share link
+    // Verify funding exists
     const { data: funding } = await supabase
       .from('funding')
       .select('id, pitch_id, funding_goal, end_date')
@@ -32,58 +38,103 @@ export async function POST(
       .single()
 
     if (!shareLink) {
-      return NextResponse.json({ error: 'Project is not shared' }, { status: 403 })
+      return NextResponse.json({ error: 'Project is not publicly shared' }, { status: 403 })
     }
 
-    // Check if funding has expired
     if (funding.end_date && new Date(funding.end_date) < new Date()) {
       return NextResponse.json({ error: 'Funding campaign has ended' }, { status: 400 })
     }
 
     const body = await request.json()
-    const { amount, name, email, message } = body
+    const { amount, name, email, message } = body as {
+      amount: number
+      name: string
+      email: string
+      message?: string
+    }
 
-    // amount is in cents (e.g., 500 = $5.00)
+    // amount in cents (USD). Minimum $1 = 100 cents
     if (!amount || amount < 100) {
       return NextResponse.json({ error: 'Minimum donation is $1' }, { status: 400 })
     }
-    if (!name || !email) {
+    if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-    const pitchUrl = `${siteUrl}/p/${funding.pitch_id}`
+    // Fetch creator's subscription tier for commission calculation
+    const { data: pitch } = await supabase
+      .from('pitches')
+      .select('user_id, project_name, users(id, email, razorpay_account_id)')
+      .eq('id', funding.pitch_id)
+      .single()
 
-    const stripe = getStripe()
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'Support this project',
-              description: message || undefined,
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
-      customer_email: email,
-      metadata: {
+    const creator = (pitch?.users as unknown) as { id: string; email: string; razorpay_account_id: string | null } | null
+
+    // Get creator's subscription tier
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('tier, status, current_period_end')
+      .eq('user_id', pitch?.user_id)
+      .single()
+
+    let tier = subscription?.tier ?? 'free'
+    // Treat expired/cancelled subscriptions as free
+    if (
+      subscription?.status === 'cancelled' &&
+      subscription?.current_period_end &&
+      new Date(subscription.current_period_end) < new Date()
+    ) {
+      tier = 'free'
+    }
+
+    const commissionRate = COMMISSION_RATES[tier] ?? COMMISSION_RATES.free
+    const commissionAmount = Math.round(amount * commissionRate)
+    const creatorAmount = amount - commissionAmount
+
+    const razorpay = getRazorpay()
+
+    // Build order — include Route transfer if creator has a linked account
+    const orderParams: Parameters<typeof razorpay.orders.create>[0] = {
+      amount,
+      currency: 'USD',
+      notes: {
         funding_id: fundingId,
         donor_name: name,
         donor_email: email,
-        message: message || '',
+        message: message ?? '',
+        creator_amount: String(creatorAmount),
+        commission_amount: String(commissionAmount),
+        tier,
       },
-      success_url: `${pitchUrl}?funded=true`,
-      cancel_url: pitchUrl,
-    })
+    }
 
-    return NextResponse.json({ url: session.url })
+    if (creator?.razorpay_account_id) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(orderParams as any).transfers = [
+        {
+          account: creator.razorpay_account_id,
+          amount: creatorAmount,
+          currency: 'USD',
+          notes: {
+            project: (pitch as unknown as { project_name?: string })?.project_name ?? '',
+          },
+        },
+      ]
+    }
+
+    const order = await razorpay.orders.create(orderParams)
+
+    return NextResponse.json({
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      creator_amount: creatorAmount,
+      commission_amount: commissionAmount,
+      commission_rate: commissionRate,
+    })
   } catch (error) {
-    console.error('Create donation session error:', error)
+    console.error('Create donation order error:', error)
     return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 })
   }
 }

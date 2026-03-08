@@ -58,7 +58,7 @@ export default function TermsPage() {
             </h2>
             <p>
               Pitchcraft offers free and paid tiers. Paid subscriptions are billed monthly or annually
-              through Stripe. You can cancel at any time. Cancellation takes effect at the end of your
+              through DodoPayments. You can cancel at any time. Cancellation takes effect at the end of your
               current billing period.
             </p>
           </section>
@@ -69,9 +69,8 @@ export default function TermsPage() {
             </h2>
             <p>
               Pitchcraft allows creators to accept funding through their pitch links. All payments are
-              processed by Stripe. Pitchcraft charges a commission on funded amounts (see your plan
-              details for rates). Stripe&apos;s standard processing fees (2.9% + $0.30 per transaction)
-              apply separately.
+              processed by Razorpay. Pitchcraft charges a commission on funded amounts (see your plan
+              details for rates). Razorpay&apos;s standard processing fees apply separately.
             </p>
             <p className="mt-[8px]">
               Creators are responsible for fulfilling any rewards or commitments made to their supporters.

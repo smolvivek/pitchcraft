@@ -53,29 +53,37 @@ export default async function Home() {
         >
           Pitchcraft
         </Link>
-        {user && profile ? (
+        <div className="flex items-center gap-[24px]">
           <Link
-            href="/dashboard"
-            className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
+            href="/pricing"
+            className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors duration-[200ms] ease-out"
           >
-            Dashboard
+            Pricing
           </Link>
-        ) : (
-          <div className="flex gap-[24px]">
+          {user && profile ? (
             <Link
-              href="/login"
+              href="/dashboard"
               className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
             >
-              Log in
+              Dashboard
             </Link>
-            <Link
-              href="/signup"
-              className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
-            >
-              Sign up
-            </Link>
-          </div>
-        )}
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary hover:opacity-70 transition-opacity duration-[200ms] ease-out"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
+        </div>
       </nav>
 
       {/* Hero Section */}
