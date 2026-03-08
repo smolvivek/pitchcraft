@@ -91,6 +91,10 @@ export async function POST(
 
     const creator = (pitch?.users as unknown) as { name: string; email: string } | null
 
+    if (typeof creator?.email !== 'string' || !creator.email.includes('@')) {
+      console.error('Creator email missing or invalid for funding', fundingId)
+    }
+
     // Record donation using Razorpay-verified amount (not client-supplied)
     const { error: insertError } = await supabase
       .from('donations')

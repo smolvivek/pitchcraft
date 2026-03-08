@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/Button'
 
 interface CheckoutButtonProps {
   tier: 'pro' | 'studio'
+  billingPeriod?: 'monthly' | 'annual'
   variant?: 'primary' | 'secondary'
   className?: string
   children: React.ReactNode
 }
 
-export function CheckoutButton({ tier, variant = 'secondary', className, children }: CheckoutButtonProps) {
+export function CheckoutButton({ tier, billingPeriod = 'monthly', variant = 'secondary', className, children }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -21,7 +22,7 @@ export function CheckoutButton({ tier, variant = 'secondary', className, childre
       const res = await fetch('/api/subscriptions/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, billing_period: billingPeriod }),
       })
 
       if (res.status === 401) {

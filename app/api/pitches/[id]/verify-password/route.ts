@@ -3,6 +3,10 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+if (process.env.NODE_ENV === 'production' && !process.env.PITCH_ACCESS_SECRET) {
+  throw new Error('PITCH_ACCESS_SECRET must be set in production')
+}
+
 function makeAccessToken(pitchId: string): string {
   const secret = process.env.PITCH_ACCESS_SECRET ?? 'dev-insecure-secret'
   return crypto.createHmac('sha256', secret).update(pitchId).digest('hex')

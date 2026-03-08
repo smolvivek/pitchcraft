@@ -158,10 +158,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Generate signed URL (1 hour expiry)
+    // Generate signed URL (7 days expiry)
     const { data: urlData, error: urlError } = await supabase.storage
       .from('pitch-assets')
-      .createSignedUrl(media.storage_path, 3600)
+      .createSignedUrl(media.storage_path, 604800)
 
     if (urlError || !urlData) {
       return NextResponse.json({ error: 'Failed to generate URL' }, { status: 500 })

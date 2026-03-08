@@ -17,6 +17,8 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   const validatePassword = (pwd: string): string | null => {
     if (pwd.length < 8) return "Password must be at least 8 characters";
@@ -80,14 +82,42 @@ export default function SignupPage() {
     }
   };
 
+  const handleResend = async () => {
+    setResendLoading(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.resend({ type: 'signup', email });
+      setResendSent(true);
+    } catch {
+      // fail silently — user can try again
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   if (success) {
     return (
       <div className="bg-surface border border-border border-t-2 border-t-pop rounded-[4px] p-[32px]">
         <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
           Check your inbox
         </h2>
-        <p className="text-[14px] leading-[24px] text-text-secondary mb-[24px]">
-          We&apos;ve sent you a confirmation link. Please check your inbox and click the link to activate your account.
+        <p className="text-[14px] leading-[24px] text-text-secondary mb-[16px]">
+          We sent a confirmation link to <strong className="text-text-primary">{email}</strong>. Click the link to log in automatically.
+        </p>
+        <p className="text-[14px] leading-[20px] text-text-secondary mb-[24px]">
+          Didn&apos;t get it?{" "}
+          {resendSent ? (
+            <span className="text-success">Sent!</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendLoading}
+              className="text-link hover:underline disabled:opacity-50"
+            >
+              {resendLoading ? "Sending..." : "Resend confirmation email"}
+            </button>
+          )}
         </p>
         <Link href="/login">
           <Button variant="primary" className="w-full">

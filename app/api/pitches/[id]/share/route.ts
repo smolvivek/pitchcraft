@@ -110,6 +110,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { data: pitch } = await supabase.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: profile } = await supabase.from('users').select('id').eq('auth_id', user.id).single()
+    if (!pitch || !profile || pitch.user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
     const body = await request.json()
     const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -155,6 +161,12 @@ export async function DELETE(
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: pitch } = await supabase.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: profile } = await supabase.from('users').select('id').eq('auth_id', user.id).single()
+    if (!pitch || !profile || pitch.user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const { error: updateError } = await supabase

@@ -47,16 +47,19 @@ function PitchCard({ pitchId, title, subtitle, status, genre, budget, version, u
     e.preventDefault();
     e.stopPropagation();
     if (!shareUrl) return;
+    if (!navigator?.clipboard) return;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      setCopied(false);
     });
   };
 
   const inner = (
     <div className="group py-[24px] border-b border-border cursor-pointer">
       <div className="flex items-start justify-between gap-[24px] mb-[6px]">
-        <h3 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary group-hover:text-pop transition-colors duration-[150ms]">
+        <h3 className="font-heading text-[20px] font-semibold leading-[28px] text-text-primary group-hover:text-pop transition-colors duration-[150ms]">
           {title}
         </h3>
         <div className="flex items-center gap-[12px] shrink-0">
@@ -67,6 +70,7 @@ function PitchCard({ pitchId, title, subtitle, status, genre, budget, version, u
               type="button"
               onClick={handleCopyLink}
               title="Copy share link"
+              aria-label="Copy share link"
               className="text-text-disabled hover:text-text-primary transition-colors duration-[150ms] p-[4px]"
             >
               {copied ? (

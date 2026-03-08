@@ -39,6 +39,7 @@ export function DuplicatePitchButton({ pitchId }: DuplicatePitchButtonProps) {
       onClick={handleDuplicate}
       disabled={loading}
       title="Duplicate pitch"
+      aria-label="Duplicate pitch"
       className="text-text-disabled hover:text-text-primary transition-colors duration-[150ms] p-[4px] disabled:opacity-40"
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">

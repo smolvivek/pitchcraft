@@ -357,7 +357,7 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
                 </p>
               ) : amount && parseFloat(amount) >= 1 && (
                 <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
-                  A small platform fee applies. Exact breakdown shown at checkout.
+                  Estimated: creator receives ~${(parseFloat(amount) * 0.92).toFixed(2)} (8% max platform fee)
                 </p>
               )}
 

@@ -89,7 +89,7 @@ export default async function DashboardPage() {
               className="font-[var(--font-heading)] text-[32px] font-bold leading-[40px] text-text-primary animate-fade-up opacity-0 [animation-fill-mode:forwards] flex items-center gap-[10px]"
             >
               Your Projects
-              <span className="w-[4px] h-[4px] rounded-full bg-pop animate-led-breathe flex-shrink-0" style={{ opacity: 0.3 }} />
+              <span className="w-[4px] h-[4px] rounded-full bg-pop flex-shrink-0" style={{ opacity: 0.3 }} />
             </h1>
             {hasPitches && (
               <Link href="/dashboard/pitches/create">

@@ -14,6 +14,10 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
   },
+  {
+    key: "Content-Security-Policy",
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline' checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com; frame-src checkout.razorpay.com api.razorpay.com; object-src 'none'; base-uri 'self'",
+  },
 ];
 
 const nextConfig: NextConfig = {

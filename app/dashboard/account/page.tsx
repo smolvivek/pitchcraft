@@ -39,6 +39,8 @@ export default async function AccountPage() {
 
   if (isExpiredCancelled) tier = 'free'
 
+  const isPastDue = subscription?.status === 'past_due'
+
   const isPaid = tier === 'pro' || tier === 'studio'
   const periodEnd = subscription?.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString(undefined, {
@@ -62,6 +64,15 @@ export default async function AccountPage() {
           <p className="text-[14px] leading-[20px] text-text-secondary mb-[40px]">
             {profile.email}
           </p>
+
+          {/* Past due warning */}
+          {isPastDue && (
+            <div className="mb-[16px] p-[16px] border-l-2 border-error bg-surface">
+              <p className="text-[14px] leading-[20px] text-error">
+                Your last payment failed. Please update your billing details to keep Pro access.
+              </p>
+            </div>
+          )}
 
           {/* Plan */}
           <section className="bg-surface border border-border rounded-[4px] p-[24px] mb-[16px]">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // GET — fetch funding for a pitch (authenticated owner)
 export async function GET(
@@ -122,6 +123,13 @@ export async function PATCH(
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = createAdminClient()
+    const { data: pitch } = await admin.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: profile } = await admin.from('users').select('id').eq('auth_id', user.id).single()
+    if (!pitch || !profile || pitch.user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()

@@ -4,6 +4,10 @@ import { cookies } from 'next/headers'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+if (process.env.NODE_ENV === 'production' && !process.env.PITCH_ACCESS_SECRET) {
+  throw new Error('PITCH_ACCESS_SECRET must be set in production')
+}
+
 function verifyAccessCookie(pitchId: string, token: string): boolean {
   const secret = process.env.PITCH_ACCESS_SECRET ?? 'dev-insecure-secret'
   const expected = crypto.createHmac('sha256', secret).update(pitchId).digest('hex')

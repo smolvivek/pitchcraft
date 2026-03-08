@@ -11,6 +11,7 @@ interface DeletePitchButtonProps {
 export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps) {
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deleted, setDeleted] = useState(false)
   const router = useRouter()
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -25,7 +26,10 @@ export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps
     setLoading(true)
     try {
       await fetch(`/api/pitches/${pitchId}`, { method: 'DELETE' })
-      router.refresh()
+      setDeleted(true)
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)
     } catch {
       setLoading(false)
       setConfirming(false)
@@ -38,6 +42,12 @@ export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps
     setConfirming(false)
   }
 
+  if (deleted) {
+    return (
+      <span className="font-[var(--font-mono)] text-[11px] text-error">Deleted</span>
+    )
+  }
+
   if (confirming) {
     return (
       <span className="flex items-center gap-[6px]">
@@ -46,6 +56,7 @@ export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps
           type="button"
           onClick={handleDelete}
           disabled={loading}
+          aria-label="Delete pitch"
           className="font-[var(--font-mono)] text-[11px] text-error hover:opacity-80 transition-opacity disabled:opacity-40"
         >
           {loading ? 'Deleting...' : 'Yes, delete'}
