@@ -1,7 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+// Max body size for AI routes: 32KB. Rejects attempts to send massive prompts.
+const AI_ROUTE_MAX_BYTES = 32 * 1024
+
+export async function proxy(request: NextRequest) {
+  // Block oversized bodies on AI routes before they reach the handler
+  if (request.nextUrl.pathname.startsWith('/api/ai/')) {
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength, 10) > AI_ROUTE_MAX_BYTES) {
+      return NextResponse.json({ error: 'Request too large' }, { status: 413 })
+    }
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
