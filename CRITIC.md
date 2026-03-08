@@ -610,6 +610,66 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 
 ---
 
+### 56. `proxy.ts` Is Not Recognized by Next.js — Middleware Is Dead
+**Area:** Security / Functionality
+**Severity:** Critical
+**What's wrong:** Next.js only runs middleware from a file named `middleware.ts` (or `middleware.js`) at the project root. `proxy.ts` contains the full middleware logic (auth redirects, AI route body limits) but Next.js ignores it entirely because of the filename. The auth redirect (logged-in users → /dashboard, unauthenticated → /login) only works because individual page server components do their own `if (!user) redirect()` checks — but the logged-in user redirect from `/login` and `/signup` is completely absent. A logged-in user can visit `/login`, fill it out again, and get confused.
+**Recommended fix:** Rename `proxy.ts` to `middleware.ts` at the project root. Git rename: `git mv proxy.ts middleware.ts`.
+**Impact if ignored:** Auth middleware is completely non-functional. Logged-in users see the login/signup form. AI route body-size limit is not enforced. Middleware-based security rules cannot be added until this is fixed.
+**Status:** Open
+
+---
+
+### 57. Session Expiry During Pitch Creation Loses All Content
+**Area:** UX / Functionality
+**Severity:** High
+**What's wrong:** The create pitch page is a long client-side form (8 required sections). If a Supabase auth session expires mid-session (default 1 hour), the `POST /api/pitches` call on submit returns 401. The create page has no 401 handler — it shows a generic error or silently fails. The entire form is lost. There is no auto-save or draft mechanism on the create page (unlike the edit page which has debounced auto-save).
+**Recommended fix:** Either (a) extend session via Supabase `refreshSession()` on focus, or (b) save a draft to localStorage as the user types, restoring it on page load. The edit page auto-save pattern is the right model.
+**Impact if ignored:** Users who spend time on a lengthy pitch creation and then hit submit after >1h lose everything. Trust erosion.
+**Status:** Open
+
+---
+
+### 58. No Share/Publish Step in the Create Flow
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** After creating a pitch, the user is redirected to the dashboard. There is no share configuration step in the create flow. To share a pitch, the user must: discover the edit page, find share settings, configure visibility, then copy the link. This two-step process is never explained. New users who create a pitch have no obvious next action.
+**Recommended fix:** After successful pitch creation, either: (a) redirect to the edit page with the sharing panel open, or (b) add a final "Publish" step to the create wizard that sets visibility and shows the share link. The first share is a critical conversion moment.
+**Impact if ignored:** Users create pitches and don't know how to share them. The product's core value (one shareable link) is blocked behind a discovery problem.
+**Status:** Open
+
+---
+
+### 59. No Upgrade Moment After First Pitch Creation
+**Area:** Profitability
+**Severity:** High
+**What's wrong:** After a free user creates their first pitch, they land on the dashboard with no upgrade prompt. The completion moment — the highest emotional high after creation — is wasted. The dashboard just shows the pitch in the list.
+**Recommended fix:** After first pitch creation, redirect to `/dashboard?firstpitch=true`. Dashboard reads this param and shows a one-time overlay: "Your pitch is live. Want password-protected links, AI, and unlimited pitches? [Go Pro →]". Dismiss once, store in localStorage.
+**Impact if ignored:** The prime conversion window is wasted. Free users who successfully create a pitch are the most motivated to pay — and they're shown nothing.
+**Status:** Open
+
+---
+
+### 60. Commission Breakdown Shown After Payment Commitment
+**Area:** UX / Trust
+**Severity:** High
+**What's wrong:** In PitchViewFunding, the commission breakdown ("You donate $25 → creator receives $23") only appears AFTER clicking "Continue to payment" — after the Razorpay order is created. Before that, donors see a vague "A small platform fee applies. Exact breakdown shown at checkout." This is the opposite of fee transparency. The breakdown should be visible as soon as the donor types an amount, not after committing.
+**Recommended fix:** Show an estimated breakdown inline as the donor types (before clicking "Continue to payment"): "Estimated: you donate $25.00 → creator receives ~$23.00 (8% platform fee)". Use the known commission rate (available from the pitch's creator tier) to compute this client-side.
+**Impact if ignored:** Donors who see the fee after clicking feel trapped. Trust damage at the critical conversion moment.
+**Status:** Open
+
+---
+
+### 61. Unauthenticated "Go Pro" Click Fails Silently
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** An unauthenticated user visiting `/pricing` clicks "Go Pro". `CheckoutButton` POSTs to `/api/subscriptions/checkout` which returns 401. The component needs to handle this by redirecting to `/signup?plan=pro` so the intent is preserved. If it doesn't, the user sees an error or nothing and leaves.
+**Recommended fix:** In `CheckoutButton`, on 401 response: `router.push('/signup?plan=pro')`. After signup + login, check for `?plan=pro` query param and trigger checkout automatically. Or simpler: redirect unauthenticated users directly to `/signup` from the pricing page CTAs.
+**Impact if ignored:** Highest-intent visitors (unauthenticated users on the pricing page who want to pay) hit a dead end.
+**Status:** Open
+
+---
+
 ## Archive (Fixed / Won't Fix)
 
 *Resolved critiques move here with resolution notes.*
