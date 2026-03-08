@@ -20,8 +20,10 @@ export default async function OGImage({ params }: { params: Promise<{ id: string
     .eq('id', id)
     .single()
 
-  const projectName = pitch?.project_name ?? 'Pitchcraft'
-  const logline = pitch?.logline ?? ''
+  const rawName = pitch?.project_name ?? ''
+  const projectName = rawName ? (rawName.length > 60 ? rawName.slice(0, 60) + '…' : rawName) : 'Untitled Project'
+  const rawLogline = pitch?.logline ?? ''
+  const logline = rawLogline.length > 160 ? rawLogline.slice(0, 160) + '…' : rawLogline
   const genre = pitch?.genre ?? ''
 
   return new ImageResponse(
@@ -74,7 +76,7 @@ export default async function OGImage({ params }: { params: Promise<{ id: string
               maxWidth: '860px',
             }}
           >
-            {logline.length > 160 ? logline.slice(0, 160) + '…' : logline}
+            {logline}
           </p>
         )}
 

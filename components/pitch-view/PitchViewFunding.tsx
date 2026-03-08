@@ -95,6 +95,10 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
       setError('Name and email are required')
       return
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Enter a valid email address')
+      return
+    }
 
     setDonating(true)
     setError('')

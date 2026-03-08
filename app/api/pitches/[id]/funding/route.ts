@@ -59,7 +59,7 @@ export async function POST(
     const body = await request.json()
     const { funding_goal, description, end_date, stretch_goals, rewards } = body
 
-    if (!funding_goal || funding_goal < 1) {
+    if (typeof funding_goal !== 'number' || !Number.isFinite(funding_goal) || funding_goal < 1) {
       return NextResponse.json({ error: 'Funding goal is required' }, { status: 400 })
     }
 

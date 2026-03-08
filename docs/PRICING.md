@@ -56,7 +56,7 @@
 | Pitch slug | **Custom** (`pitchcraft.app/p/my-film`) |
 | Branding | **None** (no Pitchcraft footer) |
 | View notifications | **Basic** ("someone viewed your pitch") |
-| Collaborators | **2 per pitch** |
+| Collaborators | **5 per pitch** |
 | PDF export | **Clean layout** |
 | Custom sections | **3** |
 
@@ -80,7 +80,7 @@
 | Pitch slug | **Custom** |
 | Branding | **None** |
 | View notifications | **Detailed** (when, time spent, which sections viewed) |
-| Collaborators | **5 per pitch** |
+| Collaborators | **Unlimited** |
 | PDF export | **Branded** (custom logo, colors, footer) |
 | Custom sections | **3** |
 | Priority support | Yes |
@@ -136,7 +136,7 @@ Funding commission  8%          5%              3%
 Custom slug         ✗           ✓               ✓
 Branding removed    ✗           ✓               ✓
 View notifications  ✗           Basic           Detailed
-Collaborators       ✗           2/pitch         5/pitch
+Collaborators       ✗           5/pitch         Unlimited
 PDF export          ✗           Clean           Branded
 Custom sections     ✗           3               3
 ```

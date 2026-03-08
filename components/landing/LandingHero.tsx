@@ -237,6 +237,41 @@ export function LandingHero() {
       <LandingPreview />
 
       {/* ═══════════════════════════════════════════════
+          PRICING PREVIEW
+          ═══════════════════════════════════════════════ */}
+      <section className="px-[24px] md:px-[48px] py-[80px] md:py-[120px] border-t border-border">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-[24px] mb-[48px]">
+            <h2 className="font-[var(--font-heading)] text-[32px] md:text-[40px] font-semibold leading-[1.1] tracking-[-0.02em] text-text-primary">
+              Simple pricing
+            </h2>
+            <Link href="/pricing" className="font-[var(--font-mono)] text-[12px] leading-[20px] tracking-[0.05em] uppercase text-text-secondary hover:text-text-primary transition-colors">
+              Full comparison →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-border rounded-[4px] overflow-hidden">
+            {[
+              { tier: 'Free', price: '$0', period: 'forever', desc: 'One complete pitch. Share it publicly.', cta: 'Start free', href: '/signup', pop: false },
+              { tier: 'Pro', price: '$12', period: '/mo', desc: 'Unlimited pitches. AI. Privacy controls.', cta: 'Go Pro', href: '/pricing', pop: true },
+              { tier: 'Studio', price: '$29', period: '/mo', desc: 'Teams. Unlimited AI. Detailed analytics.', cta: 'Get Studio', href: '/pricing', pop: false },
+            ].map((item) => (
+              <div key={item.tier} className={`p-[32px] flex flex-col gap-[16px] ${item.pop ? 'bg-surface' : 'bg-background'}`}>
+                <p className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.08em] uppercase text-text-secondary">{item.tier}</p>
+                <div className="flex items-baseline gap-[4px]">
+                  <span className="font-[var(--font-heading)] text-[36px] font-semibold leading-[1] tracking-[-0.03em] text-text-primary">{item.price}</span>
+                  <span className="font-[var(--font-mono)] text-[12px] text-text-secondary">{item.period}</span>
+                </div>
+                <p className="font-[var(--font-body)] text-[13px] leading-[20px] text-text-secondary flex-1">{item.desc}</p>
+                <Link href={item.href} className={`font-[var(--font-mono)] text-[12px] leading-[20px] ${item.pop ? 'text-pop hover:text-pop-hover' : 'text-text-secondary hover:text-text-primary'} transition-colors`}>
+                  {item.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════ */}
       <section ref={ctaSection.ref} className="px-[24px] md:px-[48px] py-[120px] md:py-[160px]">

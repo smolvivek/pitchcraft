@@ -163,7 +163,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What competitors do better:** This isn't a competitor problem — Pitchcraft is supposed to look *unlike* competitors. The pricing page is the most generic page on the site.
 **Recommended fix:** CTAs should speak to actual value ("Go Pro", "Get Studio"). Consider a layout that doesn't feel like a feature matrix. The table-of-checkboxes format is pure SaaS.
 **Impact if ignored:** The first revenue-generating page feels like it was generated from a template. Creators here for the aesthetic will feel the dissonance immediately.
-**Status:** Open — "Most popular" badge removed. CTAs and layout still need work.
+**Status:** Fixed — Pricing page rewritten as client component with billing toggle, clear CTAs (Go Pro/Get Studio), no template patterns. — "Most popular" badge removed. CTAs and layout still need work.
 
 ---
 
@@ -174,7 +174,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What competitors do better:** Notion (2 on free, unlimited on paid), Linear (unlimited for teams), Gamma (5 on free). The pattern is: make the free limit tight, make the paid limit feel generous.
 **Recommended fix:** Raise Pro to 5 collaborators. Raise Studio to unlimited or a higher number (15+). The marginal cost of adding collaborators is zero. The value signal of "5 collaborators" on Pro is much stronger for a filmmaker than "2." Update PRICING.md and the pricing page once decided.
 **Impact if ignored:** Filmmakers with a 3-person core team hit the Pro collaborator wall immediately. The feature exists but can't serve them at the $12 tier.
-**Status:** Open
+**Status:** Fixed — Pro raised to 5 collaborators/pitch, Studio raised to unlimited. Updated PRICING.md and pricing page.
 
 ---
 
@@ -185,7 +185,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What competitors do better:** Notion doesn't call it "No Notion branding." They frame the free tier branding as part of the product, and paid tiers as "custom domain" — a positive feature, not removal of a negative.
 **Recommended fix:** Reframe free-tier branding as a feature of its own ("Powered by Pitchcraft — shows provenance") and remove "No Pitchcraft branding" from the Pro feature list entirely. Instead list a positive: "Your pitch, your identity" or just omit the branding mention. Or: keep the "Made with Pitchcraft" footer on free but make it tasteful enough that it's not shameful.
 **Impact if ignored:** Every free user who reads the pricing page learns that the Pitchcraft brand on their pitch is a liability. That's not the message you want.
-**Status:** Open
+**Status:** Fixed — No Pitchcraft Branding language removed from pricing page. Free tier features list no longer mentions branding.
 
 ---
 
@@ -196,7 +196,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What competitors do better:** Gamma: "Export to PDF." Canva: "Download in PDF Print." Papermark: "PDF export." Simple nouns, not adjectives.
 **Recommended fix:** "PDF export" (Pro) and "Branded PDF export" (Studio). Or "Print-ready PDF" for Pro if you want to communicate something specific. Drop "clean."
 **Impact if ignored:** Minor copy issue, but on a pricing page every word matters. "Clean" is lazy language and doesn't hold up under scrutiny.
-**Status:** Open
+**Status:** Fixed — PDF export copy cleaned up. Pro shows PDF export, Studio shows Branded PDF export.
 
 ---
 
@@ -266,7 +266,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** The landing page has no pricing information. Visitors must navigate to `/pricing` separately — adding friction and drop-off.
 **Recommended fix:** Add a condensed 3-tier pricing block above the final CTA on the landing page. Link to full `/pricing` for details.
 **Impact if ignored:** Visitors who would upgrade never see pricing before leaving.
-**Status:** Open
+**Status:** Fixed — Added condensed 3-tier pricing section to LandingHero.tsx above the final CTA.
 
 ---
 
@@ -466,7 +466,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `navigator.clipboard.writeText()` in `Card.tsx` has no `.catch()`. On HTTP (localhost), incognito, or when permission is denied, the promise rejects silently. The "Copied" confirmation never fires. User believes the copy worked, pastes nothing.
 **Recommended fix:** Add `.catch()` that shows an error state — or falls back to `document.execCommand('copy')` for older contexts.
 **Impact if ignored:** The key post-creation action (share the pitch) silently fails in non-HTTPS or restricted contexts. Friction at the worst moment.
-**Status:** Open
+**Status:** Fixed — Added .catch() guard and navigator.clipboard existence check in Card.tsx.
 
 ---
 
@@ -476,7 +476,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `verify/route.ts` casts pitch creator data without validating shape. If the join returns unexpected structure, `creator.email` could be undefined, and the email is skipped silently (`Promise.allSettled` swallows it). Creator never learns someone donated.
 **Recommended fix:** Validate creator email before the conditional: `if (typeof creator?.email !== 'string') { console.error('Creator email missing for funding', fundingId) }`.
 **Impact if ignored:** Creators miss donation notifications. They don't know they're receiving support. The email is the primary value signal of the funding feature.
-**Status:** Open
+**Status:** Fixed — Added console.error validation for creator email before sending notification.
 
 ---
 
@@ -486,7 +486,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** After signup, the screen says "Check your inbox" with only a "Back to login" button. There's no mention that clicking the email link auto-logs them in, no pending state if they return to the tab, no resend link. Users who close the tab and return are stranded on the login page with no context.
 **Recommended fix:** Improve the success screen: "We sent a confirmation to [email]. Click the link to log in automatically. Didn't get it? [Resend]." Add `?confirmed=pending` to the login redirect so the login page can surface context.
 **Impact if ignored:** Users who don't immediately click the email link lose context and abandon. Conversion leak at the last step of signup.
-**Status:** Open
+**Status:** Fixed — Signup success screen now shows email address, explains auto-login, and has Resend confirmation email button.
 
 ---
 
@@ -496,7 +496,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `Card.tsx` calls `navigator.clipboard.writeText()` unconditionally. On `http://` (non-localhost), `navigator.clipboard` is `undefined`. Runtime TypeError thrown, unhandled promise rejection logged.
 **Recommended fix:** Guard: `if (!navigator.clipboard) { /* fallback */ return }`.
 **Impact if ignored:** Copy button throws runtime errors in HTTP-only contexts and older browsers. Development/staging environments are affected.
-**Status:** Open
+**Status:** Fixed — Added if (!navigator?.clipboard) guard before writeText call in Card.tsx.
 
 ---
 
@@ -506,7 +506,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** Multiple components (`animate-fade-up`, `animate-led-breathe`, `animate-fade-up-subtle`) run on every load without checking `prefers-reduced-motion: reduce`. Users who have disabled animations in OS settings see them anyway.
 **Recommended fix:** In `globals.css`, add: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }`.
 **Impact if ignored:** Accessibility violation. Affects users with vestibular disorders. WCAG 2.1 AA requires this.
-**Status:** Open
+**Status:** Fixed — Added comprehensive prefers-reduced-motion rule to globals.css disabling all animations/transitions.
 
 ---
 
@@ -516,7 +516,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `signup/page.tsx` captures `marketingConsent` and passes it in `options.data` to Supabase auth metadata. It's never written to the `users` table, never read back, never used to send or suppress marketing emails.
 **Recommended fix:** Either remove the checkbox (if marketing emails aren't planned yet), or add a `marketing_consent` column to the `users` table and write it there on signup.
 **Impact if ignored:** Captured consent is orphaned. If marketing emails are ever sent, consent can't be verified. Legal risk under GDPR.
-**Status:** Open
+**Status:** Fixed — Migration 20260309000001 updates handle_new_user trigger to write marketing_consent from auth metadata to users table.
 
 ---
 
@@ -526,7 +526,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** In `/api/pitches/[id]/funding/route.ts`, `funding_goal` is only checked with `if (!funding_goal || funding_goal < 1)`. If the body contains `funding_goal: "abc"` (string), the check may pass due to JS type coercion. No `typeof` guard exists.
 **Recommended fix:** `if (typeof funding_goal !== 'number' || !Number.isFinite(funding_goal) || funding_goal < 1)` — reject with 400.
 **Impact if ignored:** Malformed funding records created with NaN or string goals. Progress bar and percentage calculations break at display time.
-**Status:** Open
+**Status:** Fixed — Funding goal validated with typeof + Number.isFinite check in funding/route.ts.
 
 ---
 
@@ -556,7 +556,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `next.config.ts` sets `X-Frame-Options`, `X-Content-Type-Options`, and `Strict-Transport-Security`, but not `Content-Security-Policy`. The app embeds third-party scripts (Razorpay `checkout.js`) and inlines JSON-LD. Without a CSP, XSS attacks can load arbitrary scripts.
 **Recommended fix:** Add CSP header: `script-src 'self' checkout.razorpay.com; object-src 'none'; base-uri 'self'`. Start strict, loosen only where needed.
 **Impact if ignored:** XSS vulnerability window remains open. Any reflected or stored XSS can load external scripts. Particular risk on pitch view pages which render user-supplied content.
-**Status:** Open
+**Status:** Fixed — CSP header added to next.config.ts covering script-src, connect-src, frame-src, img-src.
 
 ---
 
@@ -566,7 +566,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `/app/p/[id]/opengraph-image.tsx` renders pitch title and logline without truncation or fallback. A 300-character logline or empty project name produces a broken/unreadable OG card.
 **Recommended fix:** Truncate: `title.slice(0, 60)`, `logline.slice(0, 120)`, append "..." if trimmed. Default: `"Untitled Project"` if name is empty.
 **Impact if ignored:** Some pitches have ugly or broken social preview cards. Brand impact on every share.
-**Status:** Open
+**Status:** Fixed — Project name truncated to 60 chars, logline to 160 chars, fallback to Untitled Project in opengraph-image.tsx.
 
 ---
 
@@ -576,7 +576,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `DeletePitchButton` calls `router.refresh()` on success — the pitch disappears. No toast or message confirms the action. Users who delete accidentally have no undo and no confirmation the delete happened vs. a network error.
 **Recommended fix:** Show a brief inline success message ("Deleted") before routing away, or a dismissable toast. Undo is out of scope, but acknowledgment is not.
 **Impact if ignored:** Minor. Deletion is implied by disappearance. But for an irreversible action, silence is not ideal.
-**Status:** Open
+**Status:** Fixed — DeletePitchButton shows Deleted state for 1.5s before router.refresh().
 
 ---
 
@@ -596,7 +596,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `PitchViewFunding.tsx` checks `!email.trim()` but not format. `"user"`, `"@"`, or `"user@"` all pass validation. These are recorded in the `donations` table. Resend rejects them silently (wrapped in `allSettled`). Donor receives no confirmation.
 **Recommended fix:** Add regex: `if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Enter a valid email') }`. One line, no library needed.
 **Impact if ignored:** Typo emails are recorded and never receive confirmation. Donor doesn't know their donation was received.
-**Status:** Open
+**Status:** Fixed — Email format validated with regex before Razorpay order creation in PitchViewFunding.
 
 ---
 
@@ -616,7 +616,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** Next.js only runs middleware from a file named `middleware.ts` (or `middleware.js`) at the project root. `proxy.ts` contains the full middleware logic (auth redirects, AI route body limits) but Next.js ignores it entirely because of the filename. The auth redirect (logged-in users → /dashboard, unauthenticated → /login) only works because individual page server components do their own `if (!user) redirect()` checks — but the logged-in user redirect from `/login` and `/signup` is completely absent. A logged-in user can visit `/login`, fill it out again, and get confused.
 **Recommended fix:** Rename `proxy.ts` to `middleware.ts` at the project root. Git rename: `git mv proxy.ts middleware.ts`.
 **Impact if ignored:** Auth middleware is completely non-functional. Logged-in users see the login/signup form. AI route body-size limit is not enforced. Middleware-based security rules cannot be added until this is fixed.
-**Status:** Open
+**Status:** Fixed — Renamed proxy.ts → middleware.ts at project root.
 
 ---
 
