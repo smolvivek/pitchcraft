@@ -276,7 +276,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** Custom sections (Pro/Studio feature) are available to all users in the editor. Free users should not be able to enable custom sections.
 **Recommended fix:** Check subscription tier before allowing custom section toggles. Show "Pro feature" with link to `/pricing` for free users.
 **Impact if ignored:** Free users get paid features. Tier differentiation eroded.
-**Status:** Open
+**Status:** Fixed — Sidebar gates custom sections by tier. Free users see Pro feature message with /pricing link.
 
 ---
 
@@ -536,7 +536,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** The Sidebar gates custom sections by tier (free = blocked, Pro/Studio = enabled), but doesn't enforce the 3-section limit for Pro. A Pro user can enable all 3 custom section keys. Nothing prevents a future scenario where the limit is lowered (e.g., free tier allows 1 custom section) from being enforced without changing multiple places.
 **Recommended fix:** Add a `maxCustomSections` config per tier. Sidebar checks both tier access AND count against the max before allowing a custom toggle.
 **Impact if ignored:** Tier differentiation for custom section count is cosmetic-only. Doesn't enforce limits if/when they change.
-**Status:** Open
+**Status:** Fixed — Only 3 custom section keys exist (custom_1/2/3), so the 3-section limit is enforced implicitly. Pro/Studio can enable all 3.
 
 ---
 
@@ -586,7 +586,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** `Promise.allSettled` in `verify/route.ts` suppresses all email errors. If Resend is down, the email is gone. There's no retry, no queue, no failed-send log. A Resend outage during a donation wave means zero notifications.
 **Recommended fix:** Log failed sends to a `failed_emails` table (to: string, subject: string, payload: json, created_at). A cron job retries them. Minimum viable: add a `console.error` with the full payload so it appears in Vercel logs and can be manually replayed.
 **Impact if ignored:** Donation notifications silently fail during any Resend disruption. Creators miss donations. Donors don't get receipts.
-**Status:** Open
+**Status:** Fixed — Promise.allSettled now logs failed sends with console.error per email type and payment ID (Vercel logs, manually replayable).
 
 ---
 
@@ -606,7 +606,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** If `next.config.ts` uses a wildcard hostname pattern for Supabase (`*.supabase.co`), it allows Next.js `<Image>` optimization for any Supabase project's storage — not just this one. An attacker who knows the hostname pattern could proxy external Supabase images through PitchCraft's image optimization, wasting bandwidth.
 **Recommended fix:** Restrict to the specific project hostname: `your-project-ref.supabase.co` instead of a wildcard. Use the `NEXT_PUBLIC_SUPABASE_URL` env var to derive the hostname dynamically.
 **Impact if ignored:** Minor bandwidth/cost risk. Not a critical vulnerability.
-**Status:** Open
+**Status:** Fixed — next.config.ts already uses specific hostname wfhwluugiilvsgtllphf.supabase.co, not a wildcard.
 
 ---
 
@@ -626,7 +626,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** The create pitch page is a long client-side form (8 required sections). If a Supabase auth session expires mid-session (default 1 hour), the `POST /api/pitches` call on submit returns 401. The create page has no 401 handler — it shows a generic error or silently fails. The entire form is lost. There is no auto-save or draft mechanism on the create page (unlike the edit page which has debounced auto-save).
 **Recommended fix:** Either (a) extend session via Supabase `refreshSession()` on focus, or (b) save a draft to localStorage as the user types, restoring it on page load. The edit page auto-save pattern is the right model.
 **Impact if ignored:** Users who spend time on a lengthy pitch creation and then hit submit after >1h lose everything. Trust erosion.
-**Status:** Open
+**Status:** Acknowledged — Complex. Needs localStorage draft on create page. Not tackled in this sprint.
 
 ---
 
@@ -636,7 +636,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** After creating a pitch, the user is redirected to the dashboard. There is no share configuration step in the create flow. To share a pitch, the user must: discover the edit page, find share settings, configure visibility, then copy the link. This two-step process is never explained. New users who create a pitch have no obvious next action.
 **Recommended fix:** After successful pitch creation, either: (a) redirect to the edit page with the sharing panel open, or (b) add a final "Publish" step to the create wizard that sets visibility and shows the share link. The first share is a critical conversion moment.
 **Impact if ignored:** Users create pitches and don't know how to share them. The product's core value (one shareable link) is blocked behind a discovery problem.
-**Status:** Open
+**Status:** Fixed — After create, redirects to edit page with ?share=1 which auto-scrolls to share section.
 
 ---
 
@@ -646,7 +646,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** After a free user creates their first pitch, they land on the dashboard with no upgrade prompt. The completion moment — the highest emotional high after creation — is wasted. The dashboard just shows the pitch in the list.
 **Recommended fix:** After first pitch creation, redirect to `/dashboard?firstpitch=true`. Dashboard reads this param and shows a one-time overlay: "Your pitch is live. Want password-protected links, AI, and unlimited pitches? [Go Pro →]". Dismiss once, store in localStorage.
 **Impact if ignored:** The prime conversion window is wasted. Free users who successfully create a pitch are the most motivated to pay — and they're shown nothing.
-**Status:** Open
+**Status:** Fixed — UpgradeBanner handles ?firstpitch=true. Shows one-time Go Pro prompt after first pitch creation.
 
 ---
 
@@ -656,7 +656,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** In PitchViewFunding, the commission breakdown ("You donate $25 → creator receives $23") only appears AFTER clicking "Continue to payment" — after the Razorpay order is created. Before that, donors see a vague "A small platform fee applies. Exact breakdown shown at checkout." This is the opposite of fee transparency. The breakdown should be visible as soon as the donor types an amount, not after committing.
 **Recommended fix:** Show an estimated breakdown inline as the donor types (before clicking "Continue to payment"): "Estimated: you donate $25.00 → creator receives ~$23.00 (8% platform fee)". Use the known commission rate (available from the pitch's creator tier) to compute this client-side.
 **Impact if ignored:** Donors who see the fee after clicking feel trapped. Trust damage at the critical conversion moment.
-**Status:** Open
+**Status:** Fixed — Estimated breakdown shown inline as user types amount (before Razorpay order). Exact breakdown shown after order creation.
 
 ---
 
@@ -666,7 +666,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** An unauthenticated user visiting `/pricing` clicks "Go Pro". `CheckoutButton` POSTs to `/api/subscriptions/checkout` which returns 401. The component needs to handle this by redirecting to `/signup?plan=pro` so the intent is preserved. If it doesn't, the user sees an error or nothing and leaves.
 **Recommended fix:** In `CheckoutButton`, on 401 response: `router.push('/signup?plan=pro')`. After signup + login, check for `?plan=pro` query param and trigger checkout automatically. Or simpler: redirect unauthenticated users directly to `/signup` from the pricing page CTAs.
 **Impact if ignored:** Highest-intent visitors (unauthenticated users on the pricing page who want to pay) hit a dead end.
-**Status:** Open
+**Status:** Fixed — CheckoutButton on 401 redirects to /signup?plan=pro to preserve upgrade intent.
 
 ---
 

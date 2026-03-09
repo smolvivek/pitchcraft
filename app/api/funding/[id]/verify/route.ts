@@ -140,7 +140,13 @@ export async function POST(
             paymentId: razorpay_payment_id,
           })
         : Promise.resolve(),
-    ]).catch((err) => console.error('Email send error:', err))
+    ]).then((results) => {
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.error(`Email ${i === 0 ? 'donor' : 'creator'} send failed for payment ${razorpay_payment_id}:`, r.reason)
+        }
+      })
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

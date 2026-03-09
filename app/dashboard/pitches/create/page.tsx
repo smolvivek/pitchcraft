@@ -616,7 +616,7 @@ export default function CreatePitchPage() {
         await supabase.from('pitch_sections').insert(sectionsToInsert)
       }
 
-      router.push('/dashboard')
+      router.push(`/dashboard/pitches/${pitch.id}/edit?share=1`)
       router.refresh()
     } catch (err) {
       console.error('Create project error:', err)

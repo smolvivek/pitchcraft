@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef, use, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { TextInput, Textarea, SelectInput } from '@/components/ui/Input'
@@ -80,6 +80,17 @@ const statusOptions = [
 export default function EditPitchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: pitchId } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Auto-scroll to share section when redirected from create (?share=1)
+  useEffect(() => {
+    if (searchParams.get('share') === '1') {
+      router.replace(`/dashboard/pitches/${pitchId}/edit`, { scroll: false })
+      setTimeout(() => {
+        document.getElementById('share-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 800)
+    }
+  }, [searchParams, router, pitchId])
 
   // Active section for sidebar navigation
   const [activeSection, setActiveSection] = useState<string>('logline')
@@ -975,7 +986,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                 </div>
 
                 {/* Share */}
-                <div className="border-t border-border pt-[24px] mt-[16px]">
+                <div id="share-section" className="border-t border-border pt-[24px] mt-[16px]">
                   <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
                     Share
                   </h2>

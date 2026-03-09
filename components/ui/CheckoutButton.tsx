@@ -26,7 +26,7 @@ export function CheckoutButton({ tier, billingPeriod = 'monthly', variant = 'sec
       })
 
       if (res.status === 401) {
-        router.push('/signup')
+        router.push(`/signup?plan=${tier}`)
         return
       }
 
