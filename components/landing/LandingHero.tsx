@@ -186,48 +186,47 @@ export function LandingHero() {
           ═══════════════════════════════════════════════ */}
       <section ref={how.ref} className="px-[24px] md:px-[48px] py-[120px] md:py-[160px]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="border-t-[2px] border-text-primary" />
-          {[
-            {
-              num: "01",
-              title: "Build",
-              desc: "Logline to budget to team. Upload images, generate references with AI, embed video. A complete project in one place.",
-              col: col0,
-            },
-            {
-              num: "02",
-              title: "Share",
-              desc: "One link. Public, private, or password-protected. Send it to a producer, a client, a collaborator.",
-              col: col1,
-            },
-            {
-              num: "03",
-              title: "Version",
-              desc: "Your project evolves. Every version persists. See what changed and why.",
-              col: col2,
-            },
-          ].map((item) => (
-            <div
-              key={item.num}
-              className="border-b border-border"
-              style={{
-                opacity: reducedMotion ? 1 : item.col,
-                transform: reducedMotion ? "none" : `translateY(${(1 - item.col) * 24}px)`,
-              }}
-            >
-              <div className="py-[32px] md:py-[40px] flex items-start gap-[24px] md:gap-[48px] lg:gap-[80px]">
-                <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.1em] text-text-disabled mt-[8px] md:mt-[12px] w-[24px] shrink-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-border">
+            {[
+              {
+                num: "01",
+                title: "Build",
+                desc: "Logline to budget to team. Upload images, generate references with AI, embed video. A complete project in one place.",
+                col: col0,
+              },
+              {
+                num: "02",
+                title: "Share",
+                desc: "One link. Public, private, or password-protected. Send it to a producer, a client, a collaborator.",
+                col: col1,
+              },
+              {
+                num: "03",
+                title: "Version",
+                desc: "Your project evolves. Every version persists. See what changed and why.",
+                col: col2,
+              },
+            ].map((item) => (
+              <div
+                key={item.num}
+                className="bg-background px-[32px] py-[40px] flex flex-col gap-[24px]"
+                style={{
+                  opacity: reducedMotion ? 1 : item.col,
+                  transform: reducedMotion ? "none" : `translateY(${(1 - item.col) * 24}px)`,
+                }}
+              >
+                <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.1em] text-text-disabled">
                   {item.num}
                 </span>
-                <h3 className="font-[var(--font-heading)] text-[28px] md:text-[36px] lg:text-[44px] leading-[1.05] tracking-[-0.02em] text-text-primary w-[100px] md:w-[140px] lg:w-[180px] shrink-0">
+                <h3 className="font-[var(--font-heading)] text-[36px] md:text-[44px] leading-[1.05] tracking-[-0.02em] text-text-primary">
                   {item.title}
                 </h3>
-                <p className="text-[14px] md:text-[15px] leading-[24px] text-text-secondary flex-1 mt-[4px] md:mt-[10px] lg:mt-[14px] max-w-[480px]">
+                <p className="text-[14px] leading-[24px] text-text-secondary">
                   {item.desc}
                 </p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
