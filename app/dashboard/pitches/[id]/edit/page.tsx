@@ -128,6 +128,12 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [sharePassword, setSharePassword] = useState('')
   const [shareHasPassword, setShareHasPassword] = useState(false)
 
+  // Slug state
+  const [savedSlug, setSavedSlug] = useState<string | null>(null)
+  const [slugInput, setSlugInput] = useState('')
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'saved'>('idle')
+  const [slugError, setSlugError] = useState('')
+
   // Version history state
   const [versions, setVersions] = useState<{ id: string; version_number: number; created_at: string }[]>([])
   const [currentVersion, setCurrentVersion] = useState(1)
@@ -319,6 +325,8 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
       setBudgetRange(pitch.budget_range)
       setPitchStatus(pitch.status)
       setTeam(pitch.team)
+      setSavedSlug(pitch.slug ?? null)
+      setSlugInput(pitch.slug ?? '')
 
       // Populate optional sections from DB
       if (fetchedSections) {
@@ -464,9 +472,76 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
   const handleCopyLink = async () => {
     if (!shareUrl) return
-    await navigator.clipboard.writeText(shareUrl)
+    const urlToCopy = savedSlug
+      ? `${window.location.origin}/p/${savedSlug}`
+      : shareUrl
+    await navigator.clipboard.writeText(urlToCopy)
     setCopied(true)
     setTimeout(() => setCopied(false), 1200)
+  }
+
+  // ─── Slug ───
+  const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+  const SLUG_RESERVED = new Set(['api', 'dashboard', 'p', 'pricing', 'login', 'signup', 'auth', 'admin', 'public', 'static'])
+
+  const validateSlugLocally = (value: string): string => {
+    if (value.length < 3 || value.length > 60) return 'Must be 3–60 characters'
+    if (!SLUG_REGEX.test(value)) return 'Only lowercase letters, numbers, and hyphens'
+    if (SLUG_RESERVED.has(value)) return 'That slug is reserved'
+    return ''
+  }
+
+  const handleSlugBlur = async () => {
+    const value = slugInput.trim()
+
+    // Unchanged — nothing to do
+    if (value === (savedSlug ?? '')) {
+      setSlugStatus('idle')
+      return
+    }
+
+    // Clearing slug
+    if (value === '') {
+      await saveSlug(null)
+      return
+    }
+
+    const localErr = validateSlugLocally(value)
+    if (localErr) {
+      setSlugStatus('invalid')
+      setSlugError(localErr)
+      return
+    }
+
+    await saveSlug(value)
+  }
+
+  const saveSlug = async (slug: string | null) => {
+    if (slug !== null) setSlugStatus('checking')
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSavedSlug(data.pitch.slug)
+        setSlugInput(data.pitch.slug ?? '')
+        setSlugStatus('saved')
+        setSlugError('')
+        setTimeout(() => setSlugStatus('idle'), 2000)
+      } else if (res.status === 409) {
+        setSlugStatus('taken')
+        setSlugError('Already taken')
+      } else {
+        setSlugStatus('invalid')
+        setSlugError(data.error ?? 'Invalid slug')
+      }
+    } catch {
+      setSlugStatus('invalid')
+      setSlugError('Failed to save slug')
+    }
   }
 
   // ─── Funding ───
@@ -997,7 +1072,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                         <input
                           type="text"
                           readOnly
-                          value={shareUrl}
+                          value={savedSlug ? `${window.location.origin}/p/${savedSlug}` : shareUrl ?? ''}
                           className="flex-1 bg-surface border border-border rounded-[4px] px-[12px] py-[8px] font-[var(--font-mono)] text-[13px] text-text-secondary"
                         />
                         <Button
@@ -1073,6 +1148,57 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                       {errors.share && (
                         <p className="text-[14px] leading-[20px] text-error">{errors.share}</p>
                       )}
+
+                      {/* Custom slug */}
+                      <div className="flex flex-col gap-[8px]">
+                        <label className="font-[var(--font-body)] text-[14px] font-medium text-text-primary">
+                          Custom URL
+                        </label>
+                        {subscriptionTier === 'free' ? (
+                          <p className="font-[var(--font-body)] text-[13px] leading-[20px] text-text-secondary">
+                            Custom slugs are a Pro feature.{' '}
+                            <a href="/pricing" className="text-pop underline-offset-2 underline">Upgrade</a>
+                          </p>
+                        ) : (
+                          <div className="flex flex-col gap-[6px]">
+                            <div className="flex items-center gap-[0px] border border-border rounded-[4px] overflow-hidden focus-within:border-border-hover">
+                              <span className="px-[10px] py-[8px] font-[var(--font-mono)] text-[12px] text-text-disabled bg-surface whitespace-nowrap border-r border-border select-none">
+                                pitchcraft.app/p/
+                              </span>
+                              <input
+                                type="text"
+                                value={slugInput}
+                                onChange={(e) => {
+                                  setSlugInput(e.target.value.toLowerCase().replace(/\s/g, '-'))
+                                  setSlugStatus('idle')
+                                  setSlugError('')
+                                }}
+                                onBlur={handleSlugBlur}
+                                placeholder="my-film"
+                                className="flex-1 bg-background px-[10px] py-[8px] font-[var(--font-mono)] text-[13px] text-text-primary outline-none placeholder:text-text-disabled"
+                              />
+                              {savedSlug && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setSlugInput(''); saveSlug(null) }}
+                                  className="px-[10px] py-[8px] font-[var(--font-mono)] text-[11px] text-text-disabled hover:text-text-secondary border-l border-border"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </div>
+                            {slugStatus === 'checking' && (
+                              <p className="font-[var(--font-mono)] text-[11px] text-text-disabled">Checking…</p>
+                            )}
+                            {slugStatus === 'saved' && (
+                              <p className="font-[var(--font-mono)] text-[11px] text-success">Saved</p>
+                            )}
+                            {(slugStatus === 'taken' || slugStatus === 'invalid') && (
+                              <p className="font-[var(--font-mono)] text-[11px] text-error">{slugError}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
                       {/* Update + Revoke */}
                       <div className="flex gap-[12px]">

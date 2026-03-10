@@ -35,6 +35,22 @@ type ShareLinkInfo = {
   hasPassword: boolean
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+async function resolveIdOrSlug(idOrSlug: string): Promise<string | null> {
+  if (UUID_REGEX.test(idOrSlug)) return idOrSlug
+
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('pitches')
+    .select('id')
+    .eq('slug', idOrSlug)
+    .is('deleted_at', null)
+    .single()
+
+  return data?.id ?? null
+}
+
 async function getShareLinkInfo(pitchId: string): Promise<ShareLinkInfo | null> {
   const supabase = createAdminClient()
 
@@ -97,7 +113,9 @@ async function fetchPitchData(pitchId: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params
+  const { id: rawId } = await params
+  const id = await resolveIdOrSlug(rawId)
+  if (!id) return { title: 'Not Found' }
 
   const linkInfo = await getShareLinkInfo(id)
   if (!linkInfo) return { title: 'Not Found' }
@@ -132,7 +150,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PitchViewPage({ params }: PageProps) {
-  const { id } = await params
+  const { id: rawId } = await params
+  const id = await resolveIdOrSlug(rawId)
+  if (!id) notFound()
 
   const linkInfo = await getShareLinkInfo(id)
   if (!linkInfo) notFound()
