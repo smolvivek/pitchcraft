@@ -63,16 +63,12 @@ export async function POST(
       return NextResponse.json({ error: 'Funding goal is required' }, { status: 400 })
     }
 
-    // Verify pitch exists and belongs to user (RLS handles this)
-    const { data: pitch } = await supabase
-      .from('pitches')
-      .select('id')
-      .eq('id', pitchId)
-      .is('deleted_at', null)
-      .single()
-
-    if (!pitch) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    // Verify pitch exists and belongs to the authenticated user
+    const adminForPost = createAdminClient()
+    const { data: postPitch } = await adminForPost.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: postProfile } = await adminForPost.from('users').select('id').eq('auth_id', user.id).single()
+    if (!postPitch || !postProfile || postPitch.user_id !== postProfile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Check for existing funding
@@ -173,6 +169,13 @@ export async function DELETE(
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = createAdminClient()
+    const { data: pitch } = await admin.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: profile } = await admin.from('users').select('id').eq('auth_id', user.id).single()
+    if (!pitch || !profile || pitch.user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const { error: deleteError } = await supabase

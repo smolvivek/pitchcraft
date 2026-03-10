@@ -249,7 +249,7 @@ export default async function PitchViewPage({ params }: PageProps) {
     <PitchViewLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(creativeWorkJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(creativeWorkJsonLd).replace(/<\//g, '<\\/') }}
       />
       <PitchViewTopBar version={pitch.current_version} />
 

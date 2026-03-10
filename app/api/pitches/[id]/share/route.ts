@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12)
+  return bcrypt.hash(password, 10)
+}
+
+async function verifyOwnership(pitchId: string, userId: string): Promise<boolean> {
+  const admin = createAdminClient()
+  const { data: pitch } = await admin.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+  const { data: profile } = await admin.from('users').select('id').eq('auth_id', userId).single()
+  return !!(pitch && profile && pitch.user_id === profile.id)
 }
 
 // GET — fetch the active share link for a pitch
@@ -74,6 +82,16 @@ export async function POST(
     const visibility = body.visibility || 'public'
     const password = body.password || null
 
+    // Private and password-protected links require Pro or Studio
+    if (visibility !== 'public') {
+      const admin = createAdminClient()
+      const { data: sub } = await admin.from('subscriptions').select('tier').eq('user_id', user.id).single()
+      const tier = sub?.tier ?? 'free'
+      if (tier === 'free') {
+        return NextResponse.json({ error: 'Private and password-protected links require Pro', upgrade: true }, { status: 403 })
+      }
+    }
+
     const { data: shareLink, error: insertError } = await supabase
       .from('share_links')
       .insert({
@@ -110,13 +128,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: pitch } = await supabase.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
-    const { data: profile } = await supabase.from('users').select('id').eq('auth_id', user.id).single()
-    if (!pitch || !profile || pitch.user_id !== profile.id) {
+    if (!await verifyOwnership(pitchId, user.id)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await request.json()
+
+    // Changing to private/password requires Pro or Studio
+    if (body.visibility !== undefined && body.visibility !== 'public') {
+      const admin = createAdminClient()
+      const { data: sub } = await admin.from('subscriptions').select('tier').eq('user_id', user.id).single()
+      const tier = sub?.tier ?? 'free'
+      if (tier === 'free') {
+        return NextResponse.json({ error: 'Private and password-protected links require Pro', upgrade: true }, { status: 403 })
+      }
+    }
+
     const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
@@ -163,9 +190,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: pitch } = await supabase.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
-    const { data: profile } = await supabase.from('users').select('id').eq('auth_id', user.id).single()
-    if (!pitch || !profile || pitch.user_id !== profile.id) {
+    if (!await verifyOwnership(pitchId, user.id)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

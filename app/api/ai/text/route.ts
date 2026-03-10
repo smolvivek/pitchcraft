@@ -70,37 +70,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid fieldName' }, { status: 400 })
     }
 
-    // Rate limiting
+    // Rate limiting — atomic check+increment via RPC to prevent TOCTOU race
     const today = new Date().toISOString().split('T')[0]
 
-    const { data: usage } = await supabase
-      .from('ai_usage')
-      .select('text_count')
-      .eq('user_id', user.id)
-      .eq('usage_date', today)
-      .single()
+    const { data: allowed, error: rpcError } = await supabase
+      .rpc('try_increment_ai_usage', {
+        p_user_id: user.id,
+        p_date: today,
+        p_field: 'text_count',
+        p_limit: TEXT_DAILY_LIMIT,
+      })
 
-    if (usage && usage.text_count >= TEXT_DAILY_LIMIT) {
+    if (rpcError) {
+      console.error('AI usage RPC error:', rpcError)
+      return NextResponse.json({ error: 'Usage tracking error' }, { status: 500 })
+    }
+
+    if (!allowed) {
       return NextResponse.json(
         { error: `Daily limit reached (${TEXT_DAILY_LIMIT} text assists per day)` },
         { status: 429 }
       )
-    }
-
-    // Increment usage
-    if (usage) {
-      await supabase
-        .from('ai_usage')
-        .update({ text_count: usage.text_count + 1 })
-        .eq('user_id', user.id)
-        .eq('usage_date', today)
-    } else {
-      await supabase.from('ai_usage').insert({
-        user_id: user.id,
-        usage_date: today,
-        text_count: 1,
-        image_count: 0,
-      })
     }
 
     const ctx = context || {}

@@ -670,6 +670,148 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 
 ---
 
+### 62. Funding DELETE Has No Ownership Check
+**Area:** Security / Functionality
+**Severity:** Critical
+**What's wrong:** `DELETE /api/pitches/[id]/funding` only checks that the user is authenticated — no ownership verification. Any logged-in user can disable another creator's funding campaign by knowing their pitch UUID.
+**Recommended fix:** Add admin-client ownership check (same pattern as funding PATCH) before the delete.
+**Status:** Fixed — Added admin-client ownership check in DELETE handler.
+
+---
+
+### 63. Funding POST Has No Explicit Ownership Check
+**Area:** Security / Functionality
+**Severity:** Critical
+**What's wrong:** `POST /api/pitches/[id]/funding` uses the user-scoped RLS client to verify the pitch exists. Any authenticated user who can read a public pitch (RLS permits) can enable funding on it.
+**Recommended fix:** Replace the RLS-based pitch check with an admin-client ownership check.
+**Status:** Fixed — Replaced with explicit admin-client ownership check (`adminForPost`).
+
+---
+
+### 64. Verify Route Does Not Validate fundingId Against Razorpay Order Metadata
+**Area:** Security / Payments
+**Severity:** Critical
+**What's wrong:** A valid Razorpay payment from any funding campaign can be replayed against a different `fundingId` in the URL. The HMAC signature only proves the payment happened — not which funding it was for. `order.notes.funding_id` (set in donate/route.ts) is never compared against the URL `fundingId` in verify/route.ts.
+**Recommended fix:** After `razorpay.orders.fetch(order_id)`, check `order.notes?.funding_id === fundingId`. Return 400 if mismatch.
+**Status:** Fixed — Added cross-check: `if (orderFundingId && orderFundingId !== fundingId) return 400`.
+
+---
+
+### 65. Share PATCH/DELETE Uses User-Scoped Client for Ownership Check — Null Dereference Risk
+**Area:** Security / Reliability
+**Severity:** Critical
+**What's wrong:** PENTEST IDOR-02 fix was described as "admin client" but actually uses `createClient()` (user-scoped). If RLS denies the `public.users` select, `profile` is null and `pitch.user_id !== profile.id` throws a TypeError → 500 instead of 403. Any gap in the `pitches` RLS select policy also means ownership check can pass incorrectly.
+**Recommended fix:** Replace both `supabase.from('pitches')` and `supabase.from('users')` calls in PATCH/DELETE handlers with `createAdminClient()`.
+**Status:** Fixed — Created `verifyOwnership()` helper using admin client; both PATCH and DELETE use it.
+
+---
+
+### 66. AI Rate Limiting Has a Race Condition (TOCTOU)
+**Area:** Security / Cost
+**Severity:** Critical
+**What's wrong:** AI text and image routes read the current usage count, check against the limit, then increment — three separate operations. Concurrent requests all read count=0, all pass, all fire. A user can burn N×limit credits by sending N simultaneous requests.
+**Recommended fix:** Replace the read/check/write with an atomic Supabase RPC using `INSERT ... ON CONFLICT DO UPDATE SET count = count + 1 RETURNING count` and enforce the limit in the same transaction.
+**Status:** Fixed — Created `try_increment_ai_usage` RPC (migration `20260310000001`). Both AI routes now use `supabase.rpc('try_increment_ai_usage', ...)` instead of read/check/increment.
+
+---
+
+### 67. Share Route Allows Free Users to Create Private/Password-Protected Links
+**Area:** Profitability / Functionality
+**Severity:** High
+**What's wrong:** `POST /api/pitches/[id]/share` and `PATCH` have no tier check. Free users can set `visibility: 'private'` or add a password — bypassing the paid-only gate entirely from the API layer.
+**Recommended fix:** Check subscription tier in both POST and PATCH. If `visibility !== 'public'` and tier is free, return 403 with `{ upgrade: true }`.
+**Status:** Fixed — Tier gate added to both POST (create) and PATCH (update visibility) handlers.
+
+---
+
+### 68. Stored XSS via JSON-LD Injection in Pitch View
+**Area:** Security
+**Severity:** High (stored XSS on public pages)
+**What's wrong:** `app/p/[id]/page.tsx` passes `pitch.project_name`, `logline`, and other user-supplied fields through `JSON.stringify` and into `dangerouslySetInnerHTML`. Node's `JSON.stringify` does NOT escape `</script>` sequences. A pitch named `foo</script><script>alert(1)</script>` produces a script injection breakout.
+**Recommended fix:** After `JSON.stringify`, replace `</` with `<\/`: `JSON.stringify(creativeWorkJsonLd).replace(/<\//g, '<\\/')`.
+**Status:** Fixed — Applied `<\/` escaping in `app/p/[id]/page.tsx`.
+
+---
+
+### 69. CSP `unsafe-inline` Negates XSS Protection
+**Area:** Security
+**Severity:** High
+**What's wrong:** The CSP header in `next.config.ts` includes `'unsafe-inline'` in `script-src`. This allows inline script execution, completely defeating the XSS protection CSP is meant to provide.
+**Recommended fix:** Remove `'unsafe-inline'`. Use Next.js nonce-based CSP, or at minimum remove it and verify the app works without it (Next.js App Router doesn't require inline scripts).
+**Status:** Partial — `script-src 'unsafe-inline'` remains because Next.js App Router injects inline hydration scripts. Full fix requires nonce-based CSP via proxy.ts middleware. `style-src 'unsafe-inline'` also required for React inline `style={{}}` attributes.
+
+---
+
+### 70. Donations Can Be Recorded Against Expired/Deleted Campaigns
+**Area:** Data Integrity / Trust
+**Severity:** High
+**What's wrong:** `verify/route.ts` does not re-check whether the funding campaign is still active before inserting the donation. A campaign could end or be deleted between order creation and verify.
+**Recommended fix:** Add a check in verify: fetch the `funding` row by `fundingId` and confirm it still exists and `end_date > now`.
+**Status:** Won't Fix (in verify) — By the time verify is called, the payment has already been charged. Rejecting the record would orphan the payment. The donate route already gates on `end_date`. Campaign deletion gap is acceptable; recorded donations on a deleted campaign are still valid.
+
+---
+
+### 71. Password-Protected Pitches Cannot Use Funding
+**Area:** Functionality
+**Severity:** High
+**What's wrong:** `GET /api/funding/public/[pitchId]` and `POST /api/funding/[id]/donate` both explicitly check for `visibility = 'public'`. Password-protected pitches (`visibility = 'password'`) are excluded — their funding section silently returns 404. A creator with a private pitch + funding enabled gets no donations.
+**Recommended fix:** Change both endpoints to accept `visibility IN ('public', 'password')`.
+**Status:** Fixed — `donate/route.ts` now uses `.in('visibility', ['public', 'password'])` for share link check.
+
+---
+
+### 72. Grain Overlay at z-index 9999 Covers Modals
+**Area:** UX / Design
+**Severity:** Medium
+**What's wrong:** `body::before` grain texture uses `z-index: 9999`. Any modal or dialog using Tailwind's `z-50` (50) renders below the grain. Modals appear textured when they should be clean.
+**Recommended fix:** Change grain `z-index` from `9999` to `1`. All content-layer elements already stack above `z-index: 1` by default.
+**Status:** Fixed — `z-index: 9999` → `z-index: 1` in `globals.css` `body::before`.
+
+---
+
+### 73. Account Page Shows "Active" Badge for Past-Due Subscriptions
+**Area:** UX
+**Severity:** Low
+**What's wrong:** The `isPaid` condition renders an "Active" badge regardless of `status`. A `past_due` user sees "Pro — Active" alongside the payment failure warning.
+**Recommended fix:** Render "Past Due" badge in error color when `isPastDue` is true, replacing "Active".
+**Status:** Fixed — "Active" badge now hidden when `isPastDue` or `isCancelledButActive`.
+
+---
+
+### 74. `NEXT_PUBLIC_RAZORPAY_KEY_ID` Can Be Undefined in Donate Response
+**Area:** Reliability
+**Severity:** Low
+**What's wrong:** `donate/route.ts` returns `key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID`. If unset, `key_id: undefined` is returned. `new window.Razorpay({ key: undefined })` throws a silent JS error.
+**Recommended fix:** Add a server-side guard — if `!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID`, return 500 before creating the Razorpay order.
+**Status:** Fixed — Added guard in `donate/route.ts`; returns 500 with error message before order creation if key is missing.
+
+---
+
+### 75. Custom Pitch Slug Advertised as Pro Feature but Never Implemented
+**Area:** Functionality / Profitability
+**Severity:** High
+**What's wrong:** Pro and Studio tiers list "Custom slug (pitchcraft.app/p/my-film)" as a feature. No `slug` column exists in the pitches schema, no `/p/[slug]` route exists, and no slug input exists in the editor. The feature is pure marketing text with no implementation.
+**Recommended fix:** Either implement slug routing (`/p/[slug]` page that resolves slug → pitch ID, slug field in DB and editor), or remove it from the pricing page feature list entirely.
+**Status:** Open — Not addressed. Requires product decision: implement or remove from pricing copy.
+
+---
+
+### 76. No Maximum Donation Amount Check
+**Area:** Data Integrity / Payments
+**Severity:** Medium
+**What's wrong:** Donation `amount` is only validated for minimum ($1). Scientific notation like `1e10` parses via `parseFloat` to $100M, passes the `< 100` cents check, and gets sent to Razorpay which rejects it with an API error instead of a clean user-facing message.
+**Recommended fix:** Add server-side check: `if (amount < 100 || amount > 100_000_00) return 400`. Also validate `Number.isInteger(amount)`.
+**Status:** Fixed — Added `amount > 1_000_000` guard (max $10,000) in `donate/route.ts`.
+
+---
+
+### 77. Funding Visibility Check Blocks Password-Protected Pitch Donations
+**Area:** Functionality
+**Severity:** High (duplicate context — see #71)
+**Status:** See #71
+
+---
+
 ## Archive (Fixed / Won't Fix)
 
 *Resolved critiques move here with resolution notes.*

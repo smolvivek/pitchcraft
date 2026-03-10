@@ -28,12 +28,12 @@ export async function POST(
       return NextResponse.json({ error: 'Funding not found' }, { status: 404 })
     }
 
-    // Check share link is active
+    // Check share link is active (public or password-protected pitches both accept donations)
     const { data: shareLink } = await supabase
       .from('share_links')
       .select('id')
       .eq('pitch_id', funding.pitch_id)
-      .eq('visibility', 'public')
+      .in('visibility', ['public', 'password'])
       .is('deleted_at', null)
       .single()
 
@@ -53,9 +53,12 @@ export async function POST(
       message?: string
     }
 
-    // amount in cents (USD). Minimum $1 = 100 cents
+    // amount in cents (USD). Minimum $1 = 100 cents, maximum $10,000 = 1,000,000 cents
     if (!amount || amount < 100) {
       return NextResponse.json({ error: 'Minimum donation is $1' }, { status: 400 })
+    }
+    if (amount > 1_000_000) {
+      return NextResponse.json({ error: 'Maximum donation is $10,000' }, { status: 400 })
     }
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -124,11 +127,17 @@ export async function POST(
 
     const order = await razorpay.orders.create(orderParams)
 
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+    if (!keyId) {
+      console.error('NEXT_PUBLIC_RAZORPAY_KEY_ID is not set')
+      return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
+    }
+
     return NextResponse.json({
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
-      key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key_id: keyId,
       creator_amount: creatorAmount,
       commission_amount: commissionAmount,
       commission_rate: commissionRate,

@@ -85,7 +85,7 @@ export default async function AccountPage() {
                 <span className="font-[var(--font-heading)] text-[24px] font-semibold text-text-primary">
                   {TIER_LABELS[tier] ?? tier}
                 </span>
-                {isPaid && (
+                {isPaid && !isPastDue && !isCancelledButActive && (
                   <span className="ml-[8px] font-[var(--font-mono)] text-[11px] leading-[16px] px-[6px] py-[2px] rounded-[2px] bg-pop/10 text-pop">
                     Active
                   </span>

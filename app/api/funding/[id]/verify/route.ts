@@ -59,6 +59,14 @@ export async function POST(
     const verifiedAmount = typeof order.amount === 'string' ? parseInt(order.amount, 10) : Number(order.amount)
     const verifiedCurrency = order.currency ?? currency ?? 'USD'
 
+    // Cross-check: order must have been created for this funding campaign.
+    // Prevents replaying a payment from campaign A against campaign B.
+    const orderFundingId = (order.notes as Record<string, string> | null)?.funding_id
+    if (orderFundingId && orderFundingId !== fundingId) {
+      console.error(`fundingId mismatch: URL=${fundingId}, order.notes=${orderFundingId}`)
+      return NextResponse.json({ error: 'Payment does not match this campaign' }, { status: 400 })
+    }
+
     const supabase = createAdminClient()
 
     // Prevent duplicate recording
