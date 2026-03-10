@@ -53,6 +53,7 @@ function useScrollProgress() {
 
 export function LandingHero() {
   const [mounted, setMounted] = useState(false);
+  const [activeCard, setActiveCard] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const how = useScrollProgress();
   const ctaSection = useScrollProgress();
@@ -61,6 +62,14 @@ export function LandingHero() {
     const t = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const interval = setInterval(() => {
+      setActiveCard((prev) => (prev + 1) % 3);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, [reducedMotion]);
 
   const rawHow = reducedMotion ? 1 : how.progress;
   const rawCta = reducedMotion ? 1 : ctaSection.progress;
@@ -186,46 +195,64 @@ export function LandingHero() {
           ═══════════════════════════════════════════════ */}
       <section ref={how.ref} className="px-[24px] md:px-[48px] py-[120px] md:py-[160px]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[12px]">
             {[
               {
                 num: "01",
                 title: "Build",
                 desc: "Logline to budget to team. Upload images, generate references with AI, embed video. A complete project in one place.",
                 col: col0,
+                idx: 0,
               },
               {
                 num: "02",
                 title: "Share",
                 desc: "One link. Public, private, or password-protected. Send it to a producer, a client, a collaborator.",
                 col: col1,
+                idx: 1,
               },
               {
                 num: "03",
                 title: "Version",
                 desc: "Your project evolves. Every version persists. See what changed and why.",
                 col: col2,
+                idx: 2,
               },
-            ].map((item) => (
-              <div
-                key={item.num}
-                className="bg-background px-[32px] py-[40px] flex flex-col gap-[24px]"
-                style={{
-                  opacity: reducedMotion ? 1 : item.col,
-                  transform: reducedMotion ? "none" : `translateY(${(1 - item.col) * 24}px)`,
-                }}
-              >
-                <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.1em] text-text-disabled">
-                  {item.num}
-                </span>
-                <h3 className="font-[var(--font-heading)] text-[36px] md:text-[44px] leading-[1.05] tracking-[-0.02em] text-text-primary">
-                  {item.title}
-                </h3>
-                <p className="text-[14px] leading-[24px] text-text-secondary">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
+            ].map((item) => {
+              const isActive = activeCard === item.idx;
+              return (
+                <div
+                  key={item.num}
+                  className="bg-surface rounded-[4px] px-[32px] py-[40px] flex flex-col gap-[32px] border-l-[2px] transition-colors duration-500"
+                  style={{
+                    opacity: reducedMotion ? 1 : item.col,
+                    transform: reducedMotion ? "none" : `translateY(${(1 - item.col) * 24}px)`,
+                    borderLeftColor: isActive ? "#FF6300" : "#262626",
+                  }}
+                >
+                  <div className="flex items-center gap-[8px]">
+                    <span
+                      className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.1em] transition-colors duration-500"
+                      style={{ color: isActive ? "#FF6300" : "#555555" }}
+                    >
+                      {item.num}
+                    </span>
+                    {isActive && !reducedMotion && (
+                      <span
+                        className="w-[4px] h-[4px] rounded-full animate-led-breathe flex-shrink-0"
+                        style={{ background: "#FF6300" }}
+                      />
+                    )}
+                  </div>
+                  <h3 className="font-[var(--font-heading)] text-[36px] md:text-[40px] leading-[1.05] tracking-[-0.02em] text-text-primary">
+                    {item.title}
+                  </h3>
+                  <p className="text-[14px] leading-[24px] text-text-secondary">
+                    {item.desc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
