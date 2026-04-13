@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 
 if (process.env.NODE_ENV === 'production' && !process.env.PITCH_ACCESS_SECRET) {
   throw new Error('PITCH_ACCESS_SECRET must be set in production')
@@ -13,7 +14,10 @@ function verifyAccessCookie(pitchId: string, token: string): boolean {
   const expected = crypto.createHmac('sha256', secret).update(pitchId).digest('hex')
   return token === expected
 }
-import type { Pitch, PitchSection, MediaRecord, BudgetRange, PitchStatus, FlowBeat } from '@/lib/types/pitch'
+import { headers } from 'next/headers'
+import { after } from 'next/server'
+import type { Pitch, PitchSection, MediaRecord, BudgetRange, FlowBeat } from '@/lib/types/pitch'
+import { recordView } from '@/lib/views/record'
 import { OPTIONAL_SECTIONS } from '@/lib/sections'
 import { PitchViewLayout } from '@/components/pitch-view/PitchViewLayout'
 import { PitchViewTopBar } from '@/components/pitch-view/PitchViewTopBar'
@@ -25,6 +29,8 @@ import { PitchViewFooter } from '@/components/pitch-view/PitchViewFooter'
 import { PitchViewFunding } from '@/components/pitch-view/PitchViewFunding'
 import { PitchViewPasswordGate } from '@/components/pitch-view/PitchViewPasswordGate'
 import { PitchViewFlow } from '@/components/pitch-view/PitchViewFlow'
+import { PitchViewCTA } from '@/components/pitch-view/PitchViewCTA'
+import { PitchViewOwnerBar } from '@/components/pitch-view/PitchViewOwnerBar'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -159,16 +165,62 @@ export default async function PitchViewPage({ params }: PageProps) {
 
   // Private links are not viewable without authentication
   if (linkInfo.visibility === 'private') {
+    // Check if the logged-in user is the owner of this pitch
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    let isOwner = false
+    if (user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single()
+      if (profile) {
+        const { data: pitch } = await supabase
+          .from('pitches')
+          .select('user_id')
+          .eq('id', id)
+          .single()
+        isOwner = pitch?.user_id === profile.id
+      }
+    }
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-[24px]">
-        <div className="bg-surface border border-border rounded-[4px] p-[32px] max-w-[400px] w-full text-center">
-          <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[8px]">
+        <div className="bg-surface border border-border rounded-none p-[32px] max-w-[400px] w-full text-center">
+          <h1 className="font-heading text-[24px] font-bold leading-[32px] tracking-[-0.02em] text-text-primary mb-[8px]">
             Private project
           </h1>
-          <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary">
-            This project is not publicly available.
-          </p>
-          <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled mt-[24px]">
+          {isOwner ? (
+            <>
+              <p className="text-[14px] leading-[20px] text-text-secondary mb-[16px]">
+                This project is set to private. Only you can see it.
+              </p>
+              <a
+                href={`/dashboard/pitches/${id}/edit`}
+                className="font-mono text-[13px] leading-[20px] text-pop hover:text-pop-hover transition-colors"
+              >
+                Edit project →
+              </a>
+            </>
+          ) : user ? (
+            <p className="text-[14px] leading-[20px] text-text-secondary">
+              This project is private and not available to view.
+            </p>
+          ) : (
+            <>
+              <p className="text-[14px] leading-[20px] text-text-secondary mb-[16px]">
+                This project is private.
+              </p>
+              <a
+                href={`/login?redirect=/p/${id}`}
+                className="font-mono text-[13px] leading-[20px] text-pop hover:text-pop-hover transition-colors"
+              >
+                Log in to continue →
+              </a>
+            </>
+          )}
+          <p className="font-mono text-[11px] leading-[16px] text-text-disabled mt-[24px]">
             Pitchcraft
           </p>
         </div>
@@ -186,15 +238,15 @@ export default async function PitchViewPage({ params }: PageProps) {
     if (!isVerified) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center px-[24px]">
-          <div className="bg-surface border border-border rounded-[4px] p-[32px] max-w-[400px] w-full">
-            <h1 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[8px]">
+          <div className="bg-surface border border-border rounded-none p-[32px] max-w-[400px] w-full">
+            <h1 className="font-heading text-[24px] font-bold leading-[32px] tracking-[-0.02em] text-text-primary mb-[8px]">
               This project is password-protected
             </h1>
-            <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary mb-[24px]">
+            <p className="text-[14px] leading-[20px] text-text-secondary mb-[24px]">
               Enter the password to view.
             </p>
             <PitchViewPasswordGate pitchId={id} />
-            <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled mt-[24px]">
+            <p className="font-mono text-[11px] leading-[16px] text-text-disabled mt-[24px]">
               Pitchcraft
             </p>
           </div>
@@ -207,8 +259,38 @@ export default async function PitchViewPage({ params }: PageProps) {
   if (!data) notFound()
 
   const { pitch, sections, media } = data
+
+  // ─── Owner check (non-critical — silently skip on error) ───
+  let isOwner = false
+  try {
+    const userSupabase = await createClient()
+    const { data: { user } } = await userSupabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await createAdminClient()
+        .from('users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single()
+      if (profile?.id === pitch.user_id) {
+        isOwner = true
+      }
+    }
+  } catch {
+    // owner bar is non-critical — skip silently
+  }
+  // Record view after response is sent — after() keeps the serverless function alive
+  // until the work completes instead of abandoning the promise on stream close.
+  const reqHeaders = await headers()
+  const ip = reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '0.0.0.0'
+  const country = reqHeaders.get('x-vercel-ip-country') ?? null
+  after(() => recordView({ pitchId: id, ownerUserId: pitch.user_id, ip, country, isOwner }))
+
   const castItems = parseCardItems(pitch.cast_and_characters)
   const teamItems = parseCardItems(pitch.team)
+
+  const directorMember = teamItems.find((t) =>
+    t.role.toLowerCase().includes('director')
+  )
 
   const mediaBySectionMap = new Map<string, typeof media>()
   const mediaById = new Map<string, string>()
@@ -271,31 +353,43 @@ export default async function PitchViewPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(creativeWorkJsonLd).replace(/<\//g, '<\\/') }}
       />
-      <PitchViewTopBar version={pitch.current_version} />
+      <PitchViewTopBar
+        projectName={pitch.project_name}
+        topOffset={isOwner ? 'top-[40px]' : undefined}
+        availableSections={{
+          synopsis: !!pitch.synopsis?.trim(),
+          vision: !!pitch.vision?.trim(),
+          cast: castItems.length > 0 || !!pitch.cast_and_characters?.trim(),
+          team: teamItems.length > 0 || !!pitch.team?.trim(),
+        }}
+      />
 
       <div className="animate-fade-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
         <PitchViewHero
           projectName={pitch.project_name}
           logline={pitch.logline}
           posterUrl={posterMedia?.signedUrl}
+          status={pitch.status}
+          directorName={directorMember?.name}
         />
       </div>
 
       <div className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
         <PitchViewMetadata
           genre={pitch.genre}
-          status={pitch.status as PitchStatus}
           budgetRange={pitch.budget_range as BudgetRange}
         />
       </div>
 
       <div className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
-        <PitchViewSection title="Synopsis" content={pitch.synopsis} />
+        <PitchViewSection id="synopsis" title="Synopsis" index={1} content={pitch.synopsis} />
       </div>
 
       <div className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
         <PitchViewSection
+          id="vision"
           title="Director's Vision"
+          index={2}
           content={pitch.vision}
           images={mediaBySectionMap.get('vision')?.map((m) => ({ url: m.signedUrl, caption: m.caption }))}
         />
@@ -303,25 +397,31 @@ export default async function PitchViewPage({ params }: PageProps) {
 
       <div className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
         {castItems.length > 0 ? (
-          <PitchViewCards title="Cast & Characters" items={castItems} />
+          <PitchViewCards id="cast" title="Cast & Characters" index={3} items={castItems} variant="cast" />
         ) : (
-          <PitchViewSection title="Cast & Characters" content={pitch.cast_and_characters} />
+          <PitchViewSection id="cast" title="Cast & Characters" index={3} content={pitch.cast_and_characters} />
         )}
       </div>
 
       <div className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
         {teamItems.length > 0 ? (
-          <PitchViewCards title="Key Team" items={teamItems} />
+          <PitchViewCards id="team" title="Key Team" index={4} items={teamItems} variant="team" />
         ) : (
-          <PitchViewSection title="Key Team" content={pitch.team} />
+          <PitchViewSection id="team" title="Key Team" index={4} content={pitch.team} />
         )}
       </div>
 
-      {sections.map((section) => {
+      {sections.map((section, optIdx) => {
         const title = section.data.title || sectionLabels.get(section.section_name) || section.section_name
         const sectionMedia = mediaBySectionMap.get(section.section_name)
 
-        // Flow section renders as horizontal-scroll experience
+        const pdfMedia = sectionMedia?.find(
+          (m) => m.file_type?.startsWith('application/pdf') || m.storage_path?.endsWith('.pdf')
+        )
+        const imageMedia = sectionMedia?.filter(
+          (m) => !(m.file_type?.startsWith('application/pdf') || m.storage_path?.endsWith('.pdf'))
+        )
+
         if (section.section_name === 'flow' && section.data.beats && section.data.beats.length > 0) {
           const flowBeats = (section.data.beats as FlowBeat[]).map((beat) => ({
             id: beat.id,
@@ -344,18 +444,30 @@ export default async function PitchViewPage({ params }: PageProps) {
           <div key={section.id} className="animate-fade-up-subtle opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: delay() }}>
             <PitchViewSection
               title={title}
+              index={5 + optIdx}
               content={section.data.content}
-              images={sectionMedia?.map((m) => ({ url: m.signedUrl, caption: m.caption }))}
+              images={imageMedia?.map((m) => ({ url: m.signedUrl, caption: m.caption }))}
               videoUrl={section.data.videoUrl}
+              pdf={pdfMedia ? { url: pdfMedia.signedUrl, label: section.section_name === 'script_documents' ? 'View Screenplay' : 'View PDF' } : null}
             />
           </div>
         )
       })}
 
       <PitchViewFunding pitchId={pitch.id} projectName={pitch.project_name} />
-      <PitchViewFooter />
+      <PitchViewCTA projectName={pitch.project_name} />
+      <PitchViewFooter projectName={pitch.project_name} />
     </PitchViewLayout>
   )
+
+  if (isOwner) {
+    return (
+      <>
+        <PitchViewOwnerBar pitchId={id} pitchName={pitch.project_name} projectType={pitch.project_type} />
+        {pitchContent}
+      </>
+    )
+  }
 
   return pitchContent
 }
