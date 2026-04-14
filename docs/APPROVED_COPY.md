@@ -13,9 +13,8 @@ Built for Creators
 
 ### Headline
 ```
-Present your work.
-Fund your vision.
-Properly.
+The pitch is
+the first frame.
 ```
 
 ### Hero subtext
