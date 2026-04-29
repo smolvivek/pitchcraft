@@ -422,10 +422,10 @@ Creators remain the priority. All features serve creator intent first.
 - No loud UI
 - No novelty for novelty's sake
 - Animations must be intentional and calm
-- Light mode only (MVP)
-- One strong accent color (owned, not copied)
+- Dark canvas only (MVP) — content is the light source
+- One restrained pop color (white on dark)
 - Grid-based, consistent spacing
-- Typography: 3 fonts (heading, body, metadata monospace)
+- Typography: 3 fonts (Newsreader headings, Inter body, JetBrains Mono metadata)
 - Clarity over cleverness
 
 ---
@@ -475,8 +475,8 @@ Trust is a core feature.
 - One-link pitch with version control
 - Share links (public/private/password)
 - Support this project (funding integration via Stripe/Patreon)
-- Light mode only
-- Dieter Rams + Teenage Engineering aesthetic
+- Dark canvas only — A24 cinematic + editorial print aesthetic
+- Newsreader / Inter / JetBrains Mono — three fonts, no exceptions
 
 **Out of scope (Phase 1):**
 - Feedback system
@@ -492,7 +492,7 @@ Trust is a core feature.
 - Anchored feedback system
 - Writing tool integration
 - Collaboration features
-- Dark mode
+- Light mode (if there's clear creator demand)
 - Creator networking (light)
 - Advanced features (agents, automation, integrations)
 

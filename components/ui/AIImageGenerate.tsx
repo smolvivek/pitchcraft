@@ -101,7 +101,7 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
           inline-flex items-center gap-[6px]
           px-[10px] py-[5px]
           text-[12px] leading-[16px] text-text-secondary
-          border border-border rounded-[4px]
+          border border-border rounded-none
           hover:bg-surface hover:text-text-primary
           transition-colors duration-[200ms]
         "
@@ -117,10 +117,10 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
   }
 
   return (
-    <div className="border border-border rounded-[4px] bg-surface p-[16px]">
+    <div className="border border-border rounded-none bg-surface p-[16px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-[12px]">
-        <span className="font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">
+        <span className="font-mono text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">
           AI Image Generate
         </span>
         <button
@@ -141,7 +141,7 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
             placeholder="Describe the image you need — style, mood, subject"
             className="
               w-full px-[12px] py-[10px] min-h-[72px]
-              bg-surface/50 border border-border rounded-[4px]
+              bg-surface/50 border border-border rounded-none
               text-[13px] leading-[20px] text-text-primary
               font-[var(--font-body)]
               placeholder:text-text-disabled
@@ -175,10 +175,10 @@ export function AIImageGenerate({ fieldName, onAccept, maxReached, context }: AI
       {/* Preview */}
       {previewUrl && (
         <div className="mb-[12px]">
-          <div className="font-[var(--font-mono)] text-[10px] leading-[14px] uppercase tracking-[0.08em] text-text-disabled mb-[6px]">
+          <div className="font-mono text-[10px] leading-[14px] uppercase tracking-[0.08em] text-text-disabled mb-[6px]">
             AI Generated
           </div>
-          <div className="w-full max-w-[300px] aspect-square rounded-[4px] overflow-hidden border border-[#D4D6C8] bg-surface">
+          <div className="w-full max-w-[300px] aspect-square rounded-none overflow-hidden border border-[#D4D6C8] bg-surface">
             <img
               src={previewUrl}
               alt="AI generated reference"

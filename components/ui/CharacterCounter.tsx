@@ -15,7 +15,7 @@ export function CharacterCounter({ current, max, type = 'characters' }: Characte
     <div className="flex justify-end mt-[8px]">
       <span
         className={`
-          font-[var(--font-mono)] text-[13px] leading-[20px]
+          font-mono text-[13px] leading-[20px]
           ${isOverLimit ? 'text-error' : isNearLimit ? 'text-link' : 'text-text-secondary'}
         `}
       >

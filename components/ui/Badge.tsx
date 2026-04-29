@@ -30,7 +30,7 @@ function Badge({ status }: BadgeProps) {
           aria-hidden="true"
         />
       </span>
-      <span className="font-[var(--font-mono)] text-[12px] leading-[16px] tracking-[0.02em] text-text-secondary uppercase">
+      <span className="font-mono text-[11px] leading-[16px] tracking-[0.12em] text-text-secondary uppercase">
         {config.label}
       </span>
     </span>

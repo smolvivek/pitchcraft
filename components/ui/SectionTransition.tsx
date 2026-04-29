@@ -74,7 +74,7 @@ export function SectionTransition({
               : "opacity 300ms ease-out",
         }}
       >
-        <span className="font-[var(--font-mono)] text-[72px] leading-[1] font-medium text-text-disabled/40 select-none">
+        <span className="font-mono text-[72px] leading-[1] font-medium text-text-disabled/40 select-none">
           {displayedNumber}
         </span>
       </div>

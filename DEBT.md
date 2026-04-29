@@ -165,7 +165,17 @@ export const SECTION_LIMITS = { free: 0, pro: 3, studio: 3 }
 
 | ID | Description | Cleared in |
 |----|-------------|------------|
-| — | — | — |
+| D-01 | Tier check duplicated in 5 places | Extracted to `lib/subscriptions/getTier.ts` |
+| D-02 | Profile lookup duplicated in 8+ routes | Extracted to `lib/auth/getAuthProfile.ts` |
+| D-04 | `PitchViewPasswordWrapper.tsx` dead code | Deleted |
+| D-06 | Editor signed URLs expired after 1 hour | Already fixed (604800) — cleared from ledger |
+| D-08 | `CUSTOM_SECTION_KEYS` split from tier-limit logic | Added `CUSTOM_SECTION_LIMITS` to `lib/sections.ts` |
+| D-09 | No auth middleware | Already handled by `proxy.ts` — cleared from ledger |
+| D-11 | Donation total incremented client-side | Re-fetches from `/api/funding/public/[id]` after verify |
+| D-03 | `pitch_sections` insert in create page was client-side | Moved to `POST /api/pitches` server-side; sections in request body |
+| D-05 | Edit page tier flash for Pro users | Tier initialized to `null`, Sidebar receives `?? 'pro'` while loading |
+| D-07 | No DB transactions on multi-table writes | Rollback (delete pitch) added if sections insert fails, in both create and duplicate routes |
+| D-10 | Version history had no restore UI | Added Restore button per version with inline confirm, backed by `GET /api/pitches/[id]/versions/[versionId]` |
 
 ---
 
@@ -176,4 +186,4 @@ Each quarter, tally:
 - Critical = 4, High = 3, Medium = 2, Low = 1
 - If score > 30: dedicate one sprint to debt clearing before next feature
 
-**Current score:** D-01(3) + D-02(2) + D-03(2) + D-04(1) + D-05(1) + D-06(2) + D-07(2) + D-08(1) + D-09(1) + D-10(2) + D-11(1) = **18**
+**Current score:** 0 — all active debt cleared

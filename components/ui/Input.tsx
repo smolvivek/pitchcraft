@@ -10,7 +10,7 @@ import {
 
 /* ─── Shared label style: mono uppercase category marker ─── */
 const labelClass =
-  "font-[var(--font-mono)] text-[10px] leading-[16px] tracking-[0.12em] uppercase text-text-disabled";
+  "font-mono text-[10px] leading-[16px] tracking-[0.12em] uppercase text-text-disabled";
 
 /* ── Text Input ── */
 
@@ -18,11 +18,15 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helpText?: string;
+  variant?: "box" | "underline";
 }
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
-  ({ label, error, helpText, id, className = "", ...props }, ref) => {
+  ({ label, error, helpText, id, variant = "box", className = "", ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+    const variantClass = variant === "underline"
+      ? "px-0 py-[10px] bg-transparent border-b"
+      : "px-[16px] py-[12px] bg-surface border";
     return (
       <div className="flex flex-col gap-[8px]">
         {label && (
@@ -35,15 +39,15 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           ref={ref}
           id={inputId}
           className={`
-            w-full px-0 py-[10px]
-            bg-transparent border-b rounded-none
+            w-full rounded-none
             text-[16px] leading-[28px] text-text-primary
             font-[var(--font-body)]
             placeholder:text-text-disabled
             transition-colors duration-[200ms] ease-out
             focus:outline-none
             disabled:text-text-disabled disabled:border-border
-            ${error ? "border-error" : "border-border focus:border-pop"}
+            ${variantClass}
+            ${error ? "border-pop" : "border-border focus:border-pop"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -53,11 +57,11 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           {...props}
         />
         {error && (
-          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-error" role="alert">
+          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-pop" role="alert">
             {error}
           </p>
         )}
-        {helpText && !error && (
+        {helpText && (
           <p id={`${inputId}-help`} className="text-[13px] leading-[18px] text-text-secondary">
             {helpText}
           </p>
@@ -75,11 +79,15 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helpText?: string;
+  variant?: "box" | "underline";
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helpText, id, className = "", ...props }, ref) => {
+  ({ label, error, helpText, id, variant = "box", className = "", ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+    const variantClass = variant === "underline"
+      ? "px-0 py-[10px] bg-transparent border-b"
+      : "px-[16px] py-[12px] bg-surface border";
     return (
       <div className="flex flex-col gap-[8px]">
         {label && (
@@ -92,8 +100,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           className={`
-            w-full px-0 py-[10px] min-h-[180px]
-            bg-transparent border-b rounded-none
+            w-full min-h-[180px] rounded-none
             text-[16px] leading-[28px] text-text-primary
             font-[var(--font-body)]
             placeholder:text-text-disabled
@@ -101,7 +108,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             transition-colors duration-[200ms] ease-out
             focus:outline-none
             disabled:text-text-disabled disabled:border-border
-            ${error ? "border-error" : "border-border focus:border-pop"}
+            ${variantClass}
+            ${error ? "border-pop" : "border-border focus:border-pop"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -111,11 +119,11 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && (
-          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-error" role="alert">
+          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-pop" role="alert">
             {error}
           </p>
         )}
-        {helpText && !error && (
+        {helpText && (
           <p id={`${inputId}-help`} className="text-[13px] leading-[18px] text-text-secondary">
             {helpText}
           </p>
@@ -162,13 +170,13 @@ const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
             text-[16px] leading-[24px] text-text-primary
             font-[var(--font-body)]
             appearance-none
-            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23FF6300%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
+            bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1%201.5L6%206.5L11%201.5%22%20stroke%3D%22%23999999%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')]
             bg-[position:right_0_center]
             bg-no-repeat
             transition-colors duration-[200ms] ease-out
             focus:outline-none
             disabled:text-text-disabled disabled:border-border
-            ${error ? "border-error" : "border-border focus:border-pop"}
+            ${error ? "border-pop" : "border-border focus:border-pop"}
             ${className}
           `}
           aria-invalid={error ? "true" : undefined}
@@ -189,11 +197,11 @@ const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
           ))}
         </select>
         {error && (
-          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-error" role="alert">
+          <p id={`${inputId}-error`} className="text-[13px] leading-[18px] text-pop" role="alert">
             {error}
           </p>
         )}
-        {helpText && !error && (
+        {helpText && (
           <p id={`${inputId}-help`} className="text-[13px] leading-[18px] text-text-secondary">
             {helpText}
           </p>

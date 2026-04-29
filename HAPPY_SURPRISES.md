@@ -75,7 +75,7 @@ Claude understands the product deeply and may spot opportunities the creator has
 **Solution:** Track anonymous view count + time spent on pitch page. Free tier = "X views", paid tier = detailed analytics (when, how long, which sections).
 **Impact:** Gives creators visibility into engagement. Natural paid tier feature (basic free, detailed paid). Respects privacy (no personal data, just aggregate metrics).
 **Implementation:** Simple page view tracking (server-side), duration calculation, dashboard display.
-**Status:** Proposed
+**Status:** Shipped — view tracking restricted to private/password-protected pitches per CONSTRAINTS.md §4. Studio tier sees 14-day chart + unique visitors in edit page analytics panel.
 
 ---
 
@@ -172,6 +172,27 @@ Claude understands the product deeply and may spot opportunities the creator has
 ## Archive (Rejected Ideas)
 
 *Rejected ideas are moved here with rationale, so we don't revisit them.*
+
+---
+
+---
+
+### HS-NEW-1: India Pricing Tier
+
+**What:** ₹499/month Pro (vs $12 ≈ ₹1,000). ₹1,199/month Studio (vs $29 ≈ ₹2,400). Show INR pricing when user locale is India.
+**Why:** The biggest single conversion unlock for the Indian market. At current global pricing, Pro costs ₹1,000/month — double what a reasonable INR-native price would be. More impactful than doubling ad spend.
+**How:** DodoPayments supports INR. Create INR-denominated price IDs. Detect locale (Accept-Language header or IP geolocation) on the pricing page. Show INR pricing to IN users, USD to everyone else.
+**Revenue impact:** Estimated 3–5x conversion rate improvement in India at ₹499 vs ₹1,000.
+**Status:** Proposed
+
+---
+
+### HS-NEW-2: Pitch Completion Indicator in Edit Header
+
+**What:** "4 of 9 core sections complete" — a non-evaluative counter in the edit page header. Clicking scrolls to the first unfilled required section.
+**Why:** Filmmakers working across multiple sessions lose track of what's missing. An unfilled synopsis or vision section can make a pitch look incomplete to investors — but the creator doesn't know until they view the public link. This orients them without judgment.
+**How:** Count filled required sections from edit page state (check for non-empty content). Display in the header near the save indicator. Clicking the counter uses `scrollIntoView` to jump to the first unfilled section.
+**Status:** Proposed
 
 ---
 

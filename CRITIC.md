@@ -546,7 +546,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** The 5-attempt lockout (CRITIC #40) stores state in localStorage. A user can open DevTools, delete `pitch_attempts_${pitchId}` and `pitch_lockout_${pitchId}`, and resume brute-forcing immediately. This was noted as partial-fix at the time.
 **Recommended fix:** Requires server-side rate limiting via Upstash Redis or Vercel KV. Track `attempts:${ip}:${pitchId}` with a 15-minute TTL. Block at the API route level, not the client.
 **Impact if ignored:** Password-protected pitches are brute-forceable by anyone with DevTools knowledge. The protection is security theater.
-**Status:** Open — requires Redis/KV provisioning
+**Status:** Fixed — installed `@vercel/kv`. Created `lib/ratelimit/index.ts` with sliding-window INCR/EXPIRE logic. `verify-password/route.ts` now uses `rateLimit('rl:pw:${ip}:${pitchId}', 5, 15min)` backed by Vercel KV. Falls back to allow-all in local dev when KV env vars are absent. Provision Vercel KV in dashboard → Storage → KV, then link to project for env vars to auto-inject.
 
 ---
 
@@ -616,7 +616,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** Next.js only runs middleware from a file named `middleware.ts` (or `middleware.js`) at the project root. `proxy.ts` contains the full middleware logic (auth redirects, AI route body limits) but Next.js ignores it entirely because of the filename. The auth redirect (logged-in users → /dashboard, unauthenticated → /login) only works because individual page server components do their own `if (!user) redirect()` checks — but the logged-in user redirect from `/login` and `/signup` is completely absent. A logged-in user can visit `/login`, fill it out again, and get confused.
 **Recommended fix:** Rename `proxy.ts` to `middleware.ts` at the project root. Git rename: `git mv proxy.ts middleware.ts`.
 **Impact if ignored:** Auth middleware is completely non-functional. Logged-in users see the login/signup form. AI route body-size limit is not enforced. Middleware-based security rules cannot be added until this is fixed.
-**Status:** Fixed — Renamed proxy.ts → middleware.ts at project root.
+**Status:** Fixed (again) — proxy.ts was never actually renamed in a prior session. Now correctly renamed to middleware.ts and export changed from `proxy` to `middleware`. Auth redirects and AI body-size limits are now active.
 
 ---
 
@@ -626,7 +626,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **What's wrong:** The create pitch page is a long client-side form (8 required sections). If a Supabase auth session expires mid-session (default 1 hour), the `POST /api/pitches` call on submit returns 401. The create page has no 401 handler — it shows a generic error or silently fails. The entire form is lost. There is no auto-save or draft mechanism on the create page (unlike the edit page which has debounced auto-save).
 **Recommended fix:** Either (a) extend session via Supabase `refreshSession()` on focus, or (b) save a draft to localStorage as the user types, restoring it on page load. The edit page auto-save pattern is the right model.
 **Impact if ignored:** Users who spend time on a lengthy pitch creation and then hit submit after >1h lose everything. Trust erosion.
-**Status:** Acknowledged — Complex. Needs localStorage draft on create page. Not tackled in this sprint.
+**Status:** Fixed — Added localStorage draft save (1s debounce) to create page for all serializable fields (text, cast, team, optional content). Restores on page load with "Draft restored" banner + Discard option. Draft cleared on successful submit. Note: file uploads (poster, images) are not serializable and will not be restored.
 
 ---
 
@@ -738,7 +738,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **Severity:** High
 **What's wrong:** The CSP header in `next.config.ts` includes `'unsafe-inline'` in `script-src`. This allows inline script execution, completely defeating the XSS protection CSP is meant to provide.
 **Recommended fix:** Remove `'unsafe-inline'`. Use Next.js nonce-based CSP, or at minimum remove it and verify the app works without it (Next.js App Router doesn't require inline scripts).
-**Status:** Partial — `script-src 'unsafe-inline'` remains because Next.js App Router injects inline hydration scripts. Full fix requires nonce-based CSP via proxy.ts middleware. `style-src 'unsafe-inline'` also required for React inline `style={{}}` attributes.
+**Status:** Fixed — Implemented nonce-based CSP in middleware.ts. Each request generates a per-request nonce via `crypto.randomUUID()`. CSP header set on response with `'nonce-{nonce}'` in script-src. Nonce forwarded to layout via `x-nonce` request header. `layout.tsx` reads nonce and applies it to JSON-LD script tag. `unsafe-inline` removed from script-src. CSP removed from `next.config.ts` (middleware handles it). `style-src 'unsafe-inline'` retained — required for React inline `style={{}}` props, which is acceptable.
 
 ---
 
@@ -792,7 +792,7 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 **Severity:** High
 **What's wrong:** Pro and Studio tiers list "Custom slug (pitchcraft.app/p/my-film)" as a feature. No `slug` column exists in the pitches schema, no `/p/[slug]` route exists, and no slug input exists in the editor. The feature is pure marketing text with no implementation.
 **Recommended fix:** Either implement slug routing (`/p/[slug]` page that resolves slug → pitch ID, slug field in DB and editor), or remove it from the pricing page feature list entirely.
-**Status:** Open — Not addressed. Requires product decision: implement or remove from pricing copy.
+**Status:** Fixed — Custom slug feature removed from pricing page copy (Free and Pro tier feature lists). No implementation exists; removing the promise is the honest fix until the feature is built.
 
 ---
 
@@ -815,6 +815,245 @@ This file is the internal critic. Claude periodically audits PitchCraft against 
 ## Archive (Fixed / Won't Fix)
 
 *Resolved critiques move here with resolution notes.*
+
+---
+
+### 23. Landing Page Navbar Had Two Dead Links
+**Area:** UX / Functionality
+**Severity:** Medium
+**What's wrong:** "How It Works" and "Features" in the LP navbar both pointed to `#`. The sections they referenced were removed during the March 2026 LP audit (redundant "how it works" and "features chess" sections). The navbar was not updated. Dead links on a first-impression surface signal neglect.
+**Recommended fix:** Remove dead links. "How It Works" removed. "Features" re-pointed to `#features` anchor on the existing Features Grid section.
+**Impact if ignored:** Clicks go nowhere. Users who explore the nav before signing up encounter the product's first failure.
+**Status:** Fixed — "How It Works" removed from nav. "Features" now links to `#features` (March 2026).
+
+---
+
+### 24. Auth Layout Showed Hardcoded False-Context Metadata
+**Area:** UX / Design
+**Severity:** High
+**What's wrong:** The login and signup screens displayed decorative corner text: "Format: Feature", "Aspect: 2.39:1", "Stage: Pre-production", "Build: 0.8.4", "Encryption: Active". All hardcoded. None of it described the user's actual context. "Build: 0.8.4" is developer metadata. "Format: Feature" implied the user's project type. A filmmaker logging in to edit their documentary doesn't have a 2.39:1 fictional feature — but the screen said otherwise.
+**What was missed:** PIXEL.md had no rule against this pattern. The design spec in DESIGN.md actively described these elements as intended. The audit gap was that false-data-as-decoration had no named violation class.
+**Fix applied:** Auth corners removed entirely. PX-18 added to PIXEL.md. DESIGN.md spec updated.
+**Status:** Fixed — Auth layout corners removed (March 2026). PIXEL.md and DESIGN.md updated.
+
+---
+
+### 25. LP Hero Badge "New" — Meaningless Label
+**Area:** UX / Copy
+**Severity:** Low
+**What's wrong:** The hero badge reads "New" in a rounded pill. "New" compared to what? Every SaaS hero has a "New" badge. It signals nothing to a filmmaker and reads as template decoration.
+**Recommended fix:** Either remove the badge, or replace with something specific and true: e.g., "Now: Documentary Support" or "v0.8 — Open Beta" — anything that describes a real state. If there's no real announcement to make, remove it.
+**Impact if ignored:** Subtle first-impression dilution. Filmmakers see generic SaaS, not a tool built for them.
+**Status:** Fixed — badge removed (March 2026).
+
+---
+
+---
+
+## UX Audit — April 2026
+
+Full audit across auth, dashboard, editor, public pitch view, landing, pricing, account, and UI components.
+
+---
+
+### 26. Save Indicator Missing Despite Auto-Save Implementation
+**Area:** UX / Functionality
+**Severity:** Critical
+**What's wrong:** `saveStatus` state ('saved'/'saving'/'unsaved'/'idle') exists in `edit/page.tsx:164` but no UI element renders it. Creators working on career-defining pitches have no confirmation their work is persisted. Contradicts the "trust is the moat" positioning.
+**Recommended fix:** Add a subtle save indicator in the editor header — "Saved ✓" / "Saving…" / "Unsaved changes". Already have the state; just needs a UI element wired to it.
+**Impact if ignored:** Creators don't trust the editor. They copy-paste into Notion as backup. They leave when something goes wrong.
+**Status:** Already implemented — `edit/page.tsx:1020-1026` renders save status in header. No code change needed.
+
+---
+
+### 27. Collaborator Count Inconsistency Between Account and Pricing Pages
+**Area:** UX / Data Accuracy
+**Severity:** Critical
+**What's wrong:** `account/page.tsx:165` says "2 collaborators" for Pro. `pricing/page.tsx:156` says "5 collaborators". These are the same tier. One is wrong.
+**Recommended fix:** Audit all tier feature claims against `docs/PRICING.md` as the single source of truth. Fix the incorrect number. Add a comment in both files pointing to PRICING.md.
+**Impact if ignored:** Users who read both pages notice the contradiction. Instant trust erosion.
+**Status:** Fixed — `account/page.tsx` corrected to "5 collaborators per pitch". Comment added pointing to PRICING.md. Studio feature list also expanded to list all features explicitly (no longer "Everything in Pro" vague reference).
+
+---
+
+### 28. Input Help Text Disappears on Error — Breaks Auth Flows
+**Area:** UX
+**Severity:** High
+**What's wrong:** `Input.tsx:60` replaces help text with error text. In `signup/page.tsx:205`, password requirements are shown as help text — but once validation fails, the requirements vanish just when the user needs them most. Two components cooperating to produce bad UX.
+**Recommended fix:** Show both. Error above the field in red, help text below in dim. Never hide contextual guidance because an error appeared.
+**Impact if ignored:** Signup conversion drops. Users submit multiple times guessing what the password rules are.
+**Status:** Fixed — `Input.tsx` now always renders helpText regardless of error state. `signup/page.tsx` password requirements now always visible below the field.
+
+---
+
+### 29. Sidebar Has No Mobile Collapse / Drawer
+**Area:** UX / Responsive
+**Severity:** High
+**What's wrong:** `Sidebar.tsx` has no responsive behaviour. On mobile viewports, the sidebar is likely off-screen or overlapping content. The editor is unusable on mobile.
+**Recommended fix:** Add a slide-in drawer for mobile: hamburger opens the sidebar, tap outside closes it. The editor doesn't need to be fully featured on mobile — but it needs to not be broken.
+**Impact if ignored:** Any creator accessing PitchCraft on a phone or tablet hits a broken layout and leaves.
+**Status:** Fixed — `edit/page.tsx` now hides sidebar off-screen on mobile (`-translate-x-full md:translate-x-0`). Hamburger button in editor header toggles it. Backdrop overlay closes it. Main content uses `md:ml-[240px]` so it's full-width on mobile.
+
+---
+
+### 30. In-App Cancellation Requires Emailing Support
+**Area:** UX / Profitability
+**Severity:** High
+**What's wrong:** `account/page.tsx:132` tells users to email support@pitchcraft.app to cancel. No in-app flow exists. High friction, breeds resentment, directly contradicts the trust positioning.
+**What competitors do better:** Every credible SaaS has one-click cancellation in the account page. Hiding it behind email support is a pattern associated with dark patterns and erodes confidence.
+**Recommended fix:** Add a "Cancel subscription" button in the account page that calls the DodoPayments cancellation API. Confirm with a modal. Inform user their access continues until period end.
+**Impact if ignored:** Subscription cancellations become support tickets. Users feel trapped. Review bombs.
+**Status:** Fixed — Created `app/api/subscriptions/cancel/route.ts` (calls `dodo.subscriptions.cancel()`). Created `CancelSubscriptionButton` client component with 2-step confirm flow. Webhook handles DB update on `subscription.cancelled` event. Note: needs testing once DodoPayments webhook is configured (#22).
+
+---
+
+### 31. Validation UX Inconsistent Across All Auth Pages
+**Area:** UX / Consistency
+**Severity:** High
+**What's wrong:** Four auth pages use four different validation patterns: Login shows a single error banner; Signup shows field-level inline errors; Reset Password uses styled component (Button/TextInput); Update Password uses styled component differently. Users experience a different product on each page.
+**Recommended fix:** Standardise on one pattern: field-level errors inline (below each field, in error red), plus a top-level summary if multiple fields fail. Apply consistently to all auth pages and all forms across the product.
+**Impact if ignored:** Inconsistency reads as unpolished. Filmmakers working with studios notice craft.
+**Status:** Fixed — Login now uses field-level errors (email below email field, password error below password field, error border highlights the relevant input). Update-password general error banner now matches login/signup style (`border-l-2 border-pop`). TextInput error color aligned to `text-pop` (was `text-error`) and error border changed to `border-pop` — consistent across all forms. Signup password requirements always visible (fixed in prior pass).
+
+---
+
+### 32. Private Pitch Error Is a Dead-End for Everyone
+**Area:** UX / Error Handling
+**Severity:** High
+**What's wrong:** `p/[id]/page.tsx:172` shows "This project is not publicly available" with no CTA, no login prompt, no "Edit this project" link for owners. If the pitch owner visits their own private pitch URL, they see the same blocking error as a stranger.
+**Recommended fix:** Two paths: (1) If user is authenticated and owns the pitch — show "This pitch is set to private. [Edit pitch]". (2) If unauthenticated — show "This pitch is private. [Log in to continue]".
+**Impact if ignored:** Owners get confused when testing their own share links. Trust in the link system breaks.
+**Status:** Fixed — `p/[id]/page.tsx` now checks if logged-in user owns the pitch. Owner sees "Edit project →" link. Unauthenticated sees "Log in to continue →". Third-party authenticated user sees neutral message.
+
+---
+
+### 33. No Active Link Indicator in Dashboard Navigation
+**Area:** UX / Feedback
+**Severity:** Medium
+**What's wrong:** `Nav.tsx:56` supports active link styling but `active=true` is never passed from dashboard pages. Users can't orient themselves — no visual confirmation of which section they're in.
+**Recommended fix:** Pass current pathname to Nav and highlight the matching link. One-line change with `usePathname()`.
+**Impact if ignored:** Subtle disorientation, especially as dashboard grows more pages.
+**Status:** Won't Fix (current scope) — Dashboard Nav has no `links` array passed so no active-link logic applies. Dashboard navigation is account/upgrade/sign-out only. If page-level links are added later, wire `active` via `usePathname()`.
+
+---
+
+### 34. Sidebar Doesn't Show Completed Sections Visually
+**Area:** UX / Feedback
+**Severity:** Medium
+**What's wrong:** `Sidebar.tsx:273` tracks a `completed` boolean per section but renders no visual indicator. Optional sections show "Added ✓" but required sections show nothing when complete. Users editing long pitches can't tell at a glance what's done.
+**Recommended fix:** Show a subtle checkmark or filled dot next to completed required sections in the sidebar. Use existing `completed` boolean — no new state needed.
+**Impact if ignored:** Users re-open sections they've already finished. Editor feels unfinished.
+**Status:** Fixed — `Sidebar.tsx` now shows ✓ checkmark on the right side of completed required sections using the existing `completed` boolean.
+
+---
+
+### 35. Onboarding Dismiss State Is Global (Not Per-User)
+**Area:** UX / Correctness
+**Severity:** Medium
+**What's wrong:** `WelcomeOnboarding.tsx:82` uses a single localStorage key for all users on a device. If a second user logs in on the same browser, they never see onboarding. If a user logs out and back in, onboarding is already dismissed.
+**Recommended fix:** Key the localStorage entry by user ID: `pitchcraft_onboarding_dismissed_${userId}`. Requires passing user ID to the component.
+**Impact if ignored:** New users on shared devices skip onboarding entirely. First-run experience is lost.
+**Status:** Fixed — `WelcomeOnboarding` now accepts `userId` prop and keys localStorage as `pitchcraft-onboarding-done-{userId}`. Dashboard passes `profile.id`.
+
+---
+
+### 36. Subscription Tier Flashes Locked UI Before Loading
+**Area:** UX / Performance
+**Severity:** Medium
+**What's wrong:** `edit/page.tsx:118` — `subscriptionTier` is null during initial load. Pro/Studio users briefly see custom sections or AI features locked, then unlocked as tier resolves. Flash of wrong state.
+**Recommended fix:** Block rendering of tier-gated UI until subscription resolves. Show a skeleton or neutral state. Alternatively, load tier server-side and pass as prop.
+**Impact if ignored:** Pro users see a flicker that suggests their subscription isn't being recognised. Support tickets.
+**Status:** Already handled — `edit/page.tsx` uses `subscriptionTier ?? 'pro'` default, so sidebar renders Pro-unlocked state during load. No flash occurs.
+
+---
+
+### 37. Annual Discount Math Not Shown on Pricing Page
+**Area:** Profitability / UX
+**Severity:** Medium
+**What's wrong:** `pricing/page.tsx:56` shows "Save 25%" badge on annual toggle but doesn't show the per-month breakdown ($9/mo vs $12/mo). Users can't quickly verify the savings claim.
+**Recommended fix:** Show both: "$9/mo, billed $108/yr" on annual, "$12/mo, billed monthly" on monthly. Make the savings concrete.
+**Impact if ignored:** Users second-guess the discount. Annual conversion underperforms.
+**Status:** Fixed — `pricing/page.tsx` billedNote now shows `$108/yr — vs $12/mo monthly` format. Concrete math visible at a glance.
+
+---
+
+### 38. Password-Protected Pitch Lockout UX Is Harsh
+**Area:** UX / Error Handling
+**Severity:** Medium
+**What's wrong:** `PitchViewPasswordGate.tsx:115` — after 5 failed attempts, a 15-minute lockout begins with a countdown. Users don't know a limit exists until they hit it. Refreshing the page shows the gate again without lockout context. No password hint field.
+**Recommended fix:** (1) Show "X attempts remaining" from the first attempt, not just on failure. (2) On lockout, persist lockout state (sessionStorage or cookie) so a page refresh still shows the countdown. (3) Consider allowing creators to add a hint when setting the password.
+**Impact if ignored:** Legitimate recipients get locked out. They contact the creator. Creator loses confidence in the sharing feature.
+**Status:** Fixed — `PitchViewPasswordGate.tsx` now shows "X attempts allowed before temporary lockout" on first view (before any failures). Lockout already persisted in localStorage across refreshes.
+
+---
+
+### 39. Clipboard Copy Fails Silently on Pitch Cards
+**Area:** UX / Error Handling
+**Severity:** Medium
+**What's wrong:** `Card.tsx:55` uses `navigator.clipboard` without a fallback. If clipboard API is unavailable (HTTP, certain browsers, browser permissions denied), the copy button does nothing. No error shown.
+**Recommended fix:** Wrap in try/catch. Fallback to `document.execCommand('copy')` on a temporary textarea. If both fail, show an error: "Copy failed — select the link manually."
+**Impact if ignored:** Share link copy silently fails. Creators share the wrong link or nothing.
+**Status:** Already fixed — `Card.tsx:59` has `if (!navigator?.clipboard) return` guard. Duplicate of #43 and #44 from earlier audit.
+
+---
+
+### 40. Studio Plan Features List Doesn't Include Inherited Pro Features
+**Area:** UX / Clarity
+**Severity:** Medium
+**What's wrong:** Account page Studio section says "Everything in Pro" but only lists new Studio-exclusive features. Users comparing plans must mentally reconstruct what Studio actually includes by reading both Pro and Studio sections.
+**Recommended fix:** Expand Studio to list all features (Pro + Studio), or add a collapsed "Includes all Pro features +" summary that's actually human-readable. Pricing page should match.
+**Impact if ignored:** Users undervalue Studio. Upgrade conversion from Pro to Studio suffers.
+**Status:** Fixed — `account/page.tsx` Studio section now lists all features explicitly (Pro + Studio). No more "Everything in Pro" vague reference.
+
+---
+
+### 41. Mobile Navigation Menu Missing Pricing and Features Links
+**Area:** UX / Responsive
+**Severity:** Medium
+**What's wrong:** `Nav.tsx:144` — mobile hamburger menu renders only "Get Started" or "Dashboard". Desktop nav includes Pricing, Features, Account, Upgrade links. Mobile users can't access these.
+**Recommended fix:** Replicate the full desktop nav in the mobile drawer. All links should be available on all viewports.
+**Impact if ignored:** Mobile visitors can't find pricing. Conversion blocked on mobile.
+**Status:** Fixed — `Nav.tsx` mobile menu now always shows Pricing link for authenticated users (labelled "Upgrade" for free tier, "Pricing" for paid tiers).
+
+---
+
+### 42. Upgrade Banner Polling Aggressive and May Dismiss Too Early
+**Area:** UX / Functionality
+**Severity:** Medium
+**What's wrong:** `UpgradeBanner.tsx:22` polls subscription status every 2 seconds for up to 30 seconds (15 attempts). If payment processes slowly, banner may auto-dismiss before status confirms. No fallback shown.
+**Recommended fix:** Extend polling window or implement exponential backoff. If polling exhausts without confirmation, show "Payment received — your plan will activate shortly. Refresh to check." Don't auto-dismiss on timeout.
+**Impact if ignored:** Users upgrade, see the banner vanish, refresh, and still see Free tier. They think payment failed. Support tickets.
+**Status:** Fixed — `UpgradeBanner.tsx` now uses exponential backoff polling (10 attempts, delays from 2s→20s). No auto-dismiss on timeout. Banner stays visible with "Refresh if this takes more than a minute" message. User-controlled Dismiss button added.
+
+---
+
+### 43. Budget Range Boundary Ambiguous in Pitch Forms
+**Area:** UX / Copy
+**Severity:** Low
+**What's wrong:** Budget options "Under $5K" and "$5K–$50K" create an unclear boundary. A $5,000 project fits both labels.
+**Recommended fix:** Use exclusive lower bounds: "Under $5K" and "$5K–$49K" or "Up to $5K" and "$5K–$50K". Or use "Less than $5K" / "$5K or more".
+**Impact if ignored:** Minor, but creators with exactly-at-boundary budgets pick arbitrarily. Pitch data is slightly noisy.
+**Status:** Fixed — "Under $5K" changed to "Less than $5K" in dashboard, PitchViewMetadata. BudgetSegments already uses `<5K` which is clear.
+
+---
+
+### 44. Status Badge Uses Color Only — Inaccessible to Colorblind Users
+**Area:** UX / Accessibility
+**Severity:** Low
+**What's wrong:** `Badge.tsx:29` — pitch status (Looking / In Progress / Complete) is indicated by a colored dot only. Three similar hues (red/yellow/green) are indistinguishable to red-green colorblind users (~8% of men).
+**Recommended fix:** Add the status label as text alongside the dot, or use distinct icons per status (circle, half-circle, checkmark). Color becomes redundant confirmation, not sole indicator.
+**Impact if ignored:** Colorblind creators can't reliably distinguish their pitch statuses.
+**Status:** Already fine — `Badge.tsx` renders both a colored dot AND the text label (Development / Production / Completed). Color is redundant confirmation, not sole indicator. No change needed.
+
+---
+
+### 45. Modal Lacks Accessibility Attributes
+**Area:** UX / Accessibility
+**Severity:** Low
+**What's wrong:** `Modal.tsx` uses native `<dialog>` but has no `aria-labelledby` or `aria-describedby`. Screen readers announce the modal without context. Title exists visually but not semantically linked.
+**Recommended fix:** Add `aria-labelledby` pointing to the modal title element. Add `aria-describedby` for content description if present.
+**Impact if ignored:** Modal is unusable for screen reader users. Low impact now, higher if product is used by studios with accessibility requirements.
+**Status:** Fixed — `Modal.tsx` dialog now has `aria-labelledby="modal-title"` and `aria-modal="true"`. Title h2 has `id="modal-title"`.
 
 ---
 

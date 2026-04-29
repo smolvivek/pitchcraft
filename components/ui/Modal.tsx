@@ -45,6 +45,8 @@ function Modal({ open, onClose, title, children }: ModalProps) {
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
+      aria-labelledby="modal-title"
+      aria-modal="true"
       className="
         backdrop:bg-black/60 backdrop:backdrop-blur-none
         bg-transparent p-0 m-auto
@@ -52,16 +54,16 @@ function Modal({ open, onClose, title, children }: ModalProps) {
         open:animate-[scale-up_250ms_ease-out]
       "
     >
-      <div className="bg-surface rounded-[4px] p-[24px] border border-border">
+      <div className="bg-surface rounded-none p-[24px] border border-border">
         <div className="flex items-center justify-between mb-[16px]">
-          <h2 className="font-heading text-[24px] font-semibold leading-[32px] text-text-primary">
+          <h2 id="modal-title" className="font-heading text-[24px] font-bold leading-[32px] text-text-primary">
             {title}
           </h2>
           <button
             onClick={onClose}
             className="
               w-[32px] h-[32px] flex items-center justify-center
-              rounded-[4px] text-text-secondary
+              rounded-none text-text-secondary
               hover:bg-surface-hover hover:text-text-primary
               transition-colors duration-[200ms] ease-out
               cursor-pointer

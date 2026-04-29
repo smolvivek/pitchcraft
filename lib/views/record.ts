@@ -3,9 +3,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserTier } from '@/lib/subscriptions/getTier'
 import { sendViewNotification } from '@/lib/email/client'
 
-// Rate-limit notifications: at most one email per pitch per hour.
-// Stored in memory — resets on cold start, which is acceptable for this use case.
-const notificationSentAt = new Map<string, number>()
 const NOTIFICATION_COOLDOWN_MS = 60 * 60 * 1000 // 1 hour
 
 function hashIpDay(ip: string): string {
@@ -35,6 +32,19 @@ export async function recordView({
     if (isOwner) return
 
     const admin = createAdminClient()
+
+    // Only record views for private or password-protected pitches (CONSTRAINTS.md §4)
+    const { data: shareLink } = await admin
+      .from('share_links')
+      .select('visibility, password_hash')
+      .eq('pitch_id', pitchId)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    const isPrivateOrProtected =
+      shareLink?.visibility === 'private' || !!shareLink?.password_hash
+    if (!isPrivateOrProtected) return
+
     const ipDayHash = hashIpDay(ip)
 
     // Dedup: if this ip+day has already been recorded for this pitch, skip
@@ -52,42 +62,38 @@ export async function recordView({
     // Notifications only for unique views
     if (!isUniqueView) return
 
-    // Only notify for private or password-protected pitches (CONSTRAINTS.md §4)
-    const { data: shareLink } = await admin
-      .from('share_links')
-      .select('visibility, password_hash')
-      .eq('pitch_id', pitchId)
-      .is('deleted_at', null)
-      .maybeSingle()
+    // Resolve auth_id for tier check — subscriptions.user_id → auth.users.id,
+    // but pitch.user_id → public.users.id. Fetch both email and auth_id in one query.
+    const { data: ownerProfile } = await admin
+      .from('users')
+      .select('auth_id, email')
+      .eq('id', ownerUserId)
+      .single()
+    if (!ownerProfile?.auth_id || !ownerProfile.email) return
 
-    const isPrivateOrProtected =
-      shareLink?.visibility === 'private' || !!shareLink?.password_hash
-    if (!isPrivateOrProtected) return
-
-    // Check if owner is Pro or Studio
-    const tier = await getUserTier(admin, ownerUserId)
+    const tier = await getUserTier(admin, ownerProfile.auth_id)
     if (tier === 'free') return
 
-    // Rate-limit: one notification per pitch per hour
-    const lastSent = notificationSentAt.get(pitchId) ?? 0
-    if (Date.now() - lastSent < NOTIFICATION_COOLDOWN_MS) return
-    notificationSentAt.set(pitchId, Date.now())
+    // Rate-limit via DB — survives cold starts on serverless.
+    const { data: pitchMeta } = await admin
+      .from('pitches')
+      .select('project_name, last_view_notification_at')
+      .eq('id', pitchId)
+      .single()
 
-    // Fetch owner email + pitch name
-    const [{ data: owner }, { data: pitch }] = await Promise.all([
-      admin.from('users').select('email').eq('id', ownerUserId).single(),
-      admin.from('pitches').select('title, project_name').eq('id', pitchId).single(),
-    ])
+    const lastSentAt = pitchMeta?.last_view_notification_at
+      ? new Date(pitchMeta.last_view_notification_at).getTime()
+      : 0
+    if (Date.now() - lastSentAt < NOTIFICATION_COOLDOWN_MS) return
 
-    if (!owner?.email) return
-
-    const projectName = (pitch as { title?: string; project_name?: string } | null)?.title
-      ?? (pitch as { project_name?: string } | null)?.project_name
-      ?? 'Your project'
+    await admin
+      .from('pitches')
+      .update({ last_view_notification_at: new Date().toISOString() })
+      .eq('id', pitchId)
 
     sendViewNotification({
-      to: owner.email,
-      projectName,
+      to: ownerProfile.email,
+      projectName: pitchMeta?.project_name ?? 'Your project',
       country: country ?? null,
       pitchEditUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pitchcraft.app'}/dashboard/pitches/${pitchId}/edit`,
     }).catch((err) => console.error('View notification email failed:', err))

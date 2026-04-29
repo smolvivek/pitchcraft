@@ -20,6 +20,7 @@ export interface Pitch {
   status: PitchStatus
   team: string
   current_version: number
+  project_type: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null

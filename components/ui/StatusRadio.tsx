@@ -41,12 +41,12 @@ export function StatusRadio({ value, onChange, error }: StatusRadioProps) {
             className={`
               flex flex-col gap-[8px]
               px-[16px] py-[16px]
-              border rounded-[4px]
+              border rounded-none
               transition-all duration-[300ms] ease-out
               text-left
               ${
                 value === option.value
-                  ? 'bg-surface-hover border-pop shadow-[0_0_0_1px_rgba(232,80,58,0.2)]'
+                  ? 'bg-surface-hover border-pop shadow-[0_0_0_1px_rgba(255,255,255,0.15)]'
                   : 'bg-surface border-border hover:bg-surface-hover'
               }
             `}
@@ -59,11 +59,11 @@ export function StatusRadio({ value, onChange, error }: StatusRadioProps) {
                   ${value === option.value ? 'scale-100' : 'scale-0'}
                 `}
                 style={{
-                  transitionTimingFunction: value === option.value ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'
+                  transitionTimingFunction: 'var(--ease-cinematic)',
                 }}
                 aria-hidden="true"
               />
-              <span className="font-[var(--font-mono)] text-[12px] leading-[20px] font-medium tracking-[0.08em] text-text-primary">
+              <span className="font-mono text-[12px] leading-[20px] font-medium tracking-[0.08em] text-text-primary">
                 {option.label}
               </span>
             </div>

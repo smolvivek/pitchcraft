@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getUserTier } from '@/lib/subscriptions/getTier'
 
 async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
@@ -26,6 +27,10 @@ export async function GET(
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!await verifyOwnership(pitchId, user.id)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const { data: shareLink } = await supabase
@@ -56,14 +61,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: pitch } = await supabase
-      .from('pitches')
-      .select('id')
-      .eq('id', pitchId)
-      .is('deleted_at', null)
-      .single()
-
-    if (!pitch) {
+    if (!await verifyOwnership(pitchId, user.id)) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
@@ -85,8 +83,7 @@ export async function POST(
     // Private and password-protected links require Pro or Studio
     if (visibility !== 'public') {
       const admin = createAdminClient()
-      const { data: sub } = await admin.from('subscriptions').select('tier').eq('user_id', user.id).single()
-      const tier = sub?.tier ?? 'free'
+      const tier = await getUserTier(admin, user.id)
       if (tier === 'free') {
         return NextResponse.json({ error: 'Private and password-protected links require Pro', upgrade: true }, { status: 403 })
       }
@@ -137,8 +134,7 @@ export async function PATCH(
     // Changing to private/password requires Pro or Studio
     if (body.visibility !== undefined && body.visibility !== 'public') {
       const admin = createAdminClient()
-      const { data: sub } = await admin.from('subscriptions').select('tier').eq('user_id', user.id).single()
-      const tier = sub?.tier ?? 'free'
+      const tier = await getUserTier(admin, user.id)
       if (tier === 'free') {
         return NextResponse.json({ error: 'Private and password-protected links require Pro', upgrade: true }, { status: 403 })
       }

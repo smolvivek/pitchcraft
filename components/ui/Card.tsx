@@ -17,7 +17,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 function Card({ children, className = "", ...props }: CardProps) {
   return (
     <div
-      className={`bg-surface border border-border rounded-[4px] p-[24px] ${className}`}
+      className={`bg-surface border border-border rounded-none p-[24px] ${className}`}
       {...props}
     >
       {children}
@@ -29,6 +29,7 @@ function Card({ children, className = "", ...props }: CardProps) {
 
 interface PitchCardProps {
   pitchId?: string;
+  index?: number;
   title: string;
   subtitle?: string;
   status: StatusType;
@@ -38,9 +39,17 @@ interface PitchCardProps {
   updatedAt?: string;
   shareUrl?: string;
   editHref?: string;
+  projectType?: string;
 }
 
-function PitchCard({ pitchId, title, subtitle, status, genre, budget, version, updatedAt, shareUrl, editHref }: PitchCardProps) {
+const PROJECT_TYPE_LABELS: Record<string, string> = {
+  fiction: 'Fiction',
+  documentary: 'Doc',
+  ad_film: 'Ad Film',
+  music_video: 'Music Video',
+}
+
+function PitchCard({ pitchId, index, title, subtitle, status, genre, budget, version, updatedAt, shareUrl, editHref, projectType }: PitchCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = (e: React.MouseEvent) => {
@@ -56,12 +65,23 @@ function PitchCard({ pitchId, title, subtitle, status, genre, budget, version, u
     });
   };
 
+  const num = index !== undefined ? String(index + 1).padStart(2, "0") : null;
+
   const inner = (
-    <div className="group py-[24px] border-b border-border cursor-pointer">
-      <div className="flex items-start justify-between gap-[24px] mb-[6px]">
-        <h3 className="font-heading text-[20px] font-semibold leading-[28px] text-text-primary group-hover:text-pop transition-colors duration-[150ms]">
-          {title}
-        </h3>
+    <div className="group py-[20px] border-b border-border cursor-pointer">
+      {/* Title row */}
+      <div className="flex items-baseline justify-between gap-[24px] mb-[6px]">
+        <div className="flex items-baseline gap-[10px] min-w-0">
+          {num && (
+            <span className="font-mono text-[11px] leading-[20px] text-text-disabled shrink-0">
+              {num} /
+            </span>
+          )}
+          <h3 className="font-heading italic text-[22px] leading-[28px] text-text-primary group-hover:text-pop transition-colors duration-[150ms] truncate">
+            {title}
+          </h3>
+        </div>
+        {/* Actions */}
         <div className="flex items-center gap-[12px] shrink-0">
           {pitchId && <DuplicatePitchButton pitchId={pitchId} />}
           {pitchId && <DeletePitchButton pitchId={pitchId} pitchName={title} />}
@@ -79,21 +99,28 @@ function PitchCard({ pitchId, title, subtitle, status, genre, budget, version, u
                 </svg>
               ) : (
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                  <rect x="4" y="4" width="8" height="8" stroke="currentColor" strokeWidth="1.2" />
                   <path d="M2 10V2h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
               )}
             </button>
           )}
-          <Badge status={status} />
         </div>
       </div>
+
+      {/* Logline */}
       {subtitle && (
-        <p className="text-[13px] leading-[20px] text-text-secondary line-clamp-1 mb-[10px]">
+        <p className="text-[13px] leading-[20px] text-text-secondary line-clamp-1 mb-[10px] pl-[32px]">
           {subtitle}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-[16px]">
+
+      {/* Metadata row */}
+      <div className="flex flex-wrap items-center gap-[16px] pl-[32px]">
+        <Badge status={status} />
+        {projectType && PROJECT_TYPE_LABELS[projectType] && (
+          <MonoText>{PROJECT_TYPE_LABELS[projectType]}</MonoText>
+        )}
         {genre && <MonoText>{genre}</MonoText>}
         {budget && <MonoText>{budget}</MonoText>}
         {version !== undefined && <MonoText>v{version}</MonoText>}

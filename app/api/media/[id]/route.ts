@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthProfile } from '@/lib/auth/getAuthProfile'
 
 export async function DELETE(
   request: NextRequest,
@@ -27,12 +28,7 @@ export async function DELETE(
     }
 
     // Verify ownership via pitch user_id
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(supabase, user.id)
     if (!profile || media.pitches.user_id !== profile.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
@@ -95,12 +91,7 @@ export async function PATCH(
       .eq('id', id)
       .single()
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(supabase, user.id)
     if (!profile || !mediaRecord || (mediaRecord.pitches as unknown as { user_id: string }).user_id !== profile.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
@@ -148,12 +139,7 @@ export async function GET(
       return NextResponse.json({ error: 'Media not found' }, { status: 404 })
     }
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(supabase, user.id)
     if (!profile || (media.pitches as unknown as { user_id: string }).user_id !== profile.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }

@@ -16,6 +16,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const admin = createAdminClient()
+    const { data: pitch } = await admin.from('pitches').select('user_id').eq('id', pitchId).is('deleted_at', null).single()
+    const { data: profile } = await admin.from('users').select('id').eq('auth_id', user.id).single()
+    if (!pitch || !profile || pitch.user_id !== profile.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
     const { data: funding } = await supabase
       .from('funding')
       .select('*')

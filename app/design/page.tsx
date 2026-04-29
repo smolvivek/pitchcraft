@@ -40,7 +40,7 @@ const genreOptions = [
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-[48px]">
-      <h2 className="font-heading text-[24px] font-semibold leading-[32px] text-text-primary mb-[24px] pb-[8px] border-b border-border">
+      <h2 className="font-heading text-[24px] font-bold leading-[32px] text-text-primary mb-[24px] pb-[8px] border-b border-border">
         {title}
       </h2>
       {children}
@@ -51,7 +51,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Subsection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-[32px]">
-      <h3 className="font-heading text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
+      <h3 className="font-heading text-[18px] font-bold leading-[28px] text-text-primary mb-[16px]">
         {title}
       </h3>
       {children}
@@ -69,7 +69,7 @@ export default function DesignShowcase() {
       <Nav links={navLinks} />
 
       <Container className="py-[48px]" id="main-content">
-        <h1 className="font-heading text-[32px] font-semibold leading-[40px] text-text-primary mb-[8px]">
+        <h1 className="font-heading text-[32px] font-bold leading-[40px] text-text-primary mb-[8px]">
           Design System
         </h1>
         <p className="text-[16px] leading-[24px] text-text-secondary mb-[48px]">
@@ -98,7 +98,7 @@ export default function DesignShowcase() {
               { name: "Success", value: "#4CAF50", className: "bg-success" },
             ].map((color) => (
               <div key={color.name} className="flex flex-col gap-[8px]">
-                <div className={`w-full h-[48px] rounded-[4px] ${color.className}`} />
+                <div className={`w-full h-[48px] rounded-none ${color.className}`} />
                 <span className="text-[14px] leading-[20px] text-text-primary">{color.name}</span>
                 <MonoText>{color.value}</MonoText>
               </div>
@@ -111,19 +111,19 @@ export default function DesignShowcase() {
           <div className="flex flex-col gap-[24px]">
             <div>
               <MonoText>Page title — Space Grotesk 600 / 32px / 40px</MonoText>
-              <p className="font-heading text-[32px] font-semibold leading-[40px] mt-[8px]">
+              <p className="font-heading text-[32px] font-bold leading-[40px] mt-[8px]">
                 The quick brown fox jumps
               </p>
             </div>
             <div>
               <MonoText>Section header — Space Grotesk 600 / 24px / 32px</MonoText>
-              <p className="font-heading text-[24px] font-semibold leading-[32px] mt-[8px]">
+              <p className="font-heading text-[24px] font-bold leading-[32px] mt-[8px]">
                 The quick brown fox jumps over the lazy dog
               </p>
             </div>
             <div>
               <MonoText>Subsection — Space Grotesk 600 / 18px / 28px</MonoText>
-              <p className="font-heading text-[18px] font-semibold leading-[28px] mt-[8px]">
+              <p className="font-heading text-[18px] font-bold leading-[28px] mt-[8px]">
                 The quick brown fox jumps over the lazy dog
               </p>
             </div>
@@ -348,7 +348,7 @@ export default function DesignShowcase() {
 
         {/* ── Sidebar ── */}
         <Section title="Sidebar (Step Sequencer)">
-          <div className="border border-border rounded-[4px] overflow-hidden h-[400px] flex">
+          <div className="border border-border rounded-none overflow-hidden h-[400px] flex">
             <Sidebar
               sections={sidebarSections}
               activeId={activeSection}
@@ -369,7 +369,7 @@ export default function DesignShowcase() {
               <div key={size} className="flex items-center gap-[16px]">
                 <MonoText className="w-[48px] text-right">{size}px</MonoText>
                 <div
-                  className="h-[8px] bg-pop rounded-[2px]"
+                  className="h-[8px] bg-pop rounded-none"
                   style={{ width: `${size * 2}px` }}
                 />
               </div>

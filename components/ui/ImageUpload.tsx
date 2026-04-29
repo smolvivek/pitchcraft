@@ -144,7 +144,7 @@ export function ImageUpload({
           onDrop={handleDrop}
           className={`
             relative
-            border-2 border-dashed rounded-[4px]
+            border-2 border-dashed rounded-none
             px-[24px] py-[32px]
             cursor-pointer
             transition-colors duration-[200ms]
@@ -189,7 +189,7 @@ export function ImageUpload({
             </div>
           </div>
           {uploading && (
-            <div className="absolute inset-0 bg-surface/90 rounded-[4px] flex items-center justify-center">
+            <div className="absolute inset-0 bg-surface/90 rounded-none flex items-center justify-center">
               <p className="text-[14px] text-text-primary">Uploading...</p>
             </div>
           )}
@@ -267,7 +267,7 @@ function ImageThumbnail({
 
   return (
     <div className="flex flex-col gap-[4px]">
-      <div className="relative aspect-square bg-surface rounded-[4px] overflow-hidden border border-border group">
+      <div className="relative aspect-square bg-surface rounded-none overflow-hidden border border-border group">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-[12px] text-text-secondary">Loading...</p>
@@ -289,7 +289,7 @@ function ImageThumbnail({
             flex items-center justify-center
             opacity-0 group-hover:opacity-100
             transition-opacity duration-[200ms]
-            hover:bg-error hover:text-white
+            hover:bg-error hover:text-text-primary
           "
           aria-label="Delete image"
         >

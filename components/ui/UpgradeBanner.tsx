@@ -11,7 +11,7 @@ export function UpgradeBanner() {
   const [upgradeVisible, setUpgradeVisible] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [firstPitchVisible, setFirstPitchVisible] = useState(false)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // Upgraded banner — show after DodoPayments checkout return
@@ -20,28 +20,30 @@ export function UpgradeBanner() {
       router.replace(pathname, { scroll: false })
 
       let attempts = 0
-      pollRef.current = setInterval(async () => {
-        attempts++
-        try {
-          const res = await fetch('/api/subscriptions/status')
-          if (res.ok) {
-            const data = await res.json()
-            if (data.tier && data.tier !== 'free') {
-              setConfirmed(true)
-              if (pollRef.current) clearInterval(pollRef.current)
-              router.refresh()
+      const delays = [2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000]
+      const scheduleNext = (attemptIndex: number) => {
+        const delay = delays[Math.min(attemptIndex, delays.length - 1)]
+        pollRef.current = setTimeout(async () => {
+          attempts++
+          try {
+            const res = await fetch('/api/subscriptions/status')
+            if (res.ok) {
+              const data = await res.json()
+              if (data.tier && data.tier !== 'free') {
+                setConfirmed(true)
+                router.refresh()
+                return
+              }
             }
-          }
-        } catch { /* ignore */ }
-        if (attempts >= 15) {
-          if (pollRef.current) clearInterval(pollRef.current)
-        }
-      }, 2000)
+          } catch { /* ignore */ }
+          if (attempts < 10) scheduleNext(attempts)
+        }, delay)
+      }
+      scheduleNext(0)
 
-      const dismiss = setTimeout(() => setUpgradeVisible(false), 10000)
+      // Do not auto-dismiss — user sees "activating…" until confirmed or manually closes
       return () => {
-        if (pollRef.current) clearInterval(pollRef.current)
-        clearTimeout(dismiss)
+        if (pollRef.current) clearTimeout(pollRef.current)
       }
     }
 
@@ -61,11 +63,20 @@ export function UpgradeBanner() {
   if (upgradeVisible) {
     return (
       <div className="bg-success/10 border-b border-success/20 px-[24px] py-[12px]">
-        <p className="font-[var(--font-mono)] text-[13px] leading-[20px] text-success max-w-[1200px] mx-auto">
-          {confirmed
-            ? 'Subscription activated — AI, unlimited pitches, and privacy controls are now active.'
-            : 'Payment received — activating your subscription…'}
-        </p>
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between gap-[24px]">
+          <p className="font-mono text-[13px] leading-[20px] text-success">
+            {confirmed
+              ? 'Subscription activated — AI, unlimited pitches, and privacy controls are now active.'
+              : 'Payment received — activating your subscription… Refresh if this takes more than a minute.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => setUpgradeVisible(false)}
+            className="text-success/60 hover:text-success transition-colors font-mono text-[11px] shrink-0 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
     )
   }
@@ -74,7 +85,7 @@ export function UpgradeBanner() {
     return (
       <div className="bg-surface border-b border-border px-[24px] py-[12px]">
         <div className="max-w-[1200px] mx-auto flex items-center justify-between gap-[24px]">
-          <p className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+          <p className="font-mono text-[13px] leading-[20px] text-text-secondary">
             Your pitch is live. Want private links, AI, and unlimited pitches?{' '}
             <Link href="/pricing" className="text-pop hover:text-pop-hover transition-colors">
               Go Pro →
@@ -83,7 +94,7 @@ export function UpgradeBanner() {
           <button
             type="button"
             onClick={() => setFirstPitchVisible(false)}
-            className="text-text-disabled hover:text-text-secondary transition-colors font-[var(--font-mono)] text-[11px] shrink-0"
+            className="text-text-disabled hover:text-text-secondary transition-colors font-mono text-[11px] shrink-0"
           >
             Dismiss
           </button>

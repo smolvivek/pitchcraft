@@ -8,7 +8,7 @@ Each feature completes fully before the next begins. No skipping. No speculative
 |---|---------|-------|----------|--------|
 | 0 | Intent file updates | Opus | Solo | Done |
 | 1 | Design system | Opus | Solo (coherent, one mind) | Done |
-| 2 | Auth (Supabase) | Sonnet | Solo — CRUD, standard patterns | Pending |
+| 2 | Auth (Supabase) | Sonnet | Solo — CRUD, standard patterns | Done |
 | 3 | Pitch creation (forms + API) | Opus + Sonnet | Opus for architecture, Sonnet for form CRUD | Pending |
 | 4 | Media upload | Sonnet | Solo — Supabase Storage integration | Pending |
 | 5 | Pitch view (shared link + SSR) | Opus | Solo — SSR architecture, OG tags, public rendering | Pending |

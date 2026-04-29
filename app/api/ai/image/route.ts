@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/ai/image'
+import { getUserTier } from '@/lib/subscriptions/getTier'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,20 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check subscription tier — free users cannot use AI
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('tier, status, current_period_end')
-      .eq('user_id', user.id)
-      .single()
-
-    let tier = subscription?.tier ?? 'free'
-    if (
-      subscription?.status === 'cancelled' &&
-      subscription?.current_period_end &&
-      new Date(subscription.current_period_end) < new Date()
-    ) {
-      tier = 'free'
-    }
+    const tier = await getUserTier(supabase, user.id)
 
     if (tier === 'free') {
       return NextResponse.json(

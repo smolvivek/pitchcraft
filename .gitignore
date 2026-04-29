@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local working files (not committed)
+/feedback*.zip
+/feedback_images_extracted/
+/reference*.jpeg
+/reference*.jpg
+/reference*.png
+/accent-color-preview.html
+
+# supabase CLI scratch
+/supabase/.temp/

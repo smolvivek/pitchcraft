@@ -35,8 +35,8 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="bg-surface border border-border rounded-[4px] p-[32px]">
-        <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
+      <div className="bg-surface border border-border rounded-none p-[32px]">
+        <h2 className="font-heading text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
           Check your inbox
         </h2>
         <p className="text-[14px] leading-[24px] text-text-secondary mb-[24px]">
@@ -52,8 +52,8 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
-      <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
+    <div className="bg-surface border border-border rounded-none p-[32px]">
+      <h2 className="font-heading text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
         Reset password
       </h2>
       <p className="text-[14px] leading-[24px] text-text-secondary mb-[24px]">
@@ -64,6 +64,7 @@ export default function ResetPasswordPage() {
         <TextInput
           label="Email"
           type="email"
+          variant="underline"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

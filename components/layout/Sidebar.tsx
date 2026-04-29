@@ -38,86 +38,87 @@ function Sidebar({
   const hasMorePanel = allOptionalDefs.length > 0 && onToggleSection;
 
   return (
-    <aside className={`w-[240px] bg-surface border-r border-border h-full overflow-y-auto py-[16px] flex flex-col ${className}`}>
-      <div className="px-[16px] pt-[8px] mb-[8px]" />
+    <aside className={`w-64 bg-[#0e0e0e] border-r border-white/5 h-full overflow-y-auto py-[14px] flex flex-col ${className}`}>
 
-      {/* Required sections (01–08) */}
+      {/* Required sections */}
       <ul className="flex flex-col" role="list">
         {sections.map((section, index) => {
           const isActive = section.id === activeId;
+          const num = String(index + 1).padStart(2, "0");
           return (
             <li key={section.id}>
               <button
                 onClick={() => onSelect(section.id)}
                 className={`
-                  w-full flex items-center gap-[12px] px-[16px] py-[10px]
-                  text-left text-[14px] leading-[20px]
-                  transition-colors duration-[200ms] ease-out
-                  cursor-pointer
-                  ${
-                    isActive
-                      ? "border-l-2 border-pop text-text-primary font-medium bg-background"
-                      : "border-l-2 border-transparent text-text-secondary hover:bg-background hover:text-text-primary"
+                  w-full px-[16px] py-[12px] text-left flex items-center justify-between
+                  font-bold uppercase tracking-[0.15em] text-[10px]
+                  transition-colors duration-[150ms] ease-out cursor-pointer
+                  ${isActive
+                    ? "border-l-2 border-pop text-pop bg-white/5"
+                    : "border-l-2 border-transparent text-text-disabled hover:text-text-primary hover:bg-white/[0.03]"
                   }
                 `}
                 aria-current={isActive ? "step" : undefined}
               >
-                <span className="font-mono text-[11px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="flex-1 truncate">{section.label}</span>
-                <CompletionIndicator completed={section.completed} />
+                <span>{num} / {section.label}</span>
+                {section.completed && (
+                  <span className="text-text-disabled font-normal normal-case tracking-normal" aria-label="complete">✓</span>
+                )}
               </button>
             </li>
           );
         })}
       </ul>
 
-      {/* Enabled optional sections (09, 10, ...) */}
+      {/* Enabled optional sections */}
       {optionalSections.length > 0 && (
         <ul className="flex flex-col" role="list">
           {optionalSections.map((section, index) => {
             const isActive = section.id === activeId;
-            const number = sections.length + index + 1;
+            const num = String(sections.length + index + 1).padStart(2, "0");
             return (
-              <li key={section.id}>
+              <li key={section.id} className="relative group/opt">
                 <button
                   onClick={() => onSelect(section.id)}
                   className={`
-                    w-full flex items-center gap-[12px] px-[16px] py-[10px]
-                    text-left text-[14px] leading-[20px]
-                    transition-colors duration-[200ms] ease-out
-                    cursor-pointer
-                    ${
-                      isActive
-                        ? "border-l-2 border-pop text-text-primary font-medium bg-background"
-                        : "border-l-2 border-transparent text-text-secondary hover:bg-background hover:text-text-primary"
+                    w-full px-[16px] py-[12px] pr-[28px] text-left
+                    font-bold uppercase tracking-[0.15em] text-[10px]
+                    transition-colors duration-[150ms] ease-out cursor-pointer
+                    ${isActive
+                      ? "border-l-2 border-pop text-pop bg-white/5"
+                      : "border-l-2 border-transparent text-text-disabled hover:text-text-primary hover:bg-white/[0.03]"
                     }
                   `}
                   aria-current={isActive ? "step" : undefined}
                 >
-                  <span className="font-mono text-[11px] leading-[20px] text-text-disabled w-[20px] text-right shrink-0">
-                    {String(number).padStart(2, "0")}
-                  </span>
-                  <span className="flex-1 truncate">{section.label}</span>
-                  <CompletionIndicator completed={section.completed} />
+                  {num} / {section.label}
                 </button>
+                {onToggleSection && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleSection(section.id)}
+                    className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[16px] h-[16px] flex items-center justify-center text-[14px] text-text-disabled hover:text-error opacity-0 group-hover/opt:opacity-100 transition-opacity"
+                    aria-label={`Remove ${section.label}`}
+                  >
+                    ×
+                  </button>
+                )}
               </li>
             );
           })}
         </ul>
       )}
 
-      {/* Divider + More button */}
+      {/* + Add section */}
       {hasMorePanel && (
         <div className="mt-[8px]">
-          <div className="mx-[16px] border-t border-border" />
+          <div className="mx-[16px] border-t border-white/5" />
           <button
             type="button"
             onClick={() => setMoreOpen(!moreOpen)}
-            className="w-full flex items-center justify-between px-[16px] py-[12px] text-[13px] leading-[20px] text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-[16px] py-[12px] font-bold uppercase tracking-[0.15em] text-[10px] text-text-disabled hover:text-text-primary transition-colors cursor-pointer"
           >
-            <span className="font-mono text-[10px] uppercase tracking-[0.1em]">More</span>
+            <span>+ Add section</span>
             <svg
               width="12"
               height="12"
@@ -135,40 +136,42 @@ function Sidebar({
             </svg>
           </button>
 
-          {/* Collapsible panel */}
           {moreOpen && (
             <div className="px-[16px] pb-[16px] flex flex-col gap-[4px]">
               {allOptionalDefs.map((def) => {
                 const isEnabled = enabledKeys.has(def.key);
                 return (
-                  <label
-                    key={def.key}
-                    className="flex items-start gap-[8px] py-[6px] cursor-pointer group"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isEnabled}
-                      onChange={() => onToggleSection!(def.key)}
-                      className="mt-[2px] w-[14px] h-[14px] shrink-0"
-                    />
+                  <div key={def.key} className="flex items-start gap-[8px] py-[6px]">
                     <div className="flex-1 min-w-0">
-                      <span className="text-[13px] leading-[18px] text-text-primary group-hover:text-pop transition-colors">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.1em] font-bold text-text-primary">
                         {def.label}
                       </span>
-                      <p className="text-[11px] leading-[16px] text-text-disabled mt-[1px]">
+                      <p className="text-[10px] leading-[16px] text-text-disabled mt-[1px]">
                         {def.description}
                       </p>
                     </div>
-                  </label>
+                    {isEnabled ? (
+                      <span className="shrink-0 font-mono text-[10px] leading-[18px] text-text-disabled mt-[1px]">
+                        Added ✓
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onToggleSection!(def.key)}
+                        className="shrink-0 font-mono text-[10px] leading-[18px] text-pop hover:underline mt-[1px]"
+                      >
+                        + Add
+                      </button>
+                    )}
+                  </div>
                 );
               })}
 
-              {/* Custom sections — Pro/Studio only */}
               {tier === "free" ? (
                 <div className="py-[8px]">
-                  <p className="text-[12px] leading-[18px] text-text-disabled">
+                  <p className="font-mono text-[10px] leading-[18px] text-text-disabled">
                     Custom sections are a{" "}
-                    <a href="/pricing" className="text-link hover:underline">Pro feature</a>.
+                    <a href="/pricing" className="text-pop hover:underline">Pro feature</a>.
                   </p>
                 </div>
               ) : (
@@ -176,25 +179,29 @@ function Sidebar({
                   const isEnabled = enabledKeys.has(key);
                   const label = customSectionLabels[key] || `Custom Section ${i + 1}`;
                   return (
-                    <label
-                      key={key}
-                      className="flex items-start gap-[8px] py-[6px] cursor-pointer group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => onToggleSection!(key)}
-                        className="mt-[2px] w-[14px] h-[14px] shrink-0"
-                      />
+                    <div key={key} className="flex items-start gap-[8px] py-[6px]">
                       <div className="flex-1 min-w-0">
-                        <span className="text-[13px] leading-[18px] text-text-primary group-hover:text-pop transition-colors">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.1em] font-bold text-text-primary">
                           {label}
                         </span>
-                        <p className="text-[11px] leading-[16px] text-text-disabled mt-[1px]">
+                        <p className="font-mono text-[10px] leading-[16px] text-text-disabled mt-[1px]">
                           Your own section. Name it anything.
                         </p>
                       </div>
-                    </label>
+                      {isEnabled ? (
+                        <span className="shrink-0 font-mono text-[10px] leading-[18px] text-text-disabled mt-[1px]">
+                          Added ✓
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onToggleSection!(key)}
+                          className="shrink-0 font-mono text-[10px] leading-[18px] text-pop hover:underline mt-[1px]"
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
                   );
                 })
               )}
@@ -203,19 +210,6 @@ function Sidebar({
         </div>
       )}
     </aside>
-  );
-}
-
-function CompletionIndicator({ completed }: { completed: boolean }) {
-  return (
-    <span
-      className="w-[5px] h-[5px] shrink-0 rounded-full"
-      style={{
-        background: completed ? 'var(--color-pop)' : 'transparent',
-        border: completed ? 'none' : '1px solid var(--color-border)',
-      }}
-      aria-label={completed ? "Completed" : "Incomplete"}
-    />
   );
 }
 

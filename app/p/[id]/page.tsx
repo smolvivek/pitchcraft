@@ -29,7 +29,6 @@ import { PitchViewFooter } from '@/components/pitch-view/PitchViewFooter'
 import { PitchViewFunding } from '@/components/pitch-view/PitchViewFunding'
 import { PitchViewPasswordGate } from '@/components/pitch-view/PitchViewPasswordGate'
 import { PitchViewFlow } from '@/components/pitch-view/PitchViewFlow'
-import { PitchViewCTA } from '@/components/pitch-view/PitchViewCTA'
 import { PitchViewOwnerBar } from '@/components/pitch-view/PitchViewOwnerBar'
 
 interface PageProps {
@@ -275,8 +274,8 @@ export default async function PitchViewPage({ params }: PageProps) {
         isOwner = true
       }
     }
-  } catch {
-    // owner bar is non-critical — skip silently
+  } catch (err) {
+    console.error('Owner check failed (owner bar will be hidden):', err)
   }
   // Record view after response is sent — after() keeps the serverless function alive
   // until the work completes instead of abandoning the promise on stream close.
@@ -455,7 +454,6 @@ export default async function PitchViewPage({ params }: PageProps) {
       })}
 
       <PitchViewFunding pitchId={pitch.id} projectName={pitch.project_name} />
-      <PitchViewCTA projectName={pitch.project_name} />
       <PitchViewFooter projectName={pitch.project_name} />
     </PitchViewLayout>
   )

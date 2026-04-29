@@ -83,7 +83,7 @@ export function LandingHero() {
                 transition={{ duration: 1.0, ease: expoOut }}
                 viewport={{ once: true, amount: 0.2 }}
               >
-                Your film. One page.
+                Your project. One page.
               </motion.h2>
               <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-text-disabled flex-shrink-0">
                 01 / What it is
@@ -98,7 +98,7 @@ export function LandingHero() {
               viewport={{ once: true, amount: 0.2 }}
             >
               <p className="text-text-secondary mb-[48px] leading-relaxed text-[17px] font-light max-w-[600px]">
-                Logline, vision, cast, and budget — assembled once, shared as one link. Reads like the film it&apos;s pitching, not a slide deck.
+                Logline, vision, cast, and budget — assembled once, shared as one link. Reads like the work it&apos;s pitching, not a slide deck.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-[32px] pt-[32px] border-t border-white/10">
                 <div>
@@ -179,7 +179,7 @@ export function LandingHero() {
                     Every project. Every version. One dashboard.
                   </p>
                   <div className="mt-[40px] space-y-[16px]">
-                    {["Project List", "Version History", "Share Controls", "Funding Tracker"].map((item) => (
+                    {["Project List", "Share Controls", "Funding Tracker"].map((item) => (
                       <div key={item} className="py-[8px] border-b border-white/10">
                         <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary">{item}</span>
                       </div>
@@ -321,7 +321,7 @@ export function LandingHero() {
                   Public, private, or password-protected. Send the right cut to the right person. Every version is retrievable — the early draft doesn&apos;t disappear when you update the project.
                 </p>
                 <div className="space-y-[12px]">
-                  {["Public / Private / Password-protected", "Version history — every draft", "Link analytics — basic, no surveillance", "Revoke access instantly"].map((item) => (
+                  {["Public / Private / Password-protected", "Revoke access instantly", "Custom slug (Pro / Studio)", "Password-protected links (Pro / Studio)"].map((item) => (
                     <div key={item} className="flex items-center gap-[12px]">
                       <span className="w-[16px] h-[1px] bg-pop flex-shrink-0" />
                       <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-text-secondary">{item}</span>
@@ -405,7 +405,7 @@ export function LandingHero() {
                 { number: "3", unit: "min", label: "To publish your first project" },
                 { number: "1", unit: "link", label: "Logline, cast, moodboard, funding" },
                 { number: "0", unit: "decks", label: "Forwarded without context" },
-                { number: "∞", unit: "versions", label: "Every cut, always retrievable" },
+                { number: "1", unit: "link", label: "Every section, every asset, one URL" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -432,66 +432,6 @@ export function LandingHero() {
           </div>
         </section>
 
-        {/* ── TESTIMONIALS ── */}
-        <section className="px-[48px] md:px-[96px] py-[96px] border-t border-white/5 bg-background">
-          <div className="max-w-[1200px] mx-auto">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-baseline border-b border-white/10 pb-[24px] mb-[64px] gap-[12px]">
-              <motion.h2
-                className="font-heading text-[clamp(36px,5vw,72px)] font-light tracking-tight leading-[1.0]"
-                initial={{ opacity: 0, y: 48 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.0, ease: expoOut }}
-                viewport={{ once: true, amount: 0.2 }}
-              >
-                From the room.
-              </motion.h2>
-              <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-text-disabled flex-shrink-0">
-                05 / Filmmakers
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-white/5">
-              {[
-                {
-                  quote: "Sent the link to three exec producers before I finished writing the logline. None of them asked for a deck.",
-                  name: "A. Mercer",
-                  role: "Narrative Director",
-                  delay: 0,
-                },
-                {
-                  quote: "We use it for every project now — commercial, short, feature. The pitch page is the first thing we build, before the treatment, before the breakdown.",
-                  name: "K. Osei",
-                  role: "Independent Producer",
-                  delay: 0.08,
-                },
-                {
-                  quote: "Stopped making PDF decks six months ago. The link does what no PDF could — it shows the film's atmosphere before anyone reads a word.",
-                  name: "R. Castillo",
-                  role: "Documentary Filmmaker",
-                  delay: 0.16,
-                },
-              ].map((item) => (
-                <motion.div
-                  key={item.name}
-                  className="bg-background p-[40px] flex flex-col justify-between min-h-[280px] hover:bg-surface transition-colors duration-300"
-                  initial={{ opacity: 0, y: 32 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.85, ease: expoOut, delay: item.delay }}
-                  viewport={{ once: true, amount: 0.2 }}
-                >
-                  <p className="font-heading italic text-[18px] font-light leading-[1.5] text-text-primary/80 mb-[32px]">
-                    &ldquo;{item.quote}&rdquo;
-                  </p>
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-text-secondary">{item.name}</p>
-                    <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-text-disabled mt-[2px]">{item.role}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── PRICING ── */}
         <section className="px-[48px] md:px-[96px] py-[96px] border-t border-white/5 bg-background">
           <div className="max-w-[1200px] mx-auto">
@@ -507,7 +447,7 @@ export function LandingHero() {
                   Full comparison →
                 </Link>
                 <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-text-disabled">
-                  06 / Plans
+                  05 / Plans
                 </span>
               </div>
             </div>
@@ -516,7 +456,7 @@ export function LandingHero() {
               {[
                 { tier: "Free", price: "$0", period: "forever", desc: "One complete project. Share it publicly.", cta: "Start free", href: "/signup", pop: false },
                 { tier: "Pro", price: "$12", period: "/mo", desc: "Unlimited projects. AI. Privacy controls.", cta: "Go Pro", href: "/pricing", pop: true },
-                { tier: "Studio", price: "$29", period: "/mo", desc: "Teams. Unlimited AI. Detailed analytics.", cta: "Get Studio", href: "/pricing", pop: false },
+                { tier: "Studio", price: "$29", period: "/mo", desc: "Teams. Unlimited AI. Lower commission.", cta: "Get Studio", href: "/pricing", pop: false },
               ].map((item) => (
                 <div
                   key={item.tier}
@@ -565,7 +505,7 @@ export function LandingHero() {
                 href="/signup"
                 className="bg-text-primary text-background px-[48px] py-[18px] font-mono text-[11px] uppercase tracking-[0.2em] font-bold hover:opacity-90 transition-opacity"
               >
-                Start Building
+                Create your first project
               </Link>
               <Link
                 href="/pricing"

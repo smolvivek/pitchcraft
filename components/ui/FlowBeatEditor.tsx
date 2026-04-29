@@ -70,7 +70,7 @@ export function FlowBeatEditor({ pitchId, beats, onUpdate }: FlowBeatEditorProps
         return (
           <div
             key={beat.id}
-            className="border border-border rounded-[4px] bg-surface overflow-hidden"
+            className="border border-border rounded-none bg-surface overflow-hidden"
           >
             {/* Beat header */}
             <button
@@ -79,7 +79,7 @@ export function FlowBeatEditor({ pitchId, beats, onUpdate }: FlowBeatEditorProps
               className="w-full flex items-center justify-between px-[16px] py-[12px] hover:bg-surface-hover/50 transition-colors"
             >
               <div className="flex items-center gap-[8px]">
-                <span className="font-[var(--font-mono)] text-[11px] text-text-disabled w-[24px]">
+                <span className="font-mono text-[11px] text-text-disabled w-[24px]">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="font-[var(--font-body)] text-[14px] text-text-primary truncate max-w-[300px]">

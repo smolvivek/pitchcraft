@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getUserTier } from '@/lib/subscriptions/getTier'
+import { getAuthProfile } from '@/lib/auth/getAuthProfile'
 
 const SLUG_RESERVED = new Set([
   'api', 'dashboard', 'p', 'pricing', 'login', 'signup', 'auth', 'admin', 'public', 'static',
@@ -25,12 +27,7 @@ export async function PATCH(
 
     const admin = createAdminClient()
 
-    const { data: profile } = await admin
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(admin, user.id)
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
@@ -49,16 +46,7 @@ export async function PATCH(
     }
 
     // Tier check — Pro and Studio only
-    const { data: subscription } = await admin
-      .from('subscriptions')
-      .select('tier')
-      .eq('user_id', user.id)
-      .in('status', ['active', 'trialing'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    const tier = subscription?.tier ?? 'free'
+    const tier = await getUserTier(admin, user.id)
     if (tier === 'free') {
       return NextResponse.json({ error: 'Custom slugs require Pro or Studio', upgrade: true }, { status: 403 })
     }
@@ -127,12 +115,7 @@ export async function DELETE(
     const admin = createAdminClient()
 
     // Verify ownership
-    const { data: profile } = await admin
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(admin, user.id)
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }

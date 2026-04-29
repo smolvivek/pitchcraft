@@ -8,15 +8,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-btn text-background hover:bg-btn-hover active:bg-btn-active disabled:bg-border disabled:text-text-disabled hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100",
+    "bg-btn text-background hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed",
   secondary:
-    "bg-transparent border border-border text-text-primary hover:bg-surface-hover hover:border-border-hover active:bg-surface active:scale-[0.98] disabled:text-text-disabled disabled:border-border disabled:hover:scale-100",
+    "bg-transparent border border-border text-text-primary hover:bg-surface-hover hover:border-border-hover active:bg-surface disabled:text-text-disabled disabled:border-border disabled:cursor-not-allowed",
   tertiary:
-    "bg-transparent text-link hover:underline active:text-pop-active disabled:text-text-disabled disabled:no-underline",
+    "bg-transparent text-link hover:underline active:text-pop-active disabled:text-text-disabled disabled:no-underline disabled:cursor-not-allowed",
 };
 
 const sizeStyles: Record<ButtonVariant, string> = {
-  primary: "px-[24px] py-[12px] text-[14px] font-semibold",
+  primary: "px-[24px] py-[12px] text-[14px] font-bold uppercase tracking-[0.05em]",
   secondary: "px-[24px] py-[12px] text-[14px] font-medium",
   tertiary: "px-[16px] py-[8px] text-[14px] font-medium",
 };
@@ -28,7 +28,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={`
           inline-flex items-center justify-center
-          rounded-[4px] leading-[20px]
+          rounded-none leading-[20px]
           transition-all duration-[200ms] ease-out
           transform-gpu
           cursor-pointer

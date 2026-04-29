@@ -12,10 +12,12 @@
   --color-text-primary: #F5F5F5;
   --color-text-secondary: #999999;
   --color-text-disabled: #666666;
-  --color-pop: #FF6300;
-  --color-pop-hover: #FF7A1A;
-  --color-pop-active: #E55700;
-  --color-link: #FF6300;
+  --color-pop: #FFFFFF;
+  --color-pop-light: #CCCCCC;
+  --color-pop-hover: #E8E8E8;
+  --color-pop-active: #AAAAAA;
+  --color-link: #FFFFFF;
+  --color-text-on-surface: #e5e2e1;
   --color-btn: #F5F5F5;
   --color-btn-hover: #FFFFFF;
   --color-btn-active: #CCCCCC;
@@ -27,7 +29,7 @@
   --color-white: #F5F5F5;
 
   /* Fonts */
-  --font-heading: var(--font-dm-serif), Georgia, serif;
+  --font-heading: var(--font-newsreader), Georgia, serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
@@ -52,7 +54,7 @@
   --duration-slow: 300ms;
 
   /* Radius */
-  --radius-sm: 4px;
+  --radius-sm: 0px;
 }
 
 /* ── Base Styles ── */
@@ -73,7 +75,7 @@ body::before {
   inset: -256px;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.055;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
@@ -207,6 +209,72 @@ body::before {
   animation: slide-in-right 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── Noir Entrance ── */
+
+/* Projector flicker — the overlay cuts out in bursts like a stuck film gate */
+@keyframes noir-cut {
+  0%   { opacity: 1; }
+  40%  { opacity: 1; }
+  55%  { opacity: 0.15; }
+  65%  { opacity: 0.85; }
+  75%  { opacity: 0; }
+  80%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+
+.animate-noir-cut {
+  animation: noir-cut 0.35s ease-out forwards;
+}
+
+/* Scan line progress bar for loading states */
+@keyframes scan-right {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.animate-scan-right {
+  animation: scan-right 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left;
+}
+
+/* Text slide-up from overflow mask — hard editorial reveal */
+@keyframes text-rise {
+  from {
+    transform: translateY(110%);
+    opacity: 0.3;
+  }
+  to {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.animate-text-rise {
+  animation: text-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Witness line: horizontal rule that draws from left */
+@keyframes rule-draw {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+.animate-rule-draw {
+  animation: rule-draw 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left;
+}
+
+/* Stamp in — mono label punches onto the page */
+@keyframes stamp-in {
+  0%   { opacity: 0; letter-spacing: 0.6em; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; letter-spacing: 0.25em; }
+}
+
+.animate-stamp-in {
+  animation: stamp-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ── Card Hover (dark: subtle glow) ── */
 
 .card-hover {
@@ -218,6 +286,7 @@ body::before {
 
 .card-hover:hover {
   transform: translateY(-2px);
+  /* intentional white-glow on dark: no token needed — value tied to surface color */
   box-shadow: 0 4px 16px rgba(255, 255, 255, 0.02), 0 1px 4px rgba(255, 255, 255, 0.01);
   border-color: var(--color-border-hover);
 }
@@ -227,54 +296,11 @@ body::before {
   box-shadow: none;
 }
 
-/* ── Auth page background text slow drift ── */
-@keyframes text-drift {
-  0%, 100% { transform: translateX(0) translateY(0); }
-  33% { transform: translateX(8px) translateY(-4px); }
-  66% { transform: translateX(-4px) translateY(6px); }
-}
-
-/* ── Progress Bar Shimmer ── */
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.progress-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-pop) 0%,
-    #F06B55 50%,
-    var(--color-pop) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-}
-
 /* ── Mechanical Precision Motifs ── */
-
-@keyframes micro-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.006); }
-}
-
-@keyframes led-breathe {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
 
 @keyframes witness-draw {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
-}
-
-.animate-micro-pulse {
-  animation: micro-pulse 8s ease-in-out infinite;
-}
-
-.animate-led-breathe {
-  animation: led-breathe 4s ease-in-out infinite;
 }
 
 .animate-witness-draw {
@@ -282,14 +308,8 @@ body::before {
   transform-origin: left;
 }
 
-/* Pause constant animations for reduced motion */
+/* ── Pause constant animations for reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .animate-micro-pulse,
-  .animate-led-breathe {
-    animation-play-state: paused;
-  }
-
-  /* Disable all entrance/transition animations */
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

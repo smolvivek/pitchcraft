@@ -44,27 +44,27 @@ export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps
 
   if (deleted) {
     return (
-      <span className="font-[var(--font-mono)] text-[11px] text-error">Deleted</span>
+      <span className="font-mono text-[11px] text-error">Deleted</span>
     )
   }
 
   if (confirming) {
     return (
       <span className="flex items-center gap-[6px]">
-        <span className="font-[var(--font-mono)] text-[11px] text-text-secondary">Delete &quot;{pitchName.slice(0, 20)}&quot;?</span>
+        <span className="font-mono text-[11px] text-text-secondary">Delete &quot;{pitchName.slice(0, 20)}&quot;?</span>
         <button
           type="button"
           onClick={handleDelete}
           disabled={loading}
           aria-label="Delete pitch"
-          className="font-[var(--font-mono)] text-[11px] text-error hover:opacity-80 transition-opacity disabled:opacity-40"
+          className="font-mono text-[11px] text-error hover:opacity-80 transition-opacity disabled:opacity-40"
         >
           {loading ? 'Deleting...' : 'Yes, delete'}
         </button>
         <button
           type="button"
           onClick={handleCancel}
-          className="font-[var(--font-mono)] text-[11px] text-text-disabled hover:text-text-secondary transition-colors"
+          className="font-mono text-[11px] text-text-disabled hover:text-text-secondary transition-colors"
         >
           Cancel
         </button>
@@ -77,6 +77,7 @@ export function DeletePitchButton({ pitchId, pitchName }: DeletePitchButtonProps
       type="button"
       onClick={handleDelete}
       title="Delete pitch"
+      aria-label="Delete pitch"
       className="text-text-disabled hover:text-error transition-colors duration-[150ms] p-[4px]"
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">

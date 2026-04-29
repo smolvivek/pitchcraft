@@ -1,43 +1,36 @@
-import type { PitchStatus, BudgetRange } from '@/lib/types/pitch'
+import type { BudgetRange } from '@/lib/types/pitch'
 
 interface PitchViewMetadataProps {
   genre: string
-  status: PitchStatus
   budgetRange: BudgetRange
 }
 
-const STATUS_LABELS: Record<PitchStatus, string> = {
-  development: 'Development',
-  production: 'Production',
-  completed: 'Completed',
-}
-
-const STATUS_COLORS: Record<PitchStatus, string> = {
-  development: 'bg-status-looking',
-  production: 'bg-status-progress',
-  completed: 'bg-status-complete',
-}
-
 const BUDGET_LABELS: Record<BudgetRange, string> = {
-  'under-5k': 'Under $5K',
-  '5k-50k': '$5K\u2013$50K',
-  '50k-250k': '$50K\u2013$250K',
-  '250k-1m': '$250K\u2013$1M',
+  'under-5k': 'Less than $5K',
+  '5k-50k': '$5K–$50K',
+  '50k-250k': '$50K–$250K',
+  '250k-1m': '$250K–$1M',
   '1m-plus': '$1M+',
 }
 
-export function PitchViewMetadata({ genre, status, budgetRange }: PitchViewMetadataProps) {
+export function PitchViewMetadata({ genre, budgetRange }: PitchViewMetadataProps) {
   return (
-    <div className="max-w-[680px] mx-auto w-full px-[24px]">
-      <div className="flex flex-wrap items-center gap-[16px] font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
-        <span>{genre}</span>
-        <span className="text-border" aria-hidden="true">&middot;</span>
-        <span className="inline-flex items-center gap-[6px]">
-          <span className={`inline-block w-[8px] h-[8px] rounded-full ${STATUS_COLORS[status]}`} />
-          {STATUS_LABELS[status]}
-        </span>
-        <span className="text-border" aria-hidden="true">&middot;</span>
-        <span>{BUDGET_LABELS[budgetRange]}</span>
+    <div className="px-[48px] md:px-[96px] py-[32px] border-b border-white/5 bg-background">
+      <div className="flex flex-wrap gap-x-[64px] gap-y-[16px]">
+        {genre && (
+          <div>
+            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-disabled mb-[4px]">Genre</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-primary">{genre}</p>
+          </div>
+        )}
+        {budgetRange && (
+          <div>
+            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-disabled mb-[4px]">Budget</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-primary">
+              {BUDGET_LABELS[budgetRange]}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

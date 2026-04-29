@@ -4,21 +4,27 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, type FormEvent 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
-import { TextInput, Textarea, SelectInput } from '@/components/ui/Input'
+import { TextInput, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import { BudgetSegments } from '@/components/ui/BudgetSegments'
+import { StatusRadio } from '@/components/ui/StatusRadio'
 import { FlowBeatEditor } from '@/components/ui/FlowBeatEditor'
 import { PDFUpload } from '@/components/ui/PDFUpload'
+import { ExportPDFButton } from '@/components/ui/ExportPDFButton'
+import { VersionDiff } from '@/components/ui/VersionDiff'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { SectionTransition } from '@/components/ui/SectionTransition'
-import { OPTIONAL_SECTIONS, CUSTOM_SECTION_KEYS } from '@/lib/sections'
+import { OPTIONAL_SECTIONS, CUSTOM_SECTION_KEYS, PROJECT_TYPE_CONFIG, type ProjectType } from '@/lib/sections'
 import type { SidebarSection } from '@/components/layout/Sidebar'
-import type { BudgetRange, PitchStatus, PitchSection, FlowBeat, StretchGoal, FundingReward } from '@/lib/types/pitch'
+import type { BudgetRange, PitchStatus, PitchSection, FlowBeat, StretchGoal, FundingReward, CastMember, TeamMember, MediaRecord } from '@/lib/types/pitch'
 
 /* ─── Required section keys (sidebar navigation) ─── */
 type RequiredSectionKey =
+  | 'project'
   | 'logline'
   | 'synopsis'
+  | 'poster'
   | 'genre'
   | 'vision'
   | 'cast'
@@ -27,8 +33,10 @@ type RequiredSectionKey =
   | 'team'
 
 const REQUIRED_SECTIONS: { key: RequiredSectionKey; label: string }[] = [
+  { key: 'project', label: 'Project Name' },
   { key: 'logline', label: 'Logline' },
   { key: 'synopsis', label: 'Synopsis' },
+  { key: 'poster', label: 'Poster' },
   { key: 'genre', label: 'Genre & Format' },
   { key: 'vision', label: "Director's Vision" },
   { key: 'cast', label: 'Cast & Characters' },
@@ -63,19 +71,6 @@ const ALL_TOGGLEABLE_KEYS = [
   ...CUSTOM_SECTION_KEYS,
 ]
 
-const budgetOptions = [
-  { value: 'under-5k', label: 'Under $5K' },
-  { value: '5k-50k', label: '$5K–$50K' },
-  { value: '50k-250k', label: '$50K–$250K' },
-  { value: '250k-1m', label: '$250K–$1M' },
-  { value: '1m-plus', label: '$1M+' },
-]
-
-const statusOptions = [
-  { value: 'development', label: 'Development' },
-  { value: 'production', label: 'Production' },
-  { value: 'completed', label: 'Completed' },
-]
 
 export default function EditPitchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: pitchId } = use(params)
@@ -93,17 +88,21 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   }, [searchParams, router, pitchId])
 
   // Active section for sidebar navigation
-  const [activeSection, setActiveSection] = useState<string>('logline')
+  const [activeSection, setActiveSection] = useState<string>('project')
 
-  // 8 Required fields
+  // Required fields
+  const [title, setTitle] = useState('')
+  const [posterMediaId, setPosterMediaId] = useState<string | null>(null)
+  const [posterExistingMedia, setPosterExistingMedia] = useState<MediaRecord[]>([])
   const [logline, setLogline] = useState('')
   const [synopsis, setSynopsis] = useState('')
   const [genre, setGenre] = useState('')
   const [vision, setVision] = useState('')
-  const [castAndCharacters, setCastAndCharacters] = useState('')
+  const [castMembers, setCastMembers] = useState<CastMember[]>([{ id: '1', name: '', role: '', description: '' }])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([{ id: '1', name: '', role: '', bio: '' }])
   const [budgetRange, setBudgetRange] = useState<BudgetRange | ''>('')
   const [pitchStatus, setPitchStatus] = useState<PitchStatus>('development')
-  const [team, setTeam] = useState('')
+  const [projectType, setProjectType] = useState<ProjectType | null>(null)
 
   // Optional sections — single data-driven map
   const [sections, setSections] = useState<Record<string, OptionalSectionState>>(() => {
@@ -118,7 +117,8 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [subscriptionTier, setSubscriptionTier] = useState('free')
+  // null = still loading — prevents Pro users from seeing locked UI during fetch
+  const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'pro' | 'studio' | null>(null)
 
   // Share link state
   const [shareUrl, setShareUrl] = useState<string | null>(null)
@@ -137,6 +137,10 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   // Version history state
   const [versions, setVersions] = useState<{ id: string; version_number: number; created_at: string }[]>([])
   const [currentVersion, setCurrentVersion] = useState(1)
+  const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null)
+  const [restoreConfirmId, setRestoreConfirmId] = useState<string | null>(null)
+  const [diffVersionId, setDiffVersionId] = useState<string | null>(null)
+  const [diffData, setDiffData] = useState<Record<string, { before: Record<string, string>; after: Record<string, string> }>>({})
 
   // Funding state
   const [fundingEnabled, setFundingEnabled] = useState(false)
@@ -184,27 +188,49 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
       await supabase
         .from('pitches')
         .update({
+          title,
           logline,
           synopsis,
           genre,
           vision,
-          cast_and_characters: castAndCharacters,
+          cast_and_characters: JSON.stringify(castMembers),
           budget_range: budgetRange || null,
           status: pitchStatus,
-          team,
+          team: JSON.stringify(teamMembers),
+          poster_media_id: posterMediaId,
           updated_at: new Date().toISOString(),
         })
         .eq('id', pitchId)
+
+      // Upsert enabled optional sections
+      const enabledKeys = ALL_TOGGLEABLE_KEYS.filter((key) => sections[key]?.enabled)
+      if (enabledKeys.length > 0) {
+        const sectionsData = enabledKeys.map((key, index) => {
+          const s = sections[key]
+          const data: Record<string, unknown> = {}
+          if (s.content?.trim()) data.content = s.content
+          if (s.mediaIds?.length) data.mediaIds = s.mediaIds
+          if (s.beats?.length) data.beats = s.beats
+          if (s.mediaId) data.mediaId = s.mediaId
+          if (s.videoUrl?.trim()) data.videoUrl = s.videoUrl
+          if (s.title) data.title = s.title
+          return { pitch_id: pitchId, section_name: key, data, order_index: index + 1 }
+        })
+        await supabase
+          .from('pitch_sections')
+          .upsert(sectionsData, { onConflict: 'pitch_id,section_name' })
+      }
+
       setSaveStatus('saved')
     } catch {
       setSaveStatus('unsaved')
     }
-  }, [logline, synopsis, genre, vision, castAndCharacters, budgetRange, pitchStatus, team, pitchId])
+  }, [title, logline, synopsis, genre, vision, castMembers, budgetRange, pitchStatus, teamMembers, posterMediaId, sections, pitchId])
 
-  // Trigger markUnsaved when required fields change
+  // Trigger markUnsaved when any field changes
   useEffect(() => {
     markUnsaved()
-  }, [logline, synopsis, genre, vision, castAndCharacters, budgetRange, pitchStatus, team, markUnsaved])
+  }, [title, logline, synopsis, genre, vision, castMembers, budgetRange, pitchStatus, teamMembers, posterMediaId, sections, markUnsaved])
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -239,8 +265,14 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
     return labels
   }, [sections])
 
+  // Type-adapted required sections
+  const editTypeConfig = projectType ? PROJECT_TYPE_CONFIG[projectType] : PROJECT_TYPE_CONFIG.fiction
+  const typedRequiredSections = REQUIRED_SECTIONS
+    .filter((s) => s.key !== 'status' || editTypeConfig.includeStatus)
+    .map((s) => s.key === 'cast' ? { ...s, label: editTypeConfig.castLabel } : s)
+
   // Build sidebar sections
-  const requiredSidebarSections: SidebarSection[] = REQUIRED_SECTIONS.map((s) => ({
+  const requiredSidebarSections: SidebarSection[] = typedRequiredSections.map((s) => ({
     id: s.key,
     label: s.label,
     completed: isRequiredFieldFilled(s.key),
@@ -261,14 +293,16 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
   function isRequiredFieldFilled(key: RequiredSectionKey): boolean {
     switch (key) {
+      case 'project': return !!title.trim()
       case 'logline': return !!logline.trim()
       case 'synopsis': return !!synopsis.trim()
+      case 'poster': return !!posterMediaId
       case 'genre': return !!genre.trim()
       case 'vision': return !!vision.trim()
-      case 'cast': return !!castAndCharacters.trim()
+      case 'cast': return castMembers.some((m) => m.name.trim() && m.role.trim())
       case 'budget': return !!budgetRange
       case 'status': return !!pitchStatus
-      case 'team': return !!team.trim()
+      case 'team': return teamMembers.some((m) => m.name.trim() && m.role.trim())
     }
   }
 
@@ -279,18 +313,40 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
       updateSection(key, { enabled: false })
       // If the disabled section was active, go back to first required
       if (activeSection === key) {
-        setActiveSection('logline')
+        setActiveSection('project')
       }
     } else {
       updateSection(key, { enabled: true })
     }
   }
 
+  // Cast member helpers
+  const addCastMember = () => {
+    setCastMembers((prev) => [...prev, { id: Date.now().toString(), name: '', role: '', description: '' }])
+  }
+  const removeCastMember = (id: string) => {
+    setCastMembers((prev) => prev.length > 1 ? prev.filter((m) => m.id !== id) : prev)
+  }
+  const updateCastMember = (id: string, field: keyof CastMember, value: string) => {
+    setCastMembers((prev) => prev.map((m) => m.id === id ? { ...m, [field]: value } : m))
+  }
+
+  // Team member helpers
+  const addTeamMember = () => {
+    setTeamMembers((prev) => [...prev, { id: Date.now().toString(), name: '', role: '', bio: '' }])
+  }
+  const removeTeamMember = (id: string) => {
+    setTeamMembers((prev) => prev.length > 1 ? prev.filter((m) => m.id !== id) : prev)
+  }
+  const updateTeamMember = (id: string, field: keyof TeamMember, value: string) => {
+    setTeamMembers((prev) => prev.map((m) => m.id === id ? { ...m, [field]: value } : m))
+  }
+
   // ─── Fetch subscription tier on load ───
   useEffect(() => {
     fetch('/api/subscriptions/status')
       .then((r) => r.json())
-      .then((d) => { if (d.tier) setSubscriptionTier(d.tier) })
+      .then((d) => { if (d.tier) setSubscriptionTier(d.tier as 'free' | 'pro' | 'studio') })
       .catch(() => {})
   }, [])
 
@@ -317,16 +373,47 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
       // Populate required fields
       setCurrentVersion(pitch.current_version ?? 1)
-      setLogline(pitch.logline)
-      setSynopsis(pitch.synopsis)
-      setGenre(pitch.genre)
-      setVision(pitch.vision)
-      setCastAndCharacters(pitch.cast_and_characters)
-      setBudgetRange(pitch.budget_range)
-      setPitchStatus(pitch.status)
-      setTeam(pitch.team)
+      setProjectType((pitch.project_type as ProjectType) || null)
+      setTitle(pitch.title || '')
+      setPosterMediaId(pitch.poster_media_id || null)
+      setLogline(pitch.logline || '')
+      setSynopsis(pitch.synopsis || '')
+      setGenre(pitch.genre || '')
+      setVision(pitch.vision || '')
+      // Parse cast members — supports both JSON array and legacy string
+      try {
+        const parsed = JSON.parse(pitch.cast_and_characters || '[]')
+        setCastMembers(Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ id: '1', name: '', role: '', description: '' }])
+      } catch {
+        const legacy = pitch.cast_and_characters || ''
+        setCastMembers(legacy ? [{ id: '1', name: legacy, role: '', description: '' }] : [{ id: '1', name: '', role: '', description: '' }])
+      }
+      // Parse team members — supports both JSON array and legacy string
+      try {
+        const parsed = JSON.parse(pitch.team || '[]')
+        setTeamMembers(Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ id: '1', name: '', role: '', bio: '' }])
+      } catch {
+        const legacy = pitch.team || ''
+        setTeamMembers(legacy ? [{ id: '1', name: legacy, role: '', bio: '' }] : [{ id: '1', name: '', role: '', bio: '' }])
+      }
+      setBudgetRange(pitch.budget_range || '')
+      setPitchStatus(pitch.status || 'development')
       setSavedSlug(pitch.slug ?? null)
       setSlugInput(pitch.slug ?? '')
+
+      // Fetch existing poster media for pre-population
+      if (pitch.poster_media_id) {
+        const { data: posterMedia } = await supabase
+          .from('media')
+          .select('*')
+          .eq('pitch_id', pitchId)
+          .eq('section_name', 'poster')
+          .order('created_at', { ascending: false })
+          .limit(1)
+        if (posterMedia?.length) {
+          setPosterExistingMedia(posterMedia as MediaRecord[])
+        }
+      }
 
       // Populate optional sections from DB
       if (fetchedSections) {
@@ -394,6 +481,77 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     fetchVersions()
   }, [fetchVersions])
+
+  const handleRestoreVersion = async (versionId: string) => {
+    setRestoringVersionId(versionId)
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/versions/${versionId}`)
+      if (!res.ok) {
+        setErrors((prev) => ({ ...prev, version: 'Failed to load version' }))
+        return
+      }
+      const { version } = await res.json()
+      const snap = version.data?.pitch
+      if (!snap) {
+        setErrors((prev) => ({ ...prev, version: 'Version data is missing' }))
+        return
+      }
+      // Restore required field state from snapshot
+      if (snap.title !== undefined) setTitle(snap.title ?? '')
+      if (snap.logline !== undefined) setLogline(snap.logline ?? '')
+      if (snap.synopsis !== undefined) setSynopsis(snap.synopsis ?? '')
+      if (snap.genre !== undefined) setGenre(snap.genre ?? '')
+      if (snap.vision !== undefined) setVision(snap.vision ?? '')
+      if (snap.cast_and_characters !== undefined) {
+        try {
+          const parsed = JSON.parse(snap.cast_and_characters ?? '[]')
+          setCastMembers(Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ id: '1', name: '', role: '', description: '' }])
+        } catch {
+          setCastMembers([{ id: '1', name: '', role: '', description: '' }])
+        }
+      }
+      if (snap.budget_range !== undefined) setBudgetRange(snap.budget_range ?? '')
+      if (snap.status !== undefined) setPitchStatus(snap.status ?? 'development')
+      if (snap.team !== undefined) {
+        try {
+          const parsed = JSON.parse(snap.team ?? '[]')
+          setTeamMembers(Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ id: '1', name: '', role: '', bio: '' }])
+        } catch {
+          setTeamMembers([{ id: '1', name: '', role: '', bio: '' }])
+        }
+      }
+      setRestoreConfirmId(null)
+      setSaveStatus('unsaved')
+    } catch {
+      setErrors((prev) => ({ ...prev, version: 'Failed to restore version' }))
+    } finally {
+      setRestoringVersionId(null)
+    }
+  }
+
+  const handleToggleDiff = async (versionId: string, prevVersionId: string | null) => {
+    if (diffVersionId === versionId) { setDiffVersionId(null); return }
+    if (diffData[versionId]) { setDiffVersionId(versionId); return }
+
+    // Fetch both versions in parallel
+    const fetches = [fetch(`/api/pitches/${pitchId}/versions/${versionId}`)]
+    if (prevVersionId) fetches.push(fetch(`/api/pitches/${pitchId}/versions/${prevVersionId}`))
+
+    try {
+      const results = await Promise.all(fetches)
+      const [afterRes, beforeRes] = results
+      const afterJson = await afterRes.json()
+      const beforeJson = beforeRes?.ok ? await beforeRes.json() : null
+
+      const after = afterJson.version?.data?.pitch ?? {}
+      const before = beforeJson?.version?.data?.pitch ?? {}
+
+      setDiffData((prev) => ({ ...prev, [versionId]: { before, after } }))
+      setDiffVersionId(versionId)
+    } catch {
+      // silently skip — diff is non-critical
+    }
+  }
 
   const handleCreateShareLink = async () => {
     setSharingLoading(true)
@@ -691,25 +849,24 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
     setErrors({})
 
     const newErrors: Record<string, string> = {}
+    if (!title.trim()) newErrors.project = 'Project name is required'
     if (!logline.trim()) newErrors.logline = 'Logline is required'
     if (logline.length > 500) newErrors.logline = 'Max 500 characters'
     if (!synopsis.trim()) newErrors.synopsis = 'Synopsis is required'
     if (!genre.trim()) newErrors.genre = 'Genre is required'
     if (!vision.trim()) newErrors.vision = 'Vision is required'
-    if (!castAndCharacters.trim()) newErrors.castAndCharacters = 'Cast & Characters is required'
-    if (!budgetRange) newErrors.budgetRange = 'Budget range is required'
+    const validCast = castMembers.filter((m) => m.name.trim() && m.role.trim())
+    if (validCast.length === 0) newErrors.cast = 'At least one cast member with name and role'
+    if (!budgetRange) newErrors.budget = 'Budget range is required'
     if (!pitchStatus) newErrors.status = 'Status is required'
-    if (!team.trim()) newErrors.team = 'Team is required'
+    const validTeam = teamMembers.filter((m) => m.name.trim() && m.role.trim())
+    if (validTeam.length === 0) newErrors.team = 'At least one team member with name and role'
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       // Navigate to the first section with an error
       const errorKeys = Object.keys(newErrors)
-      const firstErrorSection = REQUIRED_SECTIONS.find((s) => {
-        if (s.key === 'cast' && errorKeys.includes('castAndCharacters')) return true
-        if (s.key === 'budget' && errorKeys.includes('budgetRange')) return true
-        return errorKeys.includes(s.key)
-      })
+      const firstErrorSection = REQUIRED_SECTIONS.find((s) => errorKeys.includes(s.key))
       if (firstErrorSection) setActiveSection(firstErrorSection.key)
       return
     }
@@ -734,14 +891,17 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
         await supabase
           .from('pitch_versions')
-          .insert({
-            pitch_id: pitchId,
-            version_number: currentPitch.current_version,
-            data: {
-              pitch: currentPitch,
-              sections: existingSections ?? [],
+          .upsert(
+            {
+              pitch_id: pitchId,
+              version_number: currentPitch.current_version,
+              data: {
+                pitch: currentPitch,
+                sections: existingSections ?? [],
+              },
             },
-          })
+            { onConflict: 'pitch_id,version_number', ignoreDuplicates: true }
+          )
       }
 
       const nextVersion = (currentPitch?.current_version ?? 0) + 1
@@ -749,14 +909,16 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
       const { error: pitchError } = await supabase
         .from('pitches')
         .update({
+          title,
           logline,
           synopsis,
           genre,
           vision,
-          cast_and_characters: castAndCharacters,
+          cast_and_characters: JSON.stringify(validCast),
           budget_range: budgetRange,
           status: pitchStatus,
-          team,
+          team: JSON.stringify(validTeam),
+          poster_media_id: posterMediaId,
           current_version: nextVersion,
           updated_at: new Date().toISOString(),
         })
@@ -862,43 +1024,85 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
     return '01'
   })()
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
   return (
     <>
       <div className="min-h-screen bg-background flex">
-        {/* ─── Sidebar ─── */}
+        {/* ─── Sidebar: hidden on mobile, fixed on desktop ─── */}
         <Sidebar
           sections={requiredSidebarSections}
           optionalSections={optionalSidebarSections}
           activeId={activeSection}
-          onSelect={setActiveSection}
+          onSelect={(id) => { setActiveSection(id); setMobileSidebarOpen(false) }}
           allOptionalDefs={OPTIONAL_SECTIONS}
           enabledKeys={enabledKeysSet}
           onToggleSection={handleToggleSection}
           customSectionLabels={customSectionLabels}
-          tier={subscriptionTier}
-          className="fixed left-0 top-0 h-screen z-10"
+          tier={subscriptionTier ?? 'pro'}
+          className={`fixed left-0 top-0 h-screen z-30 transition-transform duration-[200ms] ${
+            mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}
         />
 
+        {/* Mobile sidebar backdrop */}
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-black/60 md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* ─── Main content ─── */}
-        <main className="ml-[240px] flex-1">
-          <div className="max-w-[800px] mx-auto px-[40px] py-[40px]">
+        <main className="md:ml-[240px] flex-1 min-w-0">
+          <div className="max-w-[800px] mx-auto px-[24px] md:px-[40px] py-[40px]">
             <div className="flex items-center justify-between mb-[16px]">
-              <h1 className="font-[var(--font-heading)] text-[32px] font-semibold leading-[40px] tracking-[-0.02em] text-text-primary">
-                Edit Project
-              </h1>
-              {saveStatus !== 'idle' && (
-                <span className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] text-text-disabled">
-                  {saveStatus === 'saving' && 'Saving...'}
-                  {saveStatus === 'saved' && 'Saved'}
-                  {saveStatus === 'unsaved' && 'Unsaved changes'}
-                </span>
-              )}
+              <div className="flex items-center gap-[12px]">
+                {/* Mobile sidebar toggle */}
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="md:hidden w-[36px] h-[36px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                  aria-label="Open sections"
+                >
+                  <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+                    <path d="M1 1H17M1 7H17M1 13H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <h1 className="font-heading text-[28px] md:text-[32px] font-bold leading-[40px] tracking-[-0.02em] text-text-primary">
+                  {title || 'Edit Project'}
+                </h1>
+              </div>
+              <div className="flex items-center gap-[16px]">
+                {saveStatus !== 'idle' && (
+                  <span className="font-mono text-[11px] leading-[16px] tracking-[0.05em] text-text-disabled">
+                    {saveStatus === 'saving' && 'Saving...'}
+                    {saveStatus === 'saved' && 'Saved.'}
+                    {saveStatus === 'unsaved' && 'Unsaved changes'}
+                  </span>
+                )}
+                <ExportPDFButton pitchId={pitchId} tier={subscriptionTier} />
+              </div>
             </div>
             <div className="h-[1px] bg-border mb-[40px]" />
 
               <form onSubmit={handleSubmit}>
                 <SectionTransition sectionNumber={activeSectionNumber} sectionKey={activeSection}>
                 {/* ═══ Required sections ═══ */}
+
+                {activeSection === 'project' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <TextInput
+                      label="Project Name"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      error={errors.project}
+                      helpText="What's your project called?"
+                      required
+                    />
+                  </div>
+                )}
 
                 {activeSection === 'logline' && (
                   <div className="flex flex-col gap-[16px]">
@@ -907,7 +1111,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                       value={logline}
                       onChange={(e) => setLogline(e.target.value)}
                       error={errors.logline}
-                      helpText="One-sentence pitch (max 500 characters)"
+                      helpText="One sentence. The idea distilled to its essence."
                       required
                     />
                   </div>
@@ -926,6 +1130,25 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                   </div>
                 )}
 
+                {activeSection === 'poster' && (
+                  <div className="flex flex-col gap-[16px]">
+                    <p className="text-[13px] leading-[18px] text-text-secondary">
+                      Your project cover image — film poster, key visual, or concept art.
+                    </p>
+                    <ImageUpload
+                      pitchId={pitchId}
+                      sectionName="poster"
+                      maxFiles={1}
+                      existingMedia={posterExistingMedia}
+                      onUploadComplete={(mediaIds) => setPosterMediaId(mediaIds[0] || null)}
+                      onDeleteComplete={() => setPosterMediaId(null)}
+                    />
+                    {errors.poster && (
+                      <p className="text-[14px] leading-[20px] text-error">{errors.poster}</p>
+                    )}
+                  </div>
+                )}
+
                 {activeSection === 'genre' && (
                   <div className="flex flex-col gap-[16px]">
                     <TextInput
@@ -933,7 +1156,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                       value={genre}
                       onChange={(e) => setGenre(e.target.value)}
                       error={errors.genre}
-                      helpText="e.g., Drama / Feature Film"
+                      helpText="e.g., Fiction / Feature Film"
                       required
                     />
                   </div>
@@ -953,54 +1176,106 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                 )}
 
                 {activeSection === 'cast' && (
-                  <div className="flex flex-col gap-[16px]">
-                    <Textarea
-                      label="Cast & Characters"
-                      value={castAndCharacters}
-                      onChange={(e) => setCastAndCharacters(e.target.value)}
-                      error={errors.castAndCharacters}
-                      helpText="Key characters and roles"
-                      required
-                    />
+                  <div className="flex flex-col gap-[24px]">
+                    {castMembers.map((member, index) => (
+                      <div key={member.id} className="border border-border rounded-none p-[20px] bg-surface">
+                        <div className="flex items-center justify-between mb-[16px]">
+                          <span className="font-mono text-[12px] text-text-secondary">{editTypeConfig.castLabel.toUpperCase().split(' & ')[0]} {index + 1}</span>
+                          {castMembers.length > 1 && (
+                            <button type="button" onClick={() => removeCastMember(member.id)} className="text-[12px] text-error hover:underline">
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-[12px]">
+                          <div className="grid grid-cols-2 gap-[12px]">
+                            <TextInput
+                              value={member.name}
+                              onChange={(e) => updateCastMember(member.id, 'name', e.target.value)}
+                              placeholder="Actor/Character name"
+                            />
+                            <TextInput
+                              value={member.role}
+                              onChange={(e) => updateCastMember(member.id, 'role', e.target.value)}
+                              placeholder="Role"
+                            />
+                          </div>
+                          <Textarea
+                            value={member.description || ''}
+                            onChange={(e) => updateCastMember(member.id, 'description', e.target.value)}
+                            placeholder="Brief description (optional)"
+                            className="min-h-[80px]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <Button type="button" variant="secondary" onClick={addCastMember}>
+                      + Add another {editTypeConfig.castLabel.toLowerCase().split(' & ')[0].split(' ')[0]}
+                    </Button>
+                    {errors.cast && (
+                      <p className="text-[14px] leading-[20px] text-error">{errors.cast}</p>
+                    )}
                   </div>
                 )}
 
                 {activeSection === 'budget' && (
                   <div className="flex flex-col gap-[16px]">
-                    <SelectInput
-                      label="Budget Range"
-                      value={budgetRange}
-                      onChange={(e) => setBudgetRange(e.target.value as BudgetRange)}
-                      options={budgetOptions}
-                      error={errors.budgetRange}
-                      required
-                    />
+                    <label className="block font-[var(--font-body)] text-[14px] font-medium leading-[20px] text-text-primary">
+                      Budget Range
+                    </label>
+                    <BudgetSegments value={budgetRange} onChange={setBudgetRange} error={errors.budget} />
                   </div>
                 )}
 
                 {activeSection === 'status' && (
                   <div className="flex flex-col gap-[16px]">
-                    <SelectInput
-                      label="Production Status"
-                      value={pitchStatus}
-                      onChange={(e) => setPitchStatus(e.target.value as PitchStatus)}
-                      options={statusOptions}
-                      error={errors.status}
-                      required
-                    />
+                    <label className="block font-[var(--font-body)] text-[14px] font-medium leading-[20px] text-text-primary">
+                      Production Status
+                    </label>
+                    <StatusRadio value={pitchStatus} onChange={setPitchStatus} error={errors.status} />
                   </div>
                 )}
 
                 {activeSection === 'team' && (
-                  <div className="flex flex-col gap-[16px]">
-                    <Textarea
-                      label="Key Team"
-                      value={team}
-                      onChange={(e) => setTeam(e.target.value)}
-                      error={errors.team}
-                      helpText="Director, producer, writer, etc."
-                      required
-                    />
+                  <div className="flex flex-col gap-[24px]">
+                    {teamMembers.map((member, index) => (
+                      <div key={member.id} className="border border-border rounded-none p-[20px] bg-surface">
+                        <div className="flex items-center justify-between mb-[16px]">
+                          <span className="font-mono text-[12px] text-text-secondary">TEAM MEMBER {index + 1}</span>
+                          {teamMembers.length > 1 && (
+                            <button type="button" onClick={() => removeTeamMember(member.id)} className="text-[12px] text-error hover:underline">
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-[12px]">
+                          <div className="grid grid-cols-2 gap-[12px]">
+                            <TextInput
+                              value={member.name}
+                              onChange={(e) => updateTeamMember(member.id, 'name', e.target.value)}
+                              placeholder="Name"
+                            />
+                            <TextInput
+                              value={member.role}
+                              onChange={(e) => updateTeamMember(member.id, 'role', e.target.value)}
+                              placeholder="Role"
+                            />
+                          </div>
+                          <Textarea
+                            value={member.bio || ''}
+                            onChange={(e) => updateTeamMember(member.id, 'bio', e.target.value)}
+                            placeholder="Brief bio or credits (optional)"
+                            className="min-h-[80px]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <Button type="button" variant="secondary" onClick={addTeamMember}>
+                      + Add another team member
+                    </Button>
+                    {errors.team && (
+                      <p className="text-[14px] leading-[20px] text-error">{errors.team}</p>
+                    )}
                   </div>
                 )}
 
@@ -1062,7 +1337,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
                 {/* Share */}
                 <div id="share-section" className="border-t border-border pt-[24px] mt-[16px]">
-                  <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
+                  <h2 className="font-heading text-[18px] font-bold leading-[28px] text-text-primary mb-[16px]">
                     Share
                   </h2>
                   {shareUrl ? (
@@ -1073,7 +1348,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                           type="text"
                           readOnly
                           value={savedSlug ? `${window.location.origin}/p/${savedSlug}` : shareUrl ?? ''}
-                          className="flex-1 bg-surface border border-border rounded-[4px] px-[12px] py-[8px] font-[var(--font-mono)] text-[13px] text-text-secondary"
+                          className="flex-1 bg-surface border border-border rounded-none px-[12px] py-[8px] font-mono text-[13px] text-text-secondary"
                         />
                         <Button
                           variant="secondary"
@@ -1121,7 +1396,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                         <div className="flex flex-col gap-[8px]">
                           {shareHasPassword ? (
                             <div className="flex items-center gap-[8px]">
-                              <span className="font-[var(--font-mono)] text-[13px] text-text-secondary">
+                              <span className="font-mono text-[13px] text-text-secondary">
                                 Password-protected
                               </span>
                               <Button
@@ -1161,8 +1436,8 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                           </p>
                         ) : (
                           <div className="flex flex-col gap-[6px]">
-                            <div className="flex items-center gap-[0px] border border-border rounded-[4px] overflow-hidden focus-within:border-border-hover">
-                              <span className="px-[10px] py-[8px] font-[var(--font-mono)] text-[12px] text-text-disabled bg-surface whitespace-nowrap border-r border-border select-none">
+                            <div className="flex items-center gap-[0px] border border-border rounded-none overflow-hidden focus-within:border-border-hover">
+                              <span className="px-[10px] py-[8px] font-mono text-[12px] text-text-disabled bg-surface whitespace-nowrap border-r border-border select-none">
                                 pitchcraft.app/p/
                               </span>
                               <input
@@ -1175,26 +1450,26 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                                 }}
                                 onBlur={handleSlugBlur}
                                 placeholder="my-film"
-                                className="flex-1 bg-background px-[10px] py-[8px] font-[var(--font-mono)] text-[13px] text-text-primary outline-none placeholder:text-text-disabled"
+                                className="flex-1 bg-background px-[10px] py-[8px] font-mono text-[13px] text-text-primary outline-none placeholder:text-text-disabled"
                               />
                               {savedSlug && (
                                 <button
                                   type="button"
                                   onClick={() => { setSlugInput(''); saveSlug(null) }}
-                                  className="px-[10px] py-[8px] font-[var(--font-mono)] text-[11px] text-text-disabled hover:text-text-secondary border-l border-border"
+                                  className="px-[10px] py-[8px] font-mono text-[11px] text-text-disabled hover:text-text-secondary border-l border-border"
                                 >
                                   Clear
                                 </button>
                               )}
                             </div>
                             {slugStatus === 'checking' && (
-                              <p className="font-[var(--font-mono)] text-[11px] text-text-disabled">Checking…</p>
+                              <p className="font-mono text-[11px] text-text-disabled">Checking…</p>
                             )}
                             {slugStatus === 'saved' && (
-                              <p className="font-[var(--font-mono)] text-[11px] text-success">Saved</p>
+                              <p className="font-mono text-[11px] text-success">Saved</p>
                             )}
                             {(slugStatus === 'taken' || slugStatus === 'invalid') && (
-                              <p className="font-[var(--font-mono)] text-[11px] text-error">{slugError}</p>
+                              <p className="font-mono text-[11px] text-error">{slugError}</p>
                             )}
                           </div>
                         )}
@@ -1282,24 +1557,24 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
                 {/* Funding */}
                 <div className="border-t border-border pt-[24px] mt-[16px]">
-                  <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[16px]">
+                  <h2 className="font-heading text-[18px] font-bold leading-[28px] text-text-primary mb-[16px]">
                     Funding
                   </h2>
                   {/* Payout account setup */}
-                  <div className="mb-[16px] p-[16px] bg-surface rounded-[4px] border border-border">
+                  <div className="mb-[16px] p-[16px] bg-surface rounded-none border border-border">
                     <div className="flex items-center justify-between mb-[8px]">
                       <div>
-                        <p className="font-[var(--font-heading)] text-[14px] font-semibold text-text-primary">
+                        <p className="font-heading text-[14px] font-bold text-text-primary">
                           Payout account
                         </p>
-                        <p className="font-[var(--font-mono)] text-[12px] text-text-secondary mt-[2px]">
+                        <p className="font-mono text-[12px] text-text-secondary mt-[2px]">
                           {payoutConfigured
                             ? 'Your bank account is registered. Donations will be routed automatically.'
                             : 'Add your bank account to receive donations.'}
                         </p>
                       </div>
                       {payoutConfigured ? (
-                        <span className="font-[var(--font-mono)] text-[11px] text-success bg-success/10 px-[8px] py-[4px] rounded-[4px]">
+                        <span className="font-mono text-[11px] text-success bg-success/10 px-[8px] py-[4px] rounded-none">
                           Configured
                         </span>
                       ) : (
@@ -1314,14 +1589,14 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                     </div>
 
                     {payoutSuccess && (
-                      <p className="font-[var(--font-mono)] text-[12px] text-success mt-[8px]">
+                      <p className="font-mono text-[12px] text-success mt-[8px]">
                         Bank account registered. You&apos;re all set to receive donations.
                       </p>
                     )}
 
                     {showPayoutForm && !payoutConfigured && (
                       <div className="flex flex-col gap-[10px] mt-[12px] pt-[12px] border-t border-border">
-                        <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                        <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
                           Your bank details are encrypted and sent directly to Razorpay (PCI-DSS Level 1). PitchCraft does not store your account number or PAN.
                         </p>
                         <TextInput
@@ -1371,7 +1646,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                         >
                           {payoutLoading ? 'Registering...' : 'Save bank account'}
                         </Button>
-                        <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                        <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
                           Payouts are processed within 7 business days of each donation.
                         </p>
                       </div>
@@ -1381,7 +1656,7 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
                   {fundingEnabled ? (
                     <div className="flex flex-col gap-[12px]">
                       {fundingTotalRaised > 0 && (
-                        <p className="font-[var(--font-mono)] text-[13px] text-text-secondary">
+                        <p className="font-mono text-[13px] text-text-secondary">
                           Raised: ${(fundingTotalRaised / 100).toLocaleString()} of ${parseFloat(fundingGoal || '0').toLocaleString()}
                         </p>
                       )}
@@ -1476,25 +1751,73 @@ export default function EditPitchPage({ params }: { params: Promise<{ id: string
 
                 {/* Version History */}
                 <div className="border-t border-border pt-[24px] mt-[16px]">
-                  <h2 className="font-[var(--font-heading)] text-[18px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+                  <h2 className="font-heading text-[18px] font-bold leading-[28px] text-text-primary mb-[8px]">
                     Versions
                   </h2>
-                  <p className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary mb-[16px]">
+                  <p className="font-mono text-[13px] leading-[20px] text-text-secondary mb-[16px]">
                     Current: v{currentVersion}
                   </p>
+                  {errors.version && (
+                    <p className="text-[13px] leading-[20px] text-error mb-[8px]">{errors.version}</p>
+                  )}
                   {versions.length > 0 ? (
                     <div className="flex flex-col gap-[8px]">
-                      {versions.map((v) => (
-                        <div
-                          key={v.id}
-                          className="flex items-center justify-between py-[8px] px-[12px] bg-surface rounded-[4px]"
-                        >
-                          <span className="font-[var(--font-mono)] text-[13px] text-text-primary">
-                            v{v.version_number}
-                          </span>
-                          <span className="font-[var(--font-mono)] text-[13px] text-text-secondary">
-                            {new Date(v.created_at).toLocaleDateString()}
-                          </span>
+                      {versions.map((v, i) => (
+                        <div key={v.id} className="flex flex-col">
+                          <div className="flex items-center justify-between py-[8px] px-[12px] bg-surface rounded-none">
+                            <div className="flex items-center gap-[12px]">
+                              <span className="font-mono text-[13px] text-text-primary">
+                                v{v.version_number}
+                              </span>
+                              <span className="font-mono text-[13px] text-text-secondary">
+                                {new Date(v.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-[12px]">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleDiff(v.id, versions[i + 1]?.id ?? null)}
+                                className={`font-mono text-[11px] hover:underline transition-colors ${diffVersionId === v.id ? 'text-pop' : 'text-text-secondary hover:text-text-primary'}`}
+                              >
+                                {diffVersionId === v.id ? 'Hide diff' : 'Diff'}
+                              </button>
+                              {restoreConfirmId === v.id ? (
+                                <div className="flex items-center gap-[8px]">
+                                  <span className="font-mono text-[11px] text-text-secondary">
+                                    Restore this version?
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRestoreVersion(v.id)}
+                                    disabled={restoringVersionId === v.id}
+                                    className="font-mono text-[11px] text-pop hover:underline disabled:opacity-50"
+                                  >
+                                    {restoringVersionId === v.id ? 'Restoring...' : 'Yes, restore'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setRestoreConfirmId(null)}
+                                    className="font-mono text-[11px] text-text-secondary hover:underline"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setRestoreConfirmId(v.id)}
+                                  className="font-mono text-[11px] text-text-secondary hover:text-text-primary hover:underline"
+                                >
+                                  Restore
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {diffVersionId === v.id && diffData[v.id] && (
+                            <div className="px-[12px] py-[12px] bg-surface border-t border-border">
+                              <VersionDiff before={diffData[v.id].before} after={diffData[v.id].after} />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1685,7 +2008,7 @@ function RewardsEditor({
         Rewards (optional)
       </label>
       {rewards.map((reward, i) => (
-        <div key={i} className="flex flex-col gap-[4px] p-[8px] bg-surface rounded-[4px]">
+        <div key={i} className="flex flex-col gap-[4px] p-[8px] bg-surface rounded-none">
           <div className="flex gap-[8px]">
             <TextInput
               label=""

@@ -7,9 +7,7 @@ interface PitchViewLayoutProps {
 export function PitchViewLayout({ children }: PitchViewLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex flex-col gap-[48px] pb-[48px]">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }

@@ -141,7 +141,7 @@ export function PDFUpload({
           onDrop={handleDrop}
           className={`
             relative
-            border-2 border-dashed rounded-[4px]
+            border-2 border-dashed rounded-none
             px-[24px] py-[32px]
             cursor-pointer
             transition-colors duration-[200ms]
@@ -192,13 +192,13 @@ export function PDFUpload({
             </div>
           </div>
           {uploading && (
-            <div className="absolute inset-0 bg-surface/90 rounded-[4px] flex items-center justify-center">
+            <div className="absolute inset-0 bg-surface/90 rounded-none flex items-center justify-center">
               <p className="text-[14px] text-text-primary">Uploading...</p>
             </div>
           )}
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-[4px] p-[16px]">
+        <div className="bg-surface border border-border rounded-none p-[16px]">
           <div className="flex items-center gap-[12px]">
             <svg
               width="32"
@@ -235,7 +235,7 @@ export function PDFUpload({
               className="
                 flex-shrink-0
                 w-[32px] h-[32px]
-                rounded-[4px]
+                rounded-none
                 flex items-center justify-center
                 hover:bg-error/10 hover:text-error
                 transition-colors duration-[200ms]

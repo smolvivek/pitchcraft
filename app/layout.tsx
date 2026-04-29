@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Newsreader, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const dmSerifDisplay = DM_Serif_Display({
-  variable: "--font-dm-serif",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
+  style: ["italic", "normal"],
   display: "swap",
 });
 
@@ -58,17 +59,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="theme-color" content="#0a0a0a" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/<\//g, '<\\/') }}
         />
       </head>
       <body
-        className={`${dmSerifDisplay.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${newsreader.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-pop focus:px-3 focus:py-2 focus:text-white focus:text-sm"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-pop focus:px-3 focus:py-2 focus:text-text-primary focus:text-sm"
         >
           Skip to content
         </a>

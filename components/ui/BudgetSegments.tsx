@@ -28,18 +28,15 @@ export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) 
             className={`
               flex flex-col items-center justify-center
               px-[12px] py-[16px]
-              border rounded-[4px]
-              transition-all duration-[150ms]
+              border rounded-none
+              transition-all duration-[200ms] ease-out
               relative overflow-hidden
               ${
                 value === option.value
-                  ? 'border-pop scale-[1.02]'
-                  : 'bg-surface border-border hover:bg-surface-hover scale-100'
+                  ? 'border-pop'
+                  : 'bg-surface border-border hover:bg-surface-hover'
               }
             `}
-            style={{
-              transitionTimingFunction: value === option.value ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'
-            }}
           >
             {/* Pop background slide-in */}
             <div
@@ -51,22 +48,12 @@ export function BudgetSegments({ value, onChange, error }: BudgetSegmentsProps) 
             />
 
             <span
-              className={`
-                relative z-10
-                font-[var(--font-mono)] text-[13px] leading-[20px] font-medium
-                transition-colors duration-[150ms]
-                ${value === option.value ? 'text-white' : 'text-text-primary'}
-              `}
+              className="relative z-10 font-mono text-[13px] leading-[20px] font-medium text-text-primary"
             >
               {option.label}
             </span>
             <span
-              className={`
-                relative z-10
-                text-[11px] leading-[16px] mt-[4px]
-                transition-colors duration-[150ms]
-                ${value === option.value ? 'text-white/80' : 'text-text-secondary'}
-              `}
+              className={`relative z-10 text-[11px] leading-[16px] mt-[4px] transition-colors duration-[150ms] ${value === option.value ? 'text-text-primary/75' : 'text-text-secondary'}`}
             >
               {option.sublabel}
             </span>

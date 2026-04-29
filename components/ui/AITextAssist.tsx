@@ -94,7 +94,7 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
           inline-flex items-center gap-[6px]
           mt-[8px] px-[10px] py-[5px]
           text-[12px] leading-[16px] text-text-secondary
-          border border-border rounded-[4px]
+          border border-border rounded-none
           hover:bg-surface hover:text-text-primary
           transition-colors duration-[200ms]
         "
@@ -109,10 +109,10 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
   }
 
   return (
-    <div className="mt-[8px] border border-border rounded-[4px] bg-surface p-[16px]">
+    <div className="mt-[8px] border border-border rounded-none bg-surface p-[16px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-[12px]">
-        <span className="font-[var(--font-mono)] text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">
+        <span className="font-mono text-[11px] leading-[16px] uppercase tracking-[0.08em] text-text-secondary">
           AI {mode === 'refine' ? 'Refine' : 'Draft'}
         </span>
         <button
@@ -133,7 +133,7 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
             placeholder="Describe what you want — a few words or a rough idea"
             className="
               w-full px-[12px] py-[10px] min-h-[72px]
-              bg-surface/50 border border-border rounded-[4px]
+              bg-surface/50 border border-border rounded-none
               text-[13px] leading-[20px] text-text-primary
               font-[var(--font-body)]
               placeholder:text-text-disabled
@@ -174,10 +174,10 @@ export function AITextAssist({ fieldName, currentText, onAccept, context }: AITe
       {/* Suggestion preview */}
       {suggestion && (
         <div className="mb-[12px]">
-          <div className="font-[var(--font-mono)] text-[10px] leading-[14px] uppercase tracking-[0.08em] text-text-disabled mb-[6px]">
+          <div className="font-mono text-[10px] leading-[14px] uppercase tracking-[0.08em] text-text-disabled mb-[6px]">
             AI Suggestion
           </div>
-          <div className="px-[12px] py-[10px] bg-[#F5F5EC] border border-[#D4D6C8] rounded-[4px] text-[14px] leading-[22px] text-text-primary whitespace-pre-wrap">
+          <div className="px-[12px] py-[10px] bg-[#F5F5EC] border border-[#D4D6C8] rounded-none text-[14px] leading-[22px] text-text-primary whitespace-pre-wrap">
             {suggestion}
           </div>
         </div>

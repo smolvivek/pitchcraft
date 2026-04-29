@@ -76,8 +76,16 @@ export function PitchViewPasswordGate({ pitchId }: PitchViewPasswordGateProps) {
         localStorage.removeItem(getLockoutKey(pitchId))
         // Cookie is now set server-side. Full page reload triggers server re-render with cookie.
         window.location.reload()
+      } else if (res.status === 429) {
+        // Server-enforced lockout
+        const retryAfter = parseInt(res.headers.get('Retry-After') ?? String(LOCKOUT_MS / 1000), 10)
+        const until = Date.now() + retryAfter * 1000
+        localStorage.setItem(getLockoutKey(pitchId), String(until))
+        localStorage.removeItem(getAttemptsKey(pitchId))
+        setLockoutSeconds(retryAfter)
+        setError('')
       } else {
-        // Track failed attempts
+        // Track failed attempts locally (mirrors server-side counter for UX feedback)
         const attempts = parseInt(localStorage.getItem(getAttemptsKey(pitchId)) ?? '0', 10) + 1
         localStorage.setItem(getAttemptsKey(pitchId), String(attempts))
 
@@ -110,6 +118,11 @@ export function PitchViewPasswordGate({ pitchId }: PitchViewPasswordGateProps) {
     )
   }
 
+  const currentAttempts = (() => {
+    try { return parseInt(localStorage.getItem(getAttemptsKey(pitchId)) ?? '0', 10) } catch { return 0 }
+  })()
+  const attemptsUsed = currentAttempts > 0
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
       <TextInput
@@ -120,6 +133,11 @@ export function PitchViewPasswordGate({ pitchId }: PitchViewPasswordGateProps) {
       />
       {error && (
         <p className="text-[14px] leading-[20px] text-error">{error}</p>
+      )}
+      {!attemptsUsed && (
+        <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
+          {MAX_ATTEMPTS} attempts allowed before temporary lockout.
+        </p>
       )}
       <Button variant="primary" type="submit" disabled={loading}>
         {loading ? 'Verifying...' : 'View project'}

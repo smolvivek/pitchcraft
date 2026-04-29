@@ -53,6 +53,39 @@ export async function sendDonorConfirmation({
   })
 }
 
+export async function sendViewNotification({
+  to,
+  projectName,
+  country,
+  pitchEditUrl,
+}: {
+  to: string
+  projectName: string
+  country: string | null
+  pitchEditUrl: string
+}) {
+  const resend = getResend()
+  const location = country ? ` from ${country}` : ''
+  const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Someone viewed "${projectName}"`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a">
+        <p style="font-size:16px">Someone viewed <strong>${projectName}</strong>${location}.</p>
+        <p style="font-size:14px;color:#666">${time}</p>
+        <p style="margin:24px 0">
+          <a href="${pitchEditUrl}" style="background:#0A0A0A;color:#F5F5F5;padding:10px 20px;text-decoration:none;font-size:13px;display:inline-block">Open project →</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+        <p style="font-size:11px;color:#999">Pitchcraft · You're receiving this because you have view notifications enabled (Pro/Studio).</p>
+      </div>
+    `,
+  })
+}
+
 export async function sendCreatorDonationAlert({
   to,
   creatorName,

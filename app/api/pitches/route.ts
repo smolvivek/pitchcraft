@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getUserTier } from '@/lib/subscriptions/getTier'
+import { getAuthProfile } from '@/lib/auth/getAuthProfile'
 
 // POST — create a new pitch, with server-side tier enforcement
 export async function POST(request: NextRequest) {
@@ -14,31 +16,13 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    const { data: profile } = await admin
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(admin, user.id)
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     // Enforce free tier pitch limit server-side
-    const { data: subscription } = await admin
-      .from('subscriptions')
-      .select('tier, status, current_period_end')
-      .eq('user_id', user.id)
-      .single()
-
-    let tier = subscription?.tier ?? 'free'
-    if (
-      subscription?.status === 'cancelled' &&
-      subscription?.current_period_end &&
-      new Date(subscription.current_period_end) < new Date()
-    ) {
-      tier = 'free'
-    }
+    const tier = await getUserTier(admin, user.id)
 
     if (tier === 'free') {
       const { count } = await admin
@@ -66,6 +50,7 @@ export async function POST(request: NextRequest) {
       budget_range,
       status: pitchStatus,
       team,
+      project_type,
     } = body
 
     if (!project_name?.trim() || !logline?.trim()) {
@@ -85,6 +70,7 @@ export async function POST(request: NextRequest) {
         budget_range,
         status: pitchStatus,
         team,
+        project_type: project_type ?? null,
       })
       .select()
       .single()
@@ -92,6 +78,30 @@ export async function POST(request: NextRequest) {
     if (pitchError || !pitch) {
       console.error('Create pitch error:', pitchError)
       return NextResponse.json({ error: 'Failed to create pitch' }, { status: 500 })
+    }
+
+    // Insert optional sections server-side if provided
+    const sections: { section_name: string; data: Record<string, unknown>; order_index: number }[] =
+      Array.isArray(body.sections) ? body.sections : []
+
+    if (sections.length > 0) {
+      const { error: sectionsError } = await admin
+        .from('pitch_sections')
+        .insert(
+          sections.map((s) => ({
+            pitch_id: pitch.id,
+            section_name: s.section_name,
+            data: s.data,
+            order_index: s.order_index,
+          }))
+        )
+
+      if (sectionsError) {
+        // Rollback: delete the pitch row so we don't leave partial state
+        await admin.from('pitches').delete().eq('id', pitch.id)
+        console.error('Sections insert error (rolled back pitch):', sectionsError)
+        return NextResponse.json({ error: 'Failed to save sections' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ id: pitch.id })

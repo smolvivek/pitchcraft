@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthProfile } from '@/lib/auth/getAuthProfile'
 import crypto from 'crypto'
 
 const ALLOWED_TYPES: Record<string, string> = {
@@ -36,10 +37,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user owns pitch
+    const profile = await getAuthProfile(supabase, user.id)
+    if (!profile) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { data: pitch, error: pitchError } = await supabase
       .from('pitches')
       .select('id')
       .eq('id', pitchId)
+      .eq('user_id', profile.id)
+      .is('deleted_at', null)
       .single()
 
     if (pitchError || !pitch) {

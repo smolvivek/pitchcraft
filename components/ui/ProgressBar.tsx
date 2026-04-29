@@ -14,12 +14,12 @@ function ProgressBar({ current, goal, label }: ProgressBarProps) {
       {label && (
         <span className="text-[14px] leading-[20px] text-text-secondary">{label}</span>
       )}
-      <div className="w-full h-[8px] bg-surface rounded-full overflow-visible">
+      <div className="w-full h-[8px] bg-surface rounded-full overflow-hidden">
         <div
-          className="h-full bg-pop rounded-full transition-[width] duration-[500ms]"
+          className="h-full bg-pop rounded-full transition-[width] duration-[700ms]"
           style={{
             width: `${percentage}%`,
-            transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' // Spring with 5% overshoot
+            transitionTimingFunction: 'var(--ease-cinematic)',
           }}
           role="progressbar"
           aria-valuenow={current}

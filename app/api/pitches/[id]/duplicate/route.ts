@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getUserTier } from '@/lib/subscriptions/getTier'
+import { getAuthProfile } from '@/lib/auth/getAuthProfile'
 
 export async function POST(
   _request: NextRequest,
@@ -19,12 +21,7 @@ export async function POST(
     const admin = createAdminClient()
 
     // Verify ownership
-    const { data: profile } = await admin
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single()
-
+    const profile = await getAuthProfile(admin, user.id)
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
@@ -42,20 +39,7 @@ export async function POST(
     }
 
     // Enforce free tier pitch limit
-    const { data: subscription } = await admin
-      .from('subscriptions')
-      .select('tier, status, current_period_end')
-      .eq('user_id', user.id)
-      .single()
-
-    let tier = subscription?.tier ?? 'free'
-    if (
-      subscription?.status === 'cancelled' &&
-      subscription?.current_period_end &&
-      new Date(subscription.current_period_end) < new Date()
-    ) {
-      tier = 'free'
-    }
+    const tier = await getUserTier(admin, user.id)
 
     if (tier === 'free') {
       const { count } = await admin
@@ -102,7 +86,7 @@ export async function POST(
       .eq('pitch_id', pitchId)
 
     if (sections && sections.length > 0) {
-      await admin.from('pitch_sections').insert(
+      const { error: sectionsError } = await admin.from('pitch_sections').insert(
         sections.map((s) => ({
           pitch_id: copy.id,
           section_name: s.section_name,
@@ -110,6 +94,13 @@ export async function POST(
           order_index: s.order_index,
         }))
       )
+
+      if (sectionsError) {
+        // Rollback: remove the copied pitch so we don't leave partial state
+        await admin.from('pitches').delete().eq('id', copy.id)
+        console.error('Duplicate sections insert error (rolled back):', sectionsError)
+        return NextResponse.json({ error: 'Failed to duplicate pitch sections' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ id: copy.id })

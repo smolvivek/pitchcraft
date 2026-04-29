@@ -59,8 +59,8 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="bg-surface border border-border rounded-[4px] p-[32px]">
-      <h2 className="font-[var(--font-heading)] text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
+    <div className="bg-surface border border-border rounded-none p-[32px]">
+      <h2 className="font-heading text-[24px] font-bold leading-[32px] text-text-primary mb-[16px]">
         Set new password
       </h2>
       <p className="text-[14px] leading-[24px] text-text-secondary mb-[24px]">
@@ -68,8 +68,8 @@ export default function UpdatePasswordPage() {
       </p>
 
       {errors.general && (
-        <div className="mb-[24px] p-[16px] bg-error/10 border border-error rounded-[4px]">
-          <p className="text-[14px] leading-[20px] text-error">{errors.general}</p>
+        <div className="mb-[24px] border-l-2 border-pop pl-[16px]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-pop">{errors.general}</p>
         </div>
       )}
 
@@ -77,6 +77,7 @@ export default function UpdatePasswordPage() {
         <TextInput
           label="New Password"
           type="password"
+          variant="underline"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={errors.password}
@@ -87,6 +88,7 @@ export default function UpdatePasswordPage() {
         <TextInput
           label="Confirm Password"
           type="password"
+          variant="underline"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           error={errors.confirmPassword}

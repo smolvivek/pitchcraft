@@ -9,17 +9,17 @@ export default function TermsPage() {
   return (
     <main className="min-h-screen bg-background px-[24px] md:px-[48px] py-[80px]">
       <article className="max-w-[680px] mx-auto">
-        <h1 className="font-[var(--font-heading)] text-[32px] md:text-[40px] font-semibold leading-[1.2] tracking-[-0.02em] text-text-primary mb-[32px]">
+        <h1 className="font-heading text-[32px] md:text-[40px] font-light leading-[1.2] tracking-[-0.02em] text-text-primary mb-[32px]">
           Terms of Service
         </h1>
 
         <div className="flex flex-col gap-[24px] font-[var(--font-body)] text-[15px] leading-[26px] text-text-secondary">
-          <p className="font-[var(--font-mono)] text-[11px] leading-[16px] tracking-[0.05em] uppercase text-text-disabled">
+          <p className="font-mono text-[11px] leading-[16px] tracking-[0.05em] uppercase text-text-disabled">
             Last updated: February 2026
           </p>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               1. What Pitchcraft Is
             </h2>
             <p>
@@ -29,7 +29,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               2. Your Content
             </h2>
             <p>
@@ -43,7 +43,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               3. Accounts
             </h2>
             <p>
@@ -53,7 +53,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               4. Payments &amp; Subscriptions
             </h2>
             <p>
@@ -64,7 +64,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               5. Funding
             </h2>
             <p>
@@ -79,7 +79,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               6. AI Features
             </h2>
             <p>
@@ -90,7 +90,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               7. Acceptable Use
             </h2>
             <p>
@@ -101,7 +101,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               8. Availability
             </h2>
             <p>
@@ -111,7 +111,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               9. Changes to These Terms
             </h2>
             <p>
@@ -121,7 +121,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-[var(--font-heading)] text-[20px] font-semibold leading-[28px] text-text-primary mb-[8px]">
+            <h2 className="font-heading text-[20px] font-bold leading-[28px] text-text-primary mb-[8px]">
               10. Contact
             </h2>
             <p>

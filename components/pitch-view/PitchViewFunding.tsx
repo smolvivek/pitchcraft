@@ -139,7 +139,7 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
         description: `Support: ${projectName}`,
         prefill: { name, email },
         notes: { project: projectName },
-        theme: { color: '#FF6300' },
+        theme: { color: '#1a1a1a' },
         modal: {
           ondismiss: () => setDonating(false),
         },
@@ -163,15 +163,12 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
             if (verifyRes.ok) {
               setSuccess(true)
               setShowForm(false)
-              setFunding((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      total_raised: prev.total_raised + amountInCents,
-                      donor_count: prev.donor_count + 1,
-                    }
-                  : prev
-              )
+              // Re-fetch so total reflects the server's authoritative value
+              try {
+                const refreshed = await fetch(`/api/funding/public/${pitchId}`)
+                const refreshedData = await refreshed.json()
+                if (refreshedData.funding) setFunding(refreshedData.funding)
+              } catch { /* non-critical */ }
             } else {
               setError('Payment recorded but verification failed. Please contact support.')
             }
@@ -194,14 +191,20 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      <section className="max-w-[680px] mx-auto w-full px-[24px]">
-        <div className="bg-surface border border-border rounded-[4px] p-[24px]">
-          <h2 className="font-[var(--font-heading)] text-[24px] font-semibold leading-[32px] tracking-[-0.02em] text-text-primary mb-[16px]">
-            Support This Project
+      <section className="px-[48px] md:px-[96px] py-[96px] border-b border-white/5">
+        <div className="max-w-[1200px] mx-auto grid grid-cols-12 gap-[48px]">
+          <div className="col-span-12 md:col-span-2">
+            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-pop font-bold md:sticky md:top-[88px]">
+              Funding
+            </p>
+          </div>
+          <div className="col-span-12 md:col-span-10">
+          <h2 className="font-heading text-[48px] md:text-[56px] font-light tracking-[-0.02em] text-text-primary leading-[1.0] mb-[48px]">
+            Back this film.
           </h2>
 
           {funding.description && (
-            <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-text-secondary mb-[16px]">
+            <p className="text-[14px] leading-[20px] text-text-secondary mb-[16px]">
               {funding.description}
             </p>
           )}
@@ -209,25 +212,25 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
           {/* Progress bar */}
           <div className="mb-[16px]">
             <div className="flex justify-between items-baseline mb-[8px]">
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-primary">
+              <span className="font-mono text-[13px] leading-[20px] text-text-primary">
                 {formatCurrency(funding.total_raised)} raised
               </span>
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+              <span className="font-mono text-[13px] leading-[20px] text-text-secondary">
                 of {formatCurrency(funding.funding_goal)}
               </span>
             </div>
-            <div className="h-[4px] bg-border rounded-[2px] overflow-hidden">
+            <div className="h-[4px] bg-border overflow-hidden">
               <div
-                className="h-full bg-pop rounded-[2px] transition-all duration-[400ms] ease-out"
+                className="h-full bg-pop transition-all duration-[400ms] ease-out"
                 style={{ width: `${percentage}%` }}
               />
             </div>
             <div className="flex justify-between items-baseline mt-[8px]">
-              <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+              <span className="font-mono text-[13px] leading-[20px] text-text-secondary">
                 {funding.donor_count} {funding.donor_count === 1 ? 'supporter' : 'supporters'}
               </span>
               {funding.end_date && (
-                <span className="font-[var(--font-mono)] text-[13px] leading-[20px] text-text-secondary">
+                <span className="font-mono text-[13px] leading-[20px] text-text-secondary">
                   {isExpired ? 'Ended' : `Ends ${new Date(funding.end_date).toLocaleDateString()}`}
                 </span>
               )}
@@ -237,7 +240,7 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
           {/* Stretch Goals */}
           {funding.stretch_goals && funding.stretch_goals.length > 0 && (
             <div className="mb-[16px]">
-              <h3 className="font-[var(--font-heading)] text-[16px] font-semibold leading-[24px] text-text-primary mb-[8px]">
+              <h3 className="font-heading text-[16px] font-bold leading-[24px] text-text-primary mb-[8px]">
                 Stretch Goals
               </h3>
               <div className="flex flex-col gap-[8px]">
@@ -246,12 +249,12 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
                   return (
                     <div
                       key={i}
-                      className={`flex items-start gap-[8px] py-[8px] px-[12px] rounded-[4px] bg-surface border-l-2 ${reached ? 'border-success' : 'border-transparent'}`}
+                      className={`flex items-start gap-[8px] py-[8px] px-[12px] bg-surface border-l-2 ${reached ? 'border-success' : 'border-transparent'}`}
                     >
-                      <span className="font-[var(--font-mono)] text-[13px] text-text-secondary whitespace-nowrap">
+                      <span className="font-mono text-[13px] text-text-secondary whitespace-nowrap">
                         {formatCurrency(goal.amount)}
                       </span>
-                      <span className={`font-[var(--font-body)] text-[14px] leading-[20px] ${reached ? 'text-success' : 'text-text-primary'}`}>
+                      <span className={`text-[14px] leading-[20px] ${reached ? 'text-success' : 'text-text-primary'}`}>
                         {goal.description}
                         {reached && ' ✓'}
                       </span>
@@ -265,21 +268,21 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
           {/* Rewards */}
           {funding.rewards && funding.rewards.length > 0 && (
             <div className="mb-[16px]">
-              <h3 className="font-[var(--font-heading)] text-[16px] font-semibold leading-[24px] text-text-primary mb-[8px]">
+              <h3 className="font-heading text-[16px] font-bold leading-[24px] text-text-primary mb-[8px]">
                 Rewards
               </h3>
               <div className="flex flex-col gap-[8px]">
                 {funding.rewards.map((reward, i) => (
-                  <div key={i} className="py-[8px] px-[12px] bg-surface rounded-[4px]">
+                  <div key={i} className="py-[8px] px-[12px] bg-surface">
                     <div className="flex items-baseline justify-between mb-[4px]">
-                      <span className="font-[var(--font-heading)] text-[14px] font-semibold text-text-primary">
+                      <span className="font-heading text-[14px] font-bold text-text-primary">
                         {reward.title}
                       </span>
-                      <span className="font-[var(--font-mono)] text-[13px] text-text-secondary">
+                      <span className="font-mono text-[13px] text-text-secondary">
                         {formatCurrency(reward.amount)}+
                       </span>
                     </div>
-                    <p className="font-[var(--font-body)] text-[13px] leading-[18px] text-text-secondary">
+                    <p className="text-[13px] leading-[18px] text-text-secondary">
                       {reward.description}
                     </p>
                   </div>
@@ -290,29 +293,29 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
 
           {/* Trust signals */}
           <div className="flex flex-wrap items-center gap-x-[16px] gap-y-[8px] mb-[16px] py-[12px] border-t border-border">
-            <span className="flex items-center gap-[6px] font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            <span className="flex items-center gap-[6px] font-mono text-[11px] leading-[16px] text-text-disabled">
               <svg width="10" height="12" viewBox="0 0 10 12" fill="none" aria-hidden="true">
                 <path d="M5 0L0 2.18V5.5C0 8.57 2.13 11.44 5 12C7.87 11.44 10 8.57 10 5.5V2.18L5 0Z" fill="currentColor" opacity="0.5"/>
               </svg>
               Secured by Razorpay
             </span>
             <span className="text-border hidden sm:inline">·</span>
-            <span className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            <span className="font-mono text-[11px] leading-[16px] text-text-disabled">
               256-bit encryption
             </span>
             <span className="text-border hidden sm:inline">·</span>
-            <span className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            <span className="font-mono text-[11px] leading-[16px] text-text-disabled">
               PCI-DSS Level 1
             </span>
             <span className="text-border hidden sm:inline">·</span>
-            <span className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+            <span className="font-mono text-[11px] leading-[16px] text-text-disabled">
               Your card details are never stored by PitchCraft
             </span>
           </div>
 
           {success && (
-            <div className="mb-[16px] p-[12px] bg-surface border border-success/20 rounded-[4px]">
-              <p className="font-[var(--font-body)] text-[14px] leading-[20px] text-success">
+            <div className="mb-[16px] p-[12px] bg-surface border border-success/20">
+              <p className="text-[14px] leading-[20px] text-success">
                 Thank you for your support. A confirmation email is on its way.
               </p>
             </div>
@@ -327,7 +330,7 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
           {showForm && (
             <div className="flex flex-col gap-[12px] mt-[16px]">
               <TextInput
-                label="Amount (USD)"
+                label="Amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="25"
@@ -356,11 +359,11 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
 
               {/* Commission transparency */}
               {breakdown ? (
-                <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
                   You donate {formatCurrency(Math.round(parseFloat(amount) * 100))} → creator receives {formatCurrency(breakdown.creatorAmount)} ({breakdown.commissionPct}% platform fee)
                 </p>
               ) : amount && parseFloat(amount) >= 1 && (
-                <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+                <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
                   Estimated: creator receives ~${(parseFloat(amount) * 0.92).toFixed(2)} (8% max platform fee)
                 </p>
               )}
@@ -383,11 +386,12 @@ export function PitchViewFunding({ pitchId, projectName }: PitchViewFundingProps
                 </Button>
               </div>
 
-              <p className="font-[var(--font-mono)] text-[11px] leading-[16px] text-text-disabled">
+              <p className="font-mono text-[11px] leading-[16px] text-text-disabled">
                 You will be taken to Razorpay&apos;s secure checkout. PitchCraft does not see your card details.
               </p>
             </div>
           )}
+          </div>
         </div>
       </section>
     </>
