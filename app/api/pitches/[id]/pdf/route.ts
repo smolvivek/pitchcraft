@@ -7,8 +7,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getUserTier } from '@/lib/subscriptions/getTier'
 import { getAuthProfile } from '@/lib/auth/getAuthProfile'
+import { rateLimit } from '@/lib/ratelimit'
 import { PitchPDF } from '@/components/pdf/PitchPDF'
 import type { Pitch, PitchSection } from '@/lib/types/pitch'
+
+const PDF_MAX_PER_HOUR = 20
+const PDF_WINDOW_MS = 60 * 60 * 1000
 
 export async function GET(
   _request: NextRequest,
@@ -35,6 +39,15 @@ export async function GET(
     const tier = await getUserTier(admin, user.id)
     if (tier === 'free') {
       return NextResponse.json({ error: 'PDF export requires Pro or Studio', upgrade: true }, { status: 403 })
+    }
+
+    // Rate limit — PDF rendering is CPU-heavy
+    const rl = await rateLimit(`rl:pdf:${user.id}`, PDF_MAX_PER_HOUR, PDF_WINDOW_MS)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many PDF exports. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } }
+      )
     }
 
     // Ownership check

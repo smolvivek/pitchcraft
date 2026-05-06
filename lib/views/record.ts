@@ -54,13 +54,9 @@ export async function recordView({
       .eq('pitch_id', pitchId)
       .eq('ip_day_hash', ipDayHash)
 
-    const isUniqueView = (count ?? 0) === 0
+    if ((count ?? 0) > 0) return
 
-    // Always insert (even dupes) for total view count; use ip_day_hash for unique count
     await admin.from('pitch_views').insert({ pitch_id: pitchId, ip_day_hash: ipDayHash })
-
-    // Notifications only for unique views
-    if (!isUniqueView) return
 
     // Resolve auth_id for tier check — subscriptions.user_id → auth.users.id,
     // but pitch.user_id → public.users.id. Fetch both email and auth_id in one query.
